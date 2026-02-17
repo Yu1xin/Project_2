@@ -26,7 +26,7 @@ export default function LoginPage() {
           onClick={handleLogin}
           className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition"
         >
-          Login with Google
+          Login
         </button>
       </div>
     </div>

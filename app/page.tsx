@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
-// 1. 在组件外部初始化，确保内部所有函数都能访问
+// 初始化 Supabase 客户端
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -16,37 +16,37 @@ function InteractionButton({
   userId
 }: {
   emoji: string;
-  captionId: number;
+  captionId: string; // 确保这里接收的是数据库里的 UUID 字符串
   userId: string | undefined
 }) {
   const [count, setCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleVote = async () => {
-    // 权限检查
     if (!userId) {
-      alert("Please log in to vote!");
+      alert("请先登录！");
       return;
     }
 
     setIsSubmitting(true);
 
-    // 2. 向 caption_votes 表插入数据
+    // 根据你的数据库截图精确匹配字段名
     const { error } = await supabase
       .from('caption_votes')
       .insert([
         {
-          caption_id: captionId,
-          user_id: userId,
-          vote_type: emoji // 确保你的数据库表有这些字段
+          vote_value: emoji === "👎" ? -1 : 1, // 转换为数据库 int8 类型
+          profile_id: userId,                  // 对应截图中的 profile_id
+          caption_id: captionId                // 对应截图中的 caption_id
         }
       ]);
 
     if (error) {
-      console.error("Vote failed:", error.message);
-      alert("Vote failed. Check RLS or Network.");
+      console.error("投票失败:", error.message);
+      alert(`投票失败: ${error.message}`); // 显示具体错误方便调试
     } else {
-      setCount(prev => prev + 1); // 成功后数字加1
+      setCount(prev => prev + 1);
+      alert("投票成功！已记入数据库。");
     }
 
     setIsSubmitting(false);
@@ -75,6 +75,7 @@ export default function ListPage() {
 
   useEffect(() => {
     async function checkAuthAndFetch() {
+      // 获取当前登录会话以拿到用户 ID
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
@@ -82,9 +83,9 @@ export default function ListPage() {
         return;
       }
 
-      // 保存当前登录用户的 ID 供投票使用
-      setUserId(session.user.id);
+      setUserId(session.user.id); // 这里的 ID 将作为 profile_id 传入
 
+      // 获取数据
       const { data, error } = await supabase
         .from('community_contexts')
         .select('*');
@@ -101,11 +102,13 @@ export default function ListPage() {
   }, [router]);
 
   if (loading) return <div className="p-10 text-center">Loading Columbia Wisdom... 🦁</div>;
+  if (error) return <div className="p-10 text-red-500 text-center">Error: {error}</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-8 font-sans">
       <header className="mb-10 text-center">
         <h1 className="text-4xl font-bold text-blue-600 mb-2">🦁 Columbia Contexts</h1>
+        <p className="text-gray-500 italic">Logged in as user: {userId?.slice(0,8)}...</p>
       </header>
 
       <div className="grid gap-6">
@@ -113,8 +116,8 @@ export default function ListPage() {
           <div key={item.id} className="p-6 border rounded-xl shadow-sm bg-white">
             <p className="text-lg text-gray-800 mb-6">{item.content}</p>
 
-            {/* 3. 这里的修改至关重要：传入 captionId 和 userId */}
             <div className="flex gap-3 border-t pt-4">
+              {/* 核心改动：将 item.id (作为 caption_id) 和 userId (作为 profile_id) 传给按钮 */}
               <InteractionButton emoji="💗" captionId={item.id} userId={userId} />
               <InteractionButton emoji="👎" captionId={item.id} userId={userId} />
               <InteractionButton emoji="❓" captionId={item.id} userId={userId} />
@@ -123,6 +126,10 @@ export default function ListPage() {
           </div>
         ))}
       </div>
+
+      <footer className="mt-20 text-center text-gray-400 text-sm pb-10">
+        © 2026 CS Assignment - Data Mutation Practice
+      </footer>
     </div>
   );
 }

@@ -113,7 +113,7 @@ export default function ListPage() {
           <div key={item.id} className="p-6 border rounded-xl shadow-sm bg-white">
             {/* 使用你提到的 contents 列来显示文本 */}
             <p className="text-lg text-gray-800 mb-6 leading-relaxed">
-              {item.contents || "No content found in 'contents' column"}
+              {item.content || "No content found in 'contents' column"}
             </p>
 
             <div className="flex gap-4 border-t pt-4">

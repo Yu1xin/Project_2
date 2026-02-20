@@ -22,7 +22,7 @@ function InteractionButton({
 
   const handleVote = async () => {
     if (!userId) {
-      alert("请先登录！");
+      alert("Login Before you Vote！");
       return;
     }
 
@@ -44,10 +44,10 @@ function InteractionButton({
       ]);
 
     if (error) {
-      console.error("投票失败:", error.message);
-      alert(`投票失败: ${error.message}`);
+      console.error("failed to vote:", error.message);
+      alert(`failed to vote: ${error.message}`);
     } else {
-      alert("投票成功！");
+      alert("vote successfully！");
     }
 
     setIsSubmitting(false);

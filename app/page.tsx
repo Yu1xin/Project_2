@@ -175,7 +175,7 @@ export default function ListPage() {
               </div>
             </div>
           </div>
-        ))}
+        })}
       </div>
 
       <footer className="mt-24 text-center border-t border-slate-100 pt-12 pb-12">

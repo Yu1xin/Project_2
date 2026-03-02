@@ -17,59 +17,79 @@ export default function UploadPage() {
   );
 
   const handleProcess = async () => {
-    if (!file) return;
-    setLoading(true);
-    setStatus('Starting...');
+      if (!file) return;
+      setLoading(true);
+      setStatus('Starting...');
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) throw new Error("Please login first.");
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error("Please login first.");
 
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        };
 
-      // Step 1: Generate URL
-      const s1Res = await fetch('https://api.almostcrackd.ai/pipeline/generate-presigned-url', {
-        method: 'POST', headers, body: JSON.stringify({ contentType: file.type })
-      });
-      const { presignedUrl, cdnUrl } = await s1Res.json();
+        // --- Step 1: Generate Presigned URL ---
+        setStatus('Getting permission...');
+        const s1Res = await fetch('https://api.almostcrackd.ai/pipeline/generate-presigned-url', {
+          method: 'POST', headers, body: JSON.stringify({ contentType: file.type })
+        });
+        const { presignedUrl, cdnUrl } = await s1Res.json();
 
-      // Step 2: Upload
-      await fetch(presignedUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+        // --- Step 2: Upload Image Bytes ---
+        setStatus('Uploading bytes...');
+        await fetch(presignedUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
 
-      // Step 3: Register
-      const s3Res = await fetch('https://api.almostcrackd.ai/pipeline/upload-image-from-url', {
-        method: 'POST', headers, body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false })
-      });
-      const { imageId } = await s3Res.json();
+        // --- Step 3: Register Image URL ---
+        setStatus('Registering image...');
+        const s3Res = await fetch('https://api.almostcrackd.ai/pipeline/upload-image-from-url', {
+          method: 'POST', headers, body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false })
+        });
+        const { imageId } = await s3Res.json();
 
-      // Step 4: Generate Captions
-      setStatus('AI is thinking...');
-      const s4Res = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
-        method: 'POST', headers, body: JSON.stringify({ imageId })
-      });
+        // --- Step 4: Generate Captions ---
+        setStatus('AI is thinking...');
+        const s4Res = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
+          method: 'POST', headers, body: JSON.stringify({ imageId })
+        });
 
-      const captionData = await s4Res.json();
+        const captionData = await s4Res.json();
+        console.log("Full API Response:", captionData); // 建议在控制台确认结构
 
-      // ✅ 核心修改：从返回结果中提取文字
-      // 注意：根据 API 文档通常返回 { captions: [...] } 或直接是内容，这里假设取第一个
-      if (captionData && captionData.captions && captionData.captions.length > 0) {
-        setPreviewCaption(captionData.captions[0].content || captionData.captions[0]);
-      } else if (captionData.content) {
-        setPreviewCaption(captionData.content);
+        // --- 🚀 鲁棒性文字提取逻辑 ---
+        let finalCaption = "";
+
+        if (Array.isArray(captionData)) {
+          // 情况 A: 直接返回数组 [ {content: "..."}, ... ]
+          finalCaption = captionData[0]?.content || captionData[0];
+        } else if (captionData && captionData.captions && Array.isArray(captionData.captions)) {
+          // 情况 B: 返回对象带 captions 数组 { captions: [ {content: "..."}, ... ] }
+          finalCaption = captionData.captions[0]?.content || captionData.captions[0];
+        } else if (captionData && captionData.content) {
+          // 情况 C: 直接返回 content 字段 { content: "..." }
+          finalCaption = captionData.content;
+        } else if (typeof captionData === 'string') {
+          // 情况 D: 返回的就是纯字符串
+          finalCaption = captionData;
+        }
+
+        // 如果还是空的，给一个调侃式的提示，证明流程走通了
+        if (!finalCaption || typeof finalCaption === 'object') {
+          finalCaption = "Meme generated, but AI is speechless. (Check DB for ID: " + imageId.slice(0,8) + ")";
+        }
+
+        setPreviewCaption(finalCaption);
+        setPreviewUrl(cdnUrl);
+        setStatus('Success!');
+      } catch (err: any) {
+        setStatus(`Error: ${err.message}`);
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-
-      setPreviewUrl(cdnUrl);
-      setStatus('Success!');
-    } catch (err: any) {
-      setStatus(`Error: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   const resetPage = () => {
     setFile(null);

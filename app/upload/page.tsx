@@ -99,13 +99,13 @@ export default function UploadPage() {
               href="/"
               className="w-full bg-emerald-500 text-white py-3 rounded-xl font-bold text-center hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-100"
             >
-              确认，加入现存的 meme
+              Confirm, add to existing memes
             </Link>
             <button
               onClick={resetPage}
               className="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-red-50 hover:text-red-600 transition-all"
             >
-              删了 (Discard)
+              Delete
             </button>
           </div>
           <p className="mt-6 text-[10px] text-slate-300 text-center uppercase tracking-widest">Confirmation Step</p>

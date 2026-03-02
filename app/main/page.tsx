@@ -25,7 +25,7 @@ export default function MainPage() {
 
       <div className="flex flex-col gap-4 w-full max-w-xs">
         {/* Main Action Button */}
-        <Link href="/list" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg transition-all active:scale-95 text-lg">
+        <Link href="/" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg transition-all active:scale-95 text-lg">
           Start voting memes 🫡
         </Link>
 

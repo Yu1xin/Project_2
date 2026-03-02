@@ -126,8 +126,6 @@ export default function ListPage() {
       </header>
 
       <div className="space-y-12">
-
-
         {captionsList.map((item, index) => {
           const isActive = index === activeIndex;
 
@@ -175,6 +173,7 @@ export default function ListPage() {
               </div>
             </div>
           </div>
+        );
         })}
       </div>
 

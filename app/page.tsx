@@ -72,8 +72,33 @@ export default function ListPage() {
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
+      const updateActive = () => {
+            const centerY = window.innerHeight / 2;
+            let bestIndex = 0;
+            let bestDist = Number.POSITIVE_INFINITY;
+
+            cardRefs.current.forEach((el, idx) => {
+              if (!el) return;
+              const rect = el.getBoundingClientRect();
+              const elCenter = rect.top + rect.height / 2;
+              const dist = Math.abs(elCenter - centerY);
+              if (dist < bestDist) {
+                bestDist = dist;
+                bestIndex = idx;
+              }
+            });
+            setActiveIndex(bestIndex);
+          };
+
+          window.addEventListener('scroll', updateActive);
+          return () => window.removeEventListener('scroll', updateActive);
+        }, [captionsList]);
+
+
     async function fetchData() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {

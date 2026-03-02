@@ -10,8 +10,6 @@ export default function ListPage() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   // 下面是“中间变大”的效果需要的
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
-  const [activeIndex, setActiveIndex] = useState(0)
 
   // ✅ fetch votes
   useEffect(() => {

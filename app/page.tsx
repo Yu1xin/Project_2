@@ -157,7 +157,7 @@ export default function ListPage() {
                 </div>
               )}
               <div className="p-8">
-                <blockquote className="text-2xl text-slate-800 mb-8 font-semibold italic">"{item.content}"</blockquote>
+                <blockquote className="text-2xl text-blue-600 mb-8 font-semibold italic">"{item.content}"</blockquote>
                 <VotingGroup captionId={item.id} userId={userId} />
               </div>
             </div>

@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .single();
 
       if (!profile?.is_superadmin) {
-        alert("你不是管理员！");
+        alert("oops you don't have superadmin permission！");
         router.push('/');
       } else {
         setIsAdmin(true);
@@ -31,6 +31,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     checkAdmin();
   }, []);
 
-  if (loading) return <div className="p-10">正在检查身份...</div>;
-  return isAdmin ? <>{children}</> : null;
-}
+  if (loading) return <div className="p-10 font-bold text-blue-600 animate-pulse">confirming identity...</div>;
+
+    return isAdmin ? (
+      <div className="min-h-screen bg-slate-50">
+        {/* 🚀 关键：添加 ml-64 (256px) 或者根据你侧边栏实际宽度调整 */}
+        {/* pl-20 是为了给内容和侧边栏之间留一点呼吸感 */}
+        <main className="ml-64 p-8 pt-12 min-h-screen">
+          <div className="max-w-6xl mx-auto">
+            {children}
+          </div>
+        </main>
+      </div>
+    ) : null;
+  }

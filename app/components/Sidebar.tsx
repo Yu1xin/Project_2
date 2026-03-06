@@ -35,7 +35,7 @@ export default function Sidebar() {
         <SidebarLink href="/upload" icon="📸" label="Upload Meme" isOpen={isOpen} active={pathname === '/upload'} />
         <SidebarLink href="/least-favored" icon="📉" label="Bottom 20%" isOpen={isOpen} active={pathname === '/least-favored'} />
         <SidebarLink href="/list" icon="📋" label="Vote Records" isOpen={isOpen} active={pathname === '/list'} />
-        <p className="px-4 text-[10px] font-black text-slate-400 uppercase mb-2">Admin Area</p>
+        <p className="px-4 text-[10px] font-black text-slate-400 uppercase mb-2">Admin Tags</p>
             <SidebarLink href="/admin" icon="📊" label="Admin Stats" isOpen={isOpen} active={pathname === '/admin'} />
             <SidebarLink href="/admin/users" icon="👥" label="Manage Users" isOpen={isOpen} active={pathname === '/admin/users'} />
             <SidebarLink href="/admin/images" icon="🖼️" label="Manage Images" isOpen={isOpen} active={pathname === '/admin/images'} />

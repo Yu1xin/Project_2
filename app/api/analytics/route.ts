@@ -125,9 +125,9 @@ function getTimeBucket(createdAt: string | null) {
 
   const hour = new Date(createdAt).getUTCHours();
 
-  if (hour >= 3 && hour <= 10) return 'Morning (3–10)';
-  if (hour >= 11 && hour <= 17) return 'Midday (11–17)';
-  return 'Evening (18–2)';
+  if (hour >= 3 && hour <= 10) return 'Morning (4–11)';
+  if (hour >= 11 && hour <= 17) return 'Midday (12–19)';
+  return 'Evening (20–3)';
 }
 
 function groupAverageImpact(

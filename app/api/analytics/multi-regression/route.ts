@@ -1,11 +1,49 @@
 // app/api/analytics/multi-regression/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { MergedRow, FactorCard } from '@/types/analytics'; // 假设你有这些类型
-import { safeMean, computeSimpleLinearRegression } from '../analytics/route'; // 如果有的话，从 GET 文件导入工具函数；否则复制过来
+import { MergedRow } from '@/types/analytics';  // 只保留需要的类型
 
-// 如果 computeMultipleRegression 还没实现，先用简单版或占位
-// 这里先实现基本结构，多元部分用占位（后面完善）
+// 复制工具函数过来（从原来的 analytics/route.ts 复制）
+function safeMean(arr: number[]) {
+  if (!arr.length) return 0;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function computeSimpleLinearRegression(points: { x: number; y: number }[]) {
+  const n = points.length;
+  if (n < 2) return { slope: 0, intercept: 0, r2: 0, n };
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const meanX = safeMean(xs);
+  const meanY = safeMean(ys);
+  let numerator = 0, denominator = 0;
+  for (const p of points) {
+    numerator += (p.x - meanX) * (p.y - meanY);
+    denominator += (p.x - meanX) ** 2;
+  }
+  const slope = denominator === 0 ? 0 : numerator / denominator;
+  const intercept = meanY - slope * meanX;
+  let ssTot = 0, ssRes = 0;
+  for (const p of points) {
+    const yHat = intercept + slope * p.x;
+    ssTot += (p.y - meanY) ** 2;
+    ssRes += (p.y - yHat) ** 2;
+  }
+  const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot;
+  return { slope, intercept, r2, n };
+}
+
+// 占位多元回归函数（后面可完善）
+function computeMultipleRegression(y: number[], xMatrix: number[][]) {
+  // 当前简单返回平均值 + 0 系数（避免报错）
+  const n = y.length;
+  const k = xMatrix[0]?.length || 0;
+  return {
+    coefficients: [safeMean(y), ...new Array(k).fill(0)],
+    r2: 0,
+    n
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,7 +59,6 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    // 完整查询（和 GET 一样）
     const [
       captionsRes,
       responsesRes,
@@ -46,7 +83,6 @@ export async function POST(req: NextRequest) {
     const models = modelsRes.data ?? [];
     const flavors = flavorsRes.data ?? [];
 
-    // 构建 Maps（复制自 GET）
     const responseByCaptionRequestId = new Map<string, any>();
     for (const r of responses) {
       if (r.caption_request_id) responseByCaptionRequestId.set(r.caption_request_id, r);
@@ -62,7 +98,6 @@ export async function POST(req: NextRequest) {
       if (f.id && f.description) flavorNameById.set(f.id, f.description);
     }
 
-    // 合并数据
     const mergedRows: MergedRow[] = captions
       .map((c: any) => {
         const reqId = c.caption_request_id;
@@ -105,14 +140,8 @@ export async function POST(req: NextRequest) {
       return row;
     });
 
-    // 目前多元回归函数是占位版（返回 0 系数）
-    // 你可以在这里调用 computeMultipleRegression(y, xMatrix)
-    // 但由于当前实现不完整，先返回简单结果
-    const result = {
-      coefficients: [safeMean(y), ...new Array(variables.length).fill(0)],
-      r2: 0,
-      n: validRows.length
-    };
+    // 计算多元回归（当前是占位版）
+    const result = computeMultipleRegression(y, xMatrix);
 
     return NextResponse.json({
       coefficients: result.coefficients,

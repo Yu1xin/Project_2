@@ -179,38 +179,6 @@ export default function AdminAnalytics() {
     );
   };
 
-    <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
-      <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 flex items-center gap-2 ${colorClass}`}>
-        <span>{icon}</span> {title}
-      </h3>
-      <div className="space-y-3">
-        {items.length === 0 ? (
-          <div className="text-slate-500 text-sm">No data available</div>
-        ) : (
-          items.map((item, idx) => (
-            <div
-              key={`${item.name}-${idx}`}
-              className="bg-slate-950 p-4 rounded-xl border border-slate-700"
-            >
-              <div className="flex justify-between items-start gap-4">
-                <div className="min-w-0">
-                  <div className="text-sm text-slate-200 break-words">
-                    #{idx + 1} {item.name}
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-1">
-                    avg likes {item.totalLikes.toFixed(6)} · captions {item.captionCount}
-                  </div>
-                </div>
-                <div className="font-mono text-emerald-400 font-bold text-sm">
-                  {item.avgLikes.toFixed(6)}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <div className="p-8 bg-slate-900 text-white rounded-[3rem] shadow-2xl mt-10 max-w-7xl mx-auto">

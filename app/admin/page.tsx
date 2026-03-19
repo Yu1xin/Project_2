@@ -10,6 +10,7 @@ type LeaderboardCard = {
 };
 
 export default function AdminAnalytics() {
+  const [leaderboardSortBy, setLeaderboardSortBy] = useState<'avgLikes' | 'totalLikes'>('avgLikes');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -117,12 +118,64 @@ export default function AdminAnalytics() {
     </div>
   );
 
+  function sortLeaderboard(items: LeaderboardCard[]) {
+    const copied = [...items];
+
+    if (leaderboardSortBy === 'avgLikes') {
+      return copied.sort((a, b) => b.avgLikes - a.avgLikes);
+    }
+
+    return copied.sort((a, b) => b.totalLikes - a.totalLikes);
+  }
   const renderLeaderboard = (
-    title: string,
+    titleBase: string,
     icon: string,
     colorClass: string,
     items: LeaderboardCard[]
-  ) => (
+  ) => {
+    const sortedItems = sortLeaderboard(items);
+
+    return (
+      <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <h3 className={`text-sm font-bold uppercase tracking-wide flex items-center gap-2 ${colorClass}`}>
+            <span>{icon}</span>
+            {titleBase} by {leaderboardSortBy === 'avgLikes' ? 'Average Likes' : 'Total Likes'}
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          {sortedItems.length === 0 ? (
+            <div className="text-slate-500 text-sm">No data available</div>
+          ) : (
+            sortedItems.map((item, idx) => (
+              <div
+                key={`${item.name}-${idx}`}
+                className="bg-slate-950 p-4 rounded-xl border border-slate-700"
+              >
+                <div className="flex justify-between items-start gap-4">
+                  <div className="min-w-0">
+                    <div className="text-sm text-slate-200 break-words">
+                      #{idx + 1} {item.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-1">
+                      avg likes {item.avgLikes.toFixed(6)} · total likes {item.totalLikes.toFixed(0)} · captions {item.captionCount}
+                    </div>
+                  </div>
+
+                  <div className="font-mono text-emerald-400 font-bold text-sm">
+                    {leaderboardSortBy === 'avgLikes'
+                      ? item.avgLikes.toFixed(6)
+                      : item.totalLikes.toFixed(0)}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
     <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
       <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 flex items-center gap-2 ${colorClass}`}>
         <span>{icon}</span> {title}
@@ -224,10 +277,34 @@ export default function AdminAnalytics() {
             {renderFactorList('Profile Impact', '👤', 'text-amber-400', profileFactors)}
           </div>
 
+          <div className="flex flex-wrap gap-3 mb-6">
+            <button
+              onClick={() => setLeaderboardSortBy('avgLikes')}
+              className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
+                leaderboardSortBy === 'avgLikes'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+              }`}
+            >
+              Sort by Avg Likes
+            </button>
+
+            <button
+              onClick={() => setLeaderboardSortBy('totalLikes')}
+              className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
+                leaderboardSortBy === 'totalLikes'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+              }`}
+            >
+              Sort by Total Likes
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {renderLeaderboard('Top Profiles by Total Likes', '🏆', 'text-emerald-400', topProfilesByLikes)}
-            {renderLeaderboard('Top Images by Total Likes', '🖼️', 'text-cyan-400', topImagesByLikes)}
-            {renderLeaderboard('Top Flavors by Total Likes', '🙂', 'text-pink-400', topFlavorsByLikes)}
+            {renderLeaderboard('Top Profiles', '🏆', 'text-emerald-400', topProfilesByLikes)}
+            {renderLeaderboard('Top Images', '🖼️', 'text-cyan-400', topImagesByLikes)}
+            {renderLeaderboard('Top Flavors', '🙂', 'text-pink-400', topFlavorsByLikes)}
           </div>
         </>
       )}

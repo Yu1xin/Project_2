@@ -19,7 +19,10 @@ export default function AdminAnalytics() {
   const [procTimeReg, setProcTimeReg] = useState<RegressionResult>({ slope: 0, intercept: 0, r2: 0, n: 0 });
   const [selectedX, setSelectedX] = useState<'char_len' | 'word_count' | 'proc_time'>('char_len');
 
-  const supabase = createBrowserClient(/* ... */);
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   useEffect(() => {
     async function runAnalysis() {

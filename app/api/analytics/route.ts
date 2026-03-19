@@ -200,9 +200,13 @@ export async function GET() {
   }
 
   const profileNameById = new Map<string, string>();
+
   for (const p of profiles) {
     const name = [p.first_name, p.last_name].filter(Boolean).join(' ').trim();
-    profileNameById.set(p.id, name || 'Unknown User');
+    profileNameById.set(
+      p.id,
+      name || `User ${p.id.slice(0, 8)}`
+    );
   }
 
   const rows: EnrichedCaptionRow[] = captions.map((c) => ({
@@ -217,7 +221,7 @@ export async function GET() {
         : 'Unknown',
     profile_name:
       c.profile_id != null
-        ? profileNameById.get(c.profile_id) ?? 'Unknown User'
+        ? profileNameById.get(c.profile_id) ?? `User ${c.profile_id.slice(0, 8)}`
         : 'Unknown User',
     created_bucket: getTimeBucket(c.created_datetime_utc),
   }))

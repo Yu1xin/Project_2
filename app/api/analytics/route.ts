@@ -2,7 +2,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { RegressionResult, FactorCard, MergedRow } from '@/types/analytics';
 
-
 function safeMean(arr: number[]) {
   if (!arr.length) return 0;
   return arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -11,7 +10,6 @@ function safeMean(arr: number[]) {
 function computeSimpleLinearRegression(points: { x: number; y: number }[]): RegressionResult {
   const n = points.length;
   if (n < 2) return { slope: 0, intercept: 0, r2: 0, n };
-  // ...（和原来完全一样的函数体，我就不重复贴了，保持原样）
   const xs = points.map(p => p.x);
   const ys = points.map(p => p.y);
   const meanX = safeMean(xs);
@@ -45,9 +43,10 @@ function groupAverageImpact(rows: MergedRow[], key: 'llm_model_name' | 'humor_fl
   for (const [groupName, likes] of groups.entries()) {
     if (likes.length < 2) continue;
     const avg = safeMean(likes);
+    const uplift = avg - overallMean;
     results.push({
       factor: groupName,
-      impact: avg - overallMean,
+      impact: uplift,
       desc: `Avg likes ${avg.toFixed(2)} vs overall ${overallMean.toFixed(2)} (n=${likes.length})`,
     });
   }
@@ -60,35 +59,81 @@ export async function GET() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const [captionsRes, responsesRes, modelsRes, flavorsRes] = await Promise.all([
+  const [
+    captionsRes,
+    responsesRes,
+    modelsRes,
+    flavorsRes
+  ] = await Promise.all([
     supabase.from('captions').select('caption_request_id, like_count, content'),
     supabase.from('llm_model_responses').select('caption_request_id, processing_time_seconds, llm_model_id, humor_flavor_id'),
     supabase.from('llm_models').select('id, name'),
-    supabase.from('humor_flavors').select('id, description'),
+    supabase.from('humor_flavors').select('id, description')
   ]);
 
-  // ...（错误处理和数据合并逻辑和原来一模一样，我省略了重复部分）
-  // 重点改动在这里 ↓
+  if (captionsRes.error || responsesRes.error || modelsRes.error || flavorsRes.error) {
+    return Response.json(
+      { error: captionsRes.error?.message || 'Database query failed' },
+      { status: 500 }
+    );
+  }
+
+  const captions = captionsRes.data ?? [];
+  const responses = responsesRes.data ?? [];
+  const models = modelsRes.data ?? [];
+  const flavors = flavorsRes.data ?? [];
+
+  // 构建 Map 用于快速查找
+  const responseByCaptionRequestId = new Map<string, any>();
+  for (const r of responses) {
+    if (r.caption_request_id) {
+      responseByCaptionRequestId.set(r.caption_request_id, r);
+    }
+  }
+
+  const modelNameById = new Map<number, string>();
+  for (const m of models) {
+    if (m.id && m.name) modelNameById.set(m.id, m.name);
+  }
+
+  const flavorNameById = new Map<number, string>();
+  for (const f of flavors) {
+    if (f.id && f.description) flavorNameById.set(f.id, f.description);
+  }
+
+  // 合并数据 → 现在 captions 变量已定义
   const mergedRows: MergedRow[] = captions
-    .map((c) => {
+    .map((c: any) => {
       const reqId = c.caption_request_id;
       const response = reqId ? responseByCaptionRequestId.get(reqId) : undefined;
+
       return {
         like_count: Number(c.like_count ?? 0),
         caption_char_len: (c.content ?? '').length,
         caption_word_count: (c.content ?? '').trim().split(/\s+/).filter(Boolean).length,
-        processing_time_seconds: response?.processing_time_seconds != null ? Number(response.processing_time_seconds) : null,
-        llm_model_name: response?.llm_model_id != null ? modelNameById.get(response.llm_model_id) ?? 'Unknown' : null,
-        humor_flavor_name: response?.humor_flavor_id != null ? flavorNameById.get(response.humor_flavor_id) ?? 'Unknown' : null,
+        processing_time_seconds:
+          response?.processing_time_seconds != null
+            ? Number(response.processing_time_seconds)
+            : null,
+        llm_model_name:
+          response?.llm_model_id != null
+            ? modelNameById.get(response.llm_model_id) ?? 'Unknown'
+            : null,
+        humor_flavor_name:
+          response?.humor_flavor_id != null
+            ? flavorNameById.get(response.humor_flavor_id) ?? 'Unknown'
+            : null,
       };
     })
     .filter((row) => Number.isFinite(row.like_count) && Number.isFinite(row.caption_char_len));
 
-  // 计算 3 个回归
+  // 计算回归
   const charPoints = mergedRows.map(r => ({ x: r.caption_char_len, y: r.like_count }));
   const wordPoints = mergedRows.map(r => ({ x: r.caption_word_count, y: r.like_count }));
 
-  const numericSubset = mergedRows.filter(r => r.processing_time_seconds != null && Number.isFinite(r.processing_time_seconds));
+  const numericSubset = mergedRows.filter(
+    r => r.processing_time_seconds != null && Number.isFinite(r.processing_time_seconds)
+  );
   const procPoints = numericSubset.map(r => ({ x: r.processing_time_seconds!, y: r.like_count }));
 
   const charLenRegression = computeSimpleLinearRegression(charPoints);

@@ -188,7 +188,7 @@ function buildLeaderboard(
     });
   }
 
-  return results.sort((a, b) => b.totalLikes - a.totalLikes);
+  return results.sort((a, b) => b.avgLikes - a.avgLikes);
 }
 
 export async function GET() {

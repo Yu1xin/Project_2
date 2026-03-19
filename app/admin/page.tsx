@@ -127,13 +127,15 @@ export default function AdminAnalytics() {
 
     return copied.sort((a, b) => b.totalLikes - a.totalLikes);
   }
+
+
   const renderLeaderboard = (
     titleBase: string,
     icon: string,
     colorClass: string,
     items: LeaderboardCard[]
   ) => {
-    const sortedItems = sortLeaderboard(items);
+    const sortedItems = sortLeaderboard(items).slice(0, 8);
 
     return (
       <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
@@ -176,6 +178,7 @@ export default function AdminAnalytics() {
       </div>
     );
   };
+
     <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
       <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 flex items-center gap-2 ${colorClass}`}>
         <span>{icon}</span> {title}

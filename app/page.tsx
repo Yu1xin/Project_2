@@ -9,12 +9,10 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// 1. 重构组件，使其支持“锁定”和“反悔”
 function VotingGroup({ captionId, userId }: { captionId: string; userId: string | undefined }) {
   const [votedType, setVotedType] = useState<'up' | 'down' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 投票函数 (Upsert)
   const handleVote = async (type: 'up' | 'down') => {
     if (!userId || votedType) return;
     setIsSubmitting(true);
@@ -35,7 +33,6 @@ function VotingGroup({ captionId, userId }: { captionId: string; userId: string 
     setIsSubmitting(false);
   };
 
-  // 反悔函数 (Delete)
   const handleUndo = async () => {
     if (!userId) return;
     setIsSubmitting(true);
@@ -52,39 +49,36 @@ function VotingGroup({ captionId, userId }: { captionId: string; userId: string 
 
   return (
     <div className="flex items-center gap-4">
-      {/* Upvote Button */}
       <button
         onClick={() => handleVote('up')}
         disabled={isSubmitting || votedType !== null}
-        className={`flex items-center gap-2 px-6 py-2 rounded-full transition border ${
+        className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${
           votedType === 'up'
-            ? 'bg-blue-600 text-white border-blue-600'
-            : 'bg-white text-slate-600 border-slate-200 disabled:opacity-50'
-        } ${!votedType && !isSubmitting ? 'hover:bg-blue-50 cursor-pointer' : 'cursor-default'}`}
+            ? 'border-blue-600 bg-blue-600 text-white'
+            : 'border-zinc-700 bg-zinc-900 text-zinc-200 disabled:opacity-50'
+        } ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-zinc-800' : 'cursor-default'}`}
       >
         <span>👍</span>
         <span className="text-xs font-bold uppercase">{votedType === 'up' ? 'Upvoted' : 'Up'}</span>
       </button>
 
-      {/* Downvote Button */}
       <button
         onClick={() => handleVote('down')}
         disabled={isSubmitting || votedType !== null}
-        className={`flex items-center gap-2 px-6 py-2 rounded-full transition border ${
+        className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${
           votedType === 'down'
-            ? 'bg-red-600 text-white border-red-600'
-            : 'bg-white text-slate-600 border-slate-200 disabled:opacity-50'
-        } ${!votedType && !isSubmitting ? 'hover:bg-red-50 cursor-pointer' : 'cursor-default'}`}
+            ? 'border-red-600 bg-red-600 text-white'
+            : 'border-zinc-700 bg-zinc-900 text-zinc-200 disabled:opacity-50'
+        } ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-zinc-800' : 'cursor-default'}`}
       >
         <span>👎</span>
         <span className="text-xs font-bold uppercase">{votedType === 'down' ? 'Downvoted' : 'Down'}</span>
       </button>
 
-      {/* Undo Link */}
       {votedType && (
         <button
           onClick={handleUndo}
-          className="text-xs text-slate-400 underline hover:text-blue-600 transition-colors ml-2"
+          className="ml-2 text-xs text-zinc-400 underline transition-colors hover:text-blue-400"
         >
           Reset Vote
         </button>
@@ -132,12 +126,12 @@ export default function ListPage() {
     return () => window.removeEventListener('scroll', updateActive);
   }, [captionsList]);
 
-  if (loading) return <div className="p-10 text-center font-mono">LOADING...</div>;
+  if (loading) return <div className="p-10 text-center font-mono text-zinc-300">LOADING...</div>;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-transparent min-h-screen">
+    <div className="min-h-screen max-w-3xl mx-auto bg-transparent p-6 text-zinc-100">
       <header className="mb-16 text-center">
-        <h1 className="text-5xl font-black text-blue-600 mb-4 tracking-tight"> Meme Board</h1>
+        <h1 className="mb-4 text-5xl font-black tracking-tight text-blue-400">Meme Board</h1>
       </header>
 
       <div className="space-y-16">
@@ -147,17 +141,19 @@ export default function ListPage() {
             <div
               key={item.id}
               ref={(el) => { cardRefs.current[index] = el; }}
-              className={`overflow-hidden border border-slate-200 rounded-[2.5rem] bg-transparent transition-all duration-500 ${
-                isActive ? 'shadow-2xl scale-105 opacity-100' : 'shadow-sm scale-90 opacity-40'
+              className={`overflow-hidden rounded-[2.5rem] border border-zinc-800 bg-zinc-950 transition-all duration-500 ${
+                isActive ? 'scale-105 opacity-100 shadow-2xl' : 'scale-90 opacity-50 shadow-sm'
               }`}
             >
               {item.images?.url && (
                 <div className="w-full aspect-video">
-                  <img src={item.images.url} alt="Meme" className="w-full h-full object-cover" />
+                  <img src={item.images.url} alt="Meme" className="h-full w-full object-cover" />
                 </div>
               )}
               <div className="p-8">
-                <blockquote className="text-2xl text-blue-600 mb-8 font-semibold italic">"{item.content}"</blockquote>
+                <blockquote className="mb-8 text-2xl font-semibold italic text-zinc-100">
+                  "{item.content}"
+                </blockquote>
                 <VotingGroup captionId={item.id} userId={userId} />
               </div>
             </div>

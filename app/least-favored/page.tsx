@@ -3,225 +3,251 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { useRouter } from 'next/navigation';
 
-type CaptionRow = {
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+type CaptionItem = {
   id: string;
   content: string | null;
+  like_count: number | null;
   images?: {
     url?: string | null;
   } | null;
 };
 
-type VoteRow = {
-  caption_id: string;
-  vote_value: number;
-};
+async function refreshCaptionLikeCount(captionId: string) {
+  const { data, error } = await supabase
+    .from('caption_votes')
+    .select('vote_value')
+    .eq('caption_id', captionId);
 
-export default function LeastFavoredPage() {
-  const [leastFavored, setLeastFavored] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
-  const [userVotes, setUserVotes] = useState<Record<string, number>>({});
-  const [submittingId, setSubmittingId] = useState<string | null>(null);
-  const [pageError, setPageError] = useState<string | null>(null);
+  if (error) throw error;
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const score = (data || []).reduce(
+    (sum, row) => sum + Number(row.vote_value || 0),
+    0
   );
 
-  async function fetchAllRows(table: string, columns: string) {
-    const pageSize = 1000;
-    let from = 0;
-    let allRows: any[] = [];
+  const { error: updateError } = await supabase
+    .from('captions')
+    .update({ like_count: score })
+    .eq('id', captionId);
 
-    while (true) {
+  if (updateError) throw updateError;
+
+  return score;
+}
+
+function VotingGroup({
+  captionId,
+  userId,
+  initialLikeCount,
+  onVoteFinished,
+}: {
+  captionId: string;
+  userId: string | undefined;
+  initialLikeCount: number;
+  onVoteFinished: () => Promise<void>;
+}) {
+  const [votedType, setVotedType] = useState<'up' | 'down' | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingVote, setIsLoadingVote] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchExistingVote() {
+      if (!userId) {
+        setIsLoadingVote(false);
+        return;
+      }
+
       const { data, error } = await supabase
-        .from(table)
-        .select(columns)
-        .order('id', { ascending: true })
-        .range(from, from + pageSize - 1);
+        .from('caption_votes')
+        .select('vote_value')
+        .eq('profile_id', userId)
+        .eq('caption_id', captionId)
+        .maybeSingle();
 
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-
-      allRows = [...allRows, ...data];
-
-      if (data.length < pageSize) break;
-      from += pageSize;
+      if (!cancelled) {
+        if (!error && data) {
+          if (data.vote_value === 1) setVotedType('up');
+          else if (data.vote_value === -1) setVotedType('down');
+          else setVotedType(null);
+        } else {
+          setVotedType(null);
+        }
+        setIsLoadingVote(false);
+      }
     }
 
-    return allRows;
-  }
+    fetchExistingVote();
 
-  async function getCurrentProfileId() {
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    return () => {
+      cancelled = true;
+    };
+  }, [captionId, userId]);
 
-    if (authError) throw authError;
-    if (!user) return null;
+  const handleVote = async (type: 'up' | 'down') => {
+    if (!userId || votedType || isSubmitting) return;
 
-    // 先假设 profiles.id = auth user id
-    // 如果你的项目不是这种结构，这里再改
-    return user.id;
-  }
+    setIsSubmitting(true);
+    const now = new Date().toISOString();
 
-  async function loadPageData() {
     try {
-      setLoading(true);
-      setPageError(null);
+      const { error } = await supabase
+        .from('caption_votes')
+        .upsert(
+          {
+            vote_value: type === 'up' ? 1 : -1,
+            profile_id: userId,
+            caption_id: captionId,
+            modified_datetime_utc: now,
+            created_datetime_utc: now,
+          },
+          { onConflict: 'profile_id,caption_id' }
+        );
 
-      const profileId = await getCurrentProfileId();
-      setCurrentProfileId(profileId);
+      if (error) throw error;
 
-      const [votes, captions] = await Promise.all([
-        fetchAllRows('caption_votes', 'caption_id, vote_value'),
-        fetchAllRows('captions', 'id, content, images(url)'),
-      ]);
+      setVotedType(type);
 
-      const typedCaptions = (captions || []) as CaptionRow[];
-      const typedVotes = (votes || []) as VoteRow[];
-
-      const scoreMap = new Map<string, number>();
-      typedCaptions.forEach((c) => scoreMap.set(c.id, 0));
-
-      typedVotes.forEach((v) => {
-        if (scoreMap.has(v.caption_id)) {
-          const current = scoreMap.get(v.caption_id) || 0;
-          scoreMap.set(v.caption_id, current + v.vote_value);
-        }
-      });
-
-      const allCaptionsWithScores = typedCaptions.map((c) => ({
-        ...c,
-        totalScore: scoreMap.get(c.id) || 0,
-      }));
-
-      const sorted = [...allCaptionsWithScores].sort((a, b) => {
-        if (a.totalScore !== b.totalScore) {
-          return a.totalScore - b.totalScore;
-        }
-        return a.id.localeCompare(b.id);
-      });
-
-      const worst25 = sorted.slice(0, 25);
-      setLeastFavored(worst25);
-
-      if (profileId && worst25.length > 0) {
-        const captionIds = worst25.map((item) => item.id);
-
-        const { data: myVotes, error: myVotesError } = await supabase
-          .from('caption_votes')
-          .select('caption_id, vote_value')
-          .eq('profile_id', profileId)
-          .in('caption_id', captionIds);
-
-        if (myVotesError) throw myVotesError;
-
-        const voteMap: Record<string, number> = {};
-        (myVotes || []).forEach((row: any) => {
-          voteMap[row.caption_id] = row.vote_value;
-        });
-        setUserVotes(voteMap);
-      } else {
-        setUserVotes({});
-      }
-    } catch (error: any) {
-      console.error('Load page data error:', error);
-      setPageError(error.message || 'Failed to load page data.');
+      await refreshCaptionLikeCount(captionId);
+      await onVoteFinished();
+    } catch (err: any) {
+      alert(`Vote failed: ${err.message || 'Unknown error'}`);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!userId || isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('caption_votes')
+        .delete()
+        .match({ profile_id: userId, caption_id: captionId });
+
+      if (error) throw error;
+
+      setVotedType(null);
+
+      await refreshCaptionLikeCount(captionId);
+      await onVoteFinished();
+    } catch (err: any) {
+      alert(`Undo failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="text-xs font-mono text-slate-400">
+        likes: <span className="text-red-500 font-bold">{initialLikeCount}</span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => handleVote('up')}
+          disabled={isSubmitting || isLoadingVote || votedType !== null}
+          className={`px-3 py-2 rounded-xl text-xs font-bold border transition ${
+            votedType === 'up'
+              ? 'bg-green-600 text-white border-green-600'
+              : 'bg-white text-green-700 border-green-200 hover:bg-green-50 disabled:opacity-50'
+          }`}
+        >
+          {votedType === 'up' ? '⬆ Upvoted' : '⬆ Up'}
+        </button>
+
+        <button
+          onClick={() => handleVote('down')}
+          disabled={isSubmitting || isLoadingVote || votedType !== null}
+          className={`px-3 py-2 rounded-xl text-xs font-bold border transition ${
+            votedType === 'down'
+              ? 'bg-red-600 text-white border-red-600'
+              : 'bg-white text-red-700 border-red-200 hover:bg-red-50 disabled:opacity-50'
+          }`}
+        >
+          {votedType === 'down' ? '⬇ Downvoted' : '⬇ Down'}
+        </button>
+
+        {votedType && (
+          <button
+            onClick={handleUndo}
+            disabled={isSubmitting}
+            className="px-3 py-2 rounded-xl text-xs font-bold border bg-white text-slate-600 border-slate-200 hover:bg-slate-100 disabled:opacity-40"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function LeastFavoredPage() {
+  const [leastFavored, setLeastFavored] = useState<CaptionItem[]>([]);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+
+  async function loadLeastFavored() {
+    try {
+      const { data, error } = await supabase
+        .from('captions')
+        .select('id, content, like_count, images(url)')
+        .order('like_count', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(25);
+
+      if (error) throw error;
+
+      setLeastFavored((data || []) as CaptionItem[]);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to load bottom 25: ${err.message || 'Unknown error'}`);
     }
   }
 
   useEffect(() => {
-    loadPageData();
-  }, []);
+    async function fetchData() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-  const handleVote = async (captionId: string, voteValue: 1 | -1) => {
-    if (!currentProfileId) {
-      alert('Please log in first.');
-      return;
-    }
+        if (!session) {
+          router.push('/login');
+          return;
+        }
 
-    try {
-      setSubmittingId(captionId);
-
-      const existingVote = userVotes[captionId];
-
-      if (existingVote === undefined) {
-        const { error } = await supabase.from('caption_votes').insert({
-          caption_id: captionId,
-          profile_id: currentProfileId,
-          vote_value: voteValue,
-        });
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('caption_votes')
-          .update({ vote_value: voteValue })
-          .eq('caption_id', captionId)
-          .eq('profile_id', currentProfileId);
-
-        if (error) throw error;
+        setUserId(session.user.id);
+        await loadLeastFavored();
+      } catch (err: any) {
+        console.error(err);
+        alert(`Failed to load page: ${err.message || 'Unknown error'}`);
+      } finally {
+        setLoading(false);
       }
-
-      await loadPageData();
-    } catch (error: any) {
-      console.error('Vote error:', error);
-      alert(error.message || 'Failed to submit vote.');
-    } finally {
-      setSubmittingId(null);
-    }
-  };
-
-  const handleResetVote = async (captionId: string) => {
-    if (!currentProfileId) {
-      alert('Please log in first.');
-      return;
     }
 
-    try {
-      setSubmittingId(captionId);
-
-      const { error } = await supabase
-        .from('caption_votes')
-        .delete()
-        .eq('caption_id', captionId)
-        .eq('profile_id', currentProfileId);
-
-      if (error) throw error;
-
-      await loadPageData();
-    } catch (error: any) {
-      console.error('Reset vote error:', error);
-      alert(error.message || 'Failed to reset vote.');
-    } finally {
-      setSubmittingId(null);
-    }
-  };
+    fetchData();
+  }, [router]);
 
   if (loading) {
     return (
       <div className="p-20 text-center animate-pulse">
         Analyzing the 25 least favored memes... 📉
-      </div>
-    );
-  }
-
-  if (pageError) {
-    return (
-      <div className="min-h-screen bg-white p-10">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-black text-red-600 mb-4">Something went wrong</h1>
-          <p className="text-slate-600 mb-6">{pageError}</p>
-          <Link href="/main" className="text-blue-600 hover:underline">
-            ← Back to Dashboard
-          </Link>
-        </div>
       </div>
     );
   }
@@ -233,7 +259,7 @@ export default function LeastFavoredPage() {
           Bottom 25 Memes
         </h1>
         <p className="text-slate-500">
-          The 25 captions with the lowest total voting scores across the full database.
+          The 25 captions with the lowest current like counts.
         </p>
       </header>
 
@@ -241,67 +267,31 @@ export default function LeastFavoredPage() {
         <p className="text-slate-500">No caption data found.</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {leastFavored.map((item) => {
-            const currentVote = userVotes[item.id] || 0;
-            const isSubmitting = submittingId === item.id;
+          {leastFavored.map((item) => (
+            <div
+              key={item.id}
+              className="bg-slate-50 rounded-2xl border border-slate-200 p-3 opacity-90 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+            >
+              {item.images?.url && (
+                <img
+                  src={item.images.url}
+                  alt="Meme"
+                  className="w-full aspect-square object-cover rounded-xl mb-3 border border-slate-100"
+                />
+              )}
 
-            return (
-              <div
-                key={item.id}
-                className="bg-slate-50 rounded-2xl border border-slate-200 p-3 opacity-85 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-              >
-                {item.images?.url && (
-                  <img
-                    src={item.images.url}
-                    alt="Meme"
-                    className="w-full aspect-square object-cover rounded-xl mb-3 border border-slate-100"
-                  />
-                )}
+              <p className="text-sm text-slate-700 italic line-clamp-4 mb-3">
+                "{item.content || 'No caption content'}"
+              </p>
 
-                <p className="text-sm text-slate-700 italic line-clamp-4 mb-2">
-                  "{item.content || 'No caption content'}"
-                </p>
-
-                <div className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3">
-                  Score: {item.totalScore}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => handleVote(item.id, 1)}
-                    disabled={isSubmitting}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition ${
-                      currentVote === 1
-                        ? 'bg-green-600 text-white border-green-600'
-                        : 'bg-white text-green-700 border-green-200 hover:bg-green-50'
-                    }`}
-                  >
-                    ⬆ Upvote
-                  </button>
-
-                  <button
-                    onClick={() => handleVote(item.id, -1)}
-                    disabled={isSubmitting}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition ${
-                      currentVote === -1
-                        ? 'bg-red-600 text-white border-red-600'
-                        : 'bg-white text-red-700 border-red-200 hover:bg-red-50'
-                    }`}
-                  >
-                    ⬇ Downvote
-                  </button>
-
-                  <button
-                    onClick={() => handleResetVote(item.id)}
-                    disabled={isSubmitting || currentVote === 0}
-                    className="px-3 py-2 rounded-xl text-xs font-bold border bg-white text-slate-600 border-slate-200 hover:bg-slate-100 disabled:opacity-40"
-                  >
-                    Reset
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+              <VotingGroup
+                captionId={item.id}
+                userId={userId}
+                initialLikeCount={Number(item.like_count ?? 0)}
+                onVoteFinished={loadLeastFavored}
+              />
+            </div>
+          ))}
         </div>
       )}
 

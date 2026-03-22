@@ -1,3 +1,10 @@
+目前的阶段
+- 我least 25的页面如果进行vote，改动的meme就会消失
+- admin images 需要可以删除
+- user voting页面需要显示n/N的meme数量
+- main 加上一个大的 admin入口，一个admin的main，链接几个页面
+- sidebar真的好丑
+
 # Humor Analytics Dashboard
 
 An analytics dashboard built with Next.js and Supabase to help evaluate which content factors drive user engagement (likes) for captions.

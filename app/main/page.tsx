@@ -60,9 +60,9 @@ export default function MainPage() {
     },
     {
       href: '/list',
-      icon: '📋',
-      label: 'Vote Records',
-      desc: 'Review caption voting results',
+      icon: '👀',
+      label: 'Who is online',
+      desc: 'Latest 20 voting actions👁️👁️',
       color: 'bg-violet-500 hover:bg-violet-600',
     },
   ];

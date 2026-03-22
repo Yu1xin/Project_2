@@ -7,28 +7,28 @@ export default function ListPage() {
   const [data, setData] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  // 下面是“中间变大”的效果需要的
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [activeIndex, setActiveIndex] = useState(0)
 
-  // ✅ fetch votes
   useEffect(() => {
     async function fetchVotes() {
       setLoading(true)
+
       const { data, error } = await supabase
         .from('caption_votes')
         .select('*')
         .order('id', { ascending: false })
+        .limit(20)
 
       if (error) setError(error.message)
       else setData(data || [])
 
       setLoading(false)
     }
+
     fetchVotes()
   }, [])
 
-  // ✅ scroll center highlight
   useEffect(() => {
     let ticking = false
 
@@ -73,19 +73,23 @@ export default function ListPage() {
   if (error) return <div className="p-4 text-red-500">Error fetching data: {error}</div>
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-2xl font-bold mb-6 text-black">Vote Records (Verification)</h1>
+    <div className="min-h-screen bg-gray-50 p-8 ml-20 md:ml-32 lg:ml-40">
+      <h1 className="text-2xl font-bold mb-6 text-black">
+        See latest 20 voting results of your classmates
+      </h1>
 
       {data.length === 0 ? (
         <p className="text-gray-500">No votes found in the database yet.</p>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 max-w-4xl">
           {data.map((item: any, index: number) => {
             const isActive = index === activeIndex
             return (
               <div
                 key={item.id}
-                ref={(el) => { cardRefs.current[index] = el }}
+                ref={(el) => {
+                  cardRefs.current[index] = el
+                }}
                 className="bg-white border border-gray-200 p-4 rounded-lg transition-all duration-300"
                 style={{
                   transform: `scale(${isActive ? 1.02 : 0.94})`,
@@ -96,7 +100,11 @@ export default function ListPage() {
                   <span className="font-mono text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                     Vote ID: {item.id}
                   </span>
-                  <span className={`font-bold ${item.vote_value > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span
+                    className={`font-bold ${
+                      item.vote_value > 0 ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
                     Value: {item.vote_value}
                   </span>
                 </div>

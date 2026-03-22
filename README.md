@@ -7,6 +7,11 @@ An analytics dashboard built with Next.js and Supabase to help evaluate which co
 This project transforms raw caption data into actionable insights for non-technical users.  
 Instead of requiring SQL, R, or Stata, users can directly explore how different factors affect performance through an interactive dashboard.
 
+## The LLMs
+Gemini 适合一开始做prototype，能快速把框架搭出来，但要小心几乎都是hardcode
+GPT能产出完整的file，适合中间填补真实内容；也可以讨论和选择数据
+Grok后期优化计算过程
+
 ## Features
 
 ### 1. Regression Analysis

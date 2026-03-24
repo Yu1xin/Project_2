@@ -73,10 +73,10 @@ export default function MainPage() {
       <div className="mx-auto max-w-5xl">
         <div className="mb-10 rounded-[2rem] bg-white p-8 shadow-xl border border-slate-200">
           <h1 className="text-4xl font-black text-slate-900 mb-2">
-            Welcome back,
+            Welcome To Admin Panel 🔓,
           </h1>
           <p className="text-slate-500 italic break-words">
-            {userEmail}
+            Here you can view data analysis and manage profile, images, as well as captions
           </p>
         </div>
 

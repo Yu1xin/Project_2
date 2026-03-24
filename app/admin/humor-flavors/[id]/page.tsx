@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { useParams } from 'next/navigation';
 
 type Step = {
   id: string;
@@ -13,11 +14,12 @@ type Step = {
   llm_temperature: number | null;
 };
 
-export default function FlavorDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function FlavorDetailPage() {
+  const params = useParams();
+  const rawId = params?.id;
+  const flavorId =
+    typeof rawId === 'string' ? Number(rawId) : Array.isArray(rawId) ? Number(rawId[0]) : NaN;
+
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -26,10 +28,8 @@ export default function FlavorDetailPage({
   const [steps, setSteps] = useState<Step[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const flavorId = useMemo(() => Number(params?.id), [params?.id]);
-
   async function loadSteps() {
-    if (!flavorId || Number.isNaN(flavorId)) {
+    if (Number.isNaN(flavorId)) {
       setLoading(false);
       return;
     }
@@ -45,10 +45,10 @@ export default function FlavorDetailPage({
       .order('order_by', { ascending: true });
 
     if (error) {
-      console.error(error);
+      console.error('loadSteps error:', error);
       alert(error.message);
     } else {
-      setSteps(data || []);
+      setSteps((data as Step[]) || []);
     }
 
     setLoading(false);
@@ -58,8 +58,12 @@ export default function FlavorDetailPage({
     loadSteps();
   }, [flavorId]);
 
-  if (!flavorId || Number.isNaN(flavorId)) {
-    return <div className="p-8 text-red-600">Invalid flavor ID</div>;
+  if (Number.isNaN(flavorId)) {
+    return (
+      <div className="p-8 text-red-600">
+        Invalid flavor ID. rawId = {JSON.stringify(rawId)}
+      </div>
+    );
   }
 
   if (loading) {

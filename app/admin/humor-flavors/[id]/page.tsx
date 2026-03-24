@@ -71,38 +71,43 @@ export default function FlavorDetailPage() {
   }
 
   return (
-    <div className="p-8 space-y-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800">Flavor Steps</h1>
-      <p className="text-gray-600">Flavor ID: {flavorId}</p>
+    <div className="p-8 space-y-6 bg-gray-100 min-h-screen">
+      <h1 className="text-4xl font-bold text-gray-900">Flavor Steps</h1>
+      <p className="text-lg text-gray-700">Flavor ID: {flavorId}</p>
 
       {steps.length === 0 ? (
-        <div className="text-gray-500">No steps found for this flavor.</div>
+        <div className="text-gray-600 text-lg">No steps found for this flavor.</div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {steps.map((step) => (
-            <div key={step.id} className="border rounded-lg p-4 bg-white shadow-sm space-y-2">
-              <div className="font-semibold text-gray-800">Step {step.order_by}</div>
+            <div
+              key={step.id}
+              className="border border-gray-300 rounded-xl p-6 bg-white shadow-sm space-y-4"
+            >
+              <div className="text-2xl font-bold text-gray-900">
+                Step {step.order_by}
+              </div>
 
-              <div>
-                <span className="font-medium">Description:</span>{' '}
+              <div className="text-gray-800">
+                <span className="font-semibold text-gray-900">Description:</span>{' '}
                 {step.description || 'No description'}
               </div>
 
-              <div>
-                <span className="font-medium">Temperature:</span>{' '}
+              <div className="text-gray-800">
+                <span className="font-semibold text-gray-900">Temperature:</span>{' '}
                 {step.llm_temperature ?? 'N/A'}
               </div>
 
               <div>
-                <span className="font-medium">System Prompt:</span>
-                <pre className="whitespace-pre-wrap text-sm bg-gray-100 p-2 rounded mt-1">
+                <div className="font-semibold text-gray-900 mb-2">System Prompt:</div>
+                <pre className="whitespace-pre-wrap text-sm text-gray-900 bg-gray-100 border border-gray-300 p-4 rounded-lg overflow-x-auto">
                   {step.llm_system_prompt || 'None'}
                 </pre>
               </div>
 
               <div>
-                <span className="font-medium">User Prompt:</span>
-                <pre className="whitespace-pre-wrap text-sm bg-gray-100 p-2 rounded mt-1">
+                <div className="font-semibold text-gray-900 mb-2">User Prompt:</div>
+                <pre className="whitespace-pre-wrap text-sm text-gray-900 bg-gray-100 border border-gray-300 p-4 rounded-lg overflow-x-auto">
                   {step.llm_user_prompt || 'None'}
                 </pre>
               </div>

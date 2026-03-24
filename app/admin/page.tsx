@@ -67,7 +67,7 @@ export default function MainPage() {
       color: 'bg-violet-500 hover:bg-violet-600',
     },
     {
-          href: '/humor-flavors',
+          href: '/admin/humor-flavors',
           icon: '☑️',
           label: 'Human flavors',
           desc: 'See humor flavors️',

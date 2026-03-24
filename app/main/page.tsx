@@ -65,6 +65,13 @@ export default function MainPage() {
       desc: 'Latest 20 voting actions👁️👁️',
       color: 'bg-violet-500 hover:bg-violet-600',
     },
+    {
+          href: '/admin',
+          icon: '🔒',
+          label: 'Admin Panel',
+          desc: 'SuperAdmit Users View user data',
+          color: 'bg-white hover:bg-gray-100',
+    },
   ];
 
   return (

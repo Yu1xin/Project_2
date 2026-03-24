@@ -70,7 +70,7 @@ export default function MainPage() {
           icon: '🔒',
           label: 'Admin Panel',
           desc: 'SuperAdmit Users View user data',
-          color: 'bg-stone-50 hover:bg-stone-100',
+          color: 'bg-gray-50 hover:bg-gray-100',
     },
   ];
 

@@ -23,11 +23,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('is_superadmin')
+        .select('is_superadmin, is_matrix_admin')
         .eq('id', session.user.id)
         .single();
 
-      if (!profile?.is_superadmin) {
+      if (!profile?.is_superadmin && !profile?.is_matrix_admin) {
         alert("oops you don't have superadmin permission！");
         router.push('/');
       } else {

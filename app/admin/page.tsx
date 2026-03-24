@@ -66,6 +66,20 @@ export default function MainPage() {
       desc: 'Search users and see user info️',
       color: 'bg-violet-500 hover:bg-violet-600',
     },
+    {
+          href: '/humor-flavors',
+          icon: '☑️',
+          label: 'Human flavors',
+          desc: 'See humor flavors️',
+          color: 'bg-violet-500 hover:bg-violet-600',
+        },
+    {
+           href: `/admin/humor-flavors/${id}`,
+           icon: '☑️',
+           label: 'Human flavors id',
+           desc: 'See humor flavor steps',
+           color: 'bg-violet-500 hover:bg-violet-600',
+        },
   ];
 
   return (

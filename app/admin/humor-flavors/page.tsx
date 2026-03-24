@@ -66,7 +66,7 @@ export default function HumorFlavorsPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Humor Flavors</h1>
 
-      <div className="border p-4 rounded space-y-3 bg-white">
+      <div className="border p-4 rounded space-y-3 bg-blue">
         <h2 className="font-semibold">Create Flavor</h2>
         <input
           className="border p-2 w-full"
@@ -87,7 +87,7 @@ export default function HumorFlavorsPage() {
 
       <div className="space-y-3">
         {flavors.map((flavor) => (
-          <div key={flavor.id} className="border p-4 rounded bg-white flex justify-between">
+          <div key={flavor.id} className="border p-4 rounded bg-blue flex justify-between">
             <div>
               <div className="font-bold">{flavor.slug}</div>
               <div className="text-sm text-gray-600">{flavor.description}</div>

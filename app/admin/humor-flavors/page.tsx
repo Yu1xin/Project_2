@@ -66,7 +66,7 @@ export default function HumorFlavorsPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Humor Flavors</h1>
 
-      <div className="border p-4 rounded space-y-3 bg-blue">
+      <div className="border p-4 rounded space-y-3 bg-white">
         <h2 className="font-semibold">Create Flavor</h2>
         <input
           className="border p-2 w-full"
@@ -80,14 +80,14 @@ export default function HumorFlavorsPage() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <button onClick={createFlavor} className="px-4 py-2 bg-blue-600 text-black rounded">
+        <button onClick={createFlavor} className="px-4 py-2 bg-white-600 text-white rounded">
           Create
         </button>
       </div>
 
       <div className="space-y-3">
         {flavors.map((flavor) => (
-          <div key={flavor.id} className="border p-4 rounded bg-blue flex justify-between">
+          <div key={flavor.id} className="border p-4 rounded bg-white flex justify-between">
             <div>
               <div className="font-bold">{flavor.slug}</div>
               <div className="text-sm text-gray-600">{flavor.description}</div>
@@ -95,13 +95,13 @@ export default function HumorFlavorsPage() {
             <div className="flex gap-2">
               <Link
                 href={`/admin/humor-flavors/${flavor.id}`}
-                className="px-3 py-2 bg-green-600 text-black rounded"
+                className="px-3 py-2 bg-green-600 text-white rounded"
               >
                 Open
               </Link>
               <button
                 onClick={() => deleteFlavor(flavor.id)}
-                className="px-3 py-2 bg-red-600 text-black rounded"
+                className="px-3 py-2 bg-red-600 text-white rounded"
               >
                 Delete
               </button>

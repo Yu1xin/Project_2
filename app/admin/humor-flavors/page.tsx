@@ -93,10 +93,7 @@ export default function HumorFlavorsPage() {
               <div className="text-sm text-gray-600">{flavor.description}</div>
             </div>
             <div className="flex gap-2">
-              <Link
-                href={`/admin/humor-flavors/${flavor.id}`}
-                className="px-3 py-2 bg-green-600 text-white rounded"
-              >
+              <Link href={`/admin/humor-flavors/${flavor.id}`}>
                 Open
               </Link>
               <button

@@ -80,7 +80,7 @@ export default function HumorFlavorsPage() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <button onClick={createFlavor} className="px-4 py-2 bg-blue-600 text-white rounded">
+        <button onClick={createFlavor} className="px-4 py-2 bg-blue-600 text-black rounded">
           Create
         </button>
       </div>
@@ -95,13 +95,13 @@ export default function HumorFlavorsPage() {
             <div className="flex gap-2">
               <Link
                 href={`/admin/humor-flavors/${flavor.id}`}
-                className="px-3 py-2 bg-green-600 text-white rounded"
+                className="px-3 py-2 bg-green-600 text-black rounded"
               >
                 Open
               </Link>
               <button
                 onClick={() => deleteFlavor(flavor.id)}
-                className="px-3 py-2 bg-red-600 text-white rounded"
+                className="px-3 py-2 bg-red-600 text-black rounded"
               >
                 Delete
               </button>

@@ -1,9 +1,9 @@
-目前的阶段
-- 我least 25的页面如果进行vote，改动的meme就会消失 (解决)
-- admin images 需要可以删除
-- user voting页面需要显示n/N的meme数量
-- main 加上一个大的 admin入口，一个admin的main，链接几个页面
-- sidebar真的好丑
+# Current Tasks: 
+- meme disappears as voted in /admin/images (fixed)
+- admin images need delete/edit/add function
+- user voting need to show number of finished and remaining memes
+- main need an admin button linked to admin dashboard (fixed)
+- sidebar UI need adjustments
 
 # Humor Analytics Dashboard
 
@@ -15,9 +15,10 @@ This project transforms raw caption data into actionable insights for non-techni
 Instead of requiring SQL, R, or Stata, users can directly explore how different factors affect performance through an interactive dashboard.
 
 ## The LLMs
-Gemini 适合一开始做prototype，能快速把框架搭出来，但要小心几乎都是hardcode
-GPT能产出完整的file，适合中间填补真实内容；也可以讨论和选择数据
-Grok后期优化计算过程
+The project is using three LLMs. Gemini, ChatGPT5.0, and Grok.
+Gemini was used to build rough structure at the beginning
+ChatGPT gives UI suggestions
+Grok optimizes computation process
 
 ## Features
 

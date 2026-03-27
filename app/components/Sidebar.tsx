@@ -31,15 +31,8 @@ export default function Sidebar() {
       {/* 导航区域 */}
       <nav className="flex-1 flex flex-col gap-2 p-3 mt-4">
         <SidebarLink href="/main" icon="🏠" label="Dashboard" isOpen={isOpen} active={pathname === '/main'} />
-        <SidebarLink href="/" icon="🖼️" label="Vote Gallery" isOpen={isOpen} active={pathname === '/'} />
-        <SidebarLink href="/upload" icon="📸" label="Upload Meme" isOpen={isOpen} active={pathname === '/upload'} />
-        <SidebarLink href="/least-favored" icon="📉" label="Bottom 20%" isOpen={isOpen} active={pathname === '/least-favored'} />
-        <SidebarLink href="/list" icon="👀" label="Vote Records" isOpen={isOpen} active={pathname === '/list'} />
-        <p className="px-4 text-[10px] font-black text-slate-400 uppercase mb-2">Admin Tags</p>
-            <SidebarLink href="/admin" icon="📊" label="Admin Stats" isOpen={isOpen} active={pathname === '/analytics'} />
-            <SidebarLink href="/admin/users" icon="👥" label="Manage Users" isOpen={isOpen} active={pathname === '/admin/users'} />
-            <SidebarLink href="/admin/images" icon="🖼️" label="Manage Images" isOpen={isOpen} active={pathname === '/admin/images'} />
-            <SidebarLink href="/admin/captions" icon="📚" label="Manage Captions" isOpen={isOpen} active={pathname === '/admin/captions'} />
+        <SidebarLink href="/admin" icon="💻" label="Admin Page" isOpen={isOpen} active={pathname === '/admin'} />
+
       </nav>
 
       {/* 底部退出 */}

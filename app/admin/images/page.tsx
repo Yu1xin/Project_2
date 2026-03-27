@@ -1,51 +1,320 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
-// 🔍 确保这里有 "export default"
+type ImageRow = {
+  id: string;
+  url: string | null;
+  created_datetime_utc?: string | null;
+  modified_datetime_utc?: string | null;
+  is_common_use?: boolean | null;
+  is_public?: boolean | null;
+  profile_id?: string | null;
+  created_by_user_id?: string | null;
+};
+
 export default function AdminImagesPage() {
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<ImageRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploadingNew, setUploadingNew] = useState(false);
+  const [replacingId, setReplacingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  useEffect(() => {
-    async function getImages() {
-      const { data } = await supabase.from('images').select('*');
-      setImages(data || []);
+  async function loadImages() {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from('images')
+      .select('*')
+      .order('created_datetime_utc', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      alert(`Failed to load images: ${error.message}`);
+      setImages([]);
+    } else {
+      setImages((data || []) as ImageRow[]);
     }
-    getImages();
+
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadImages();
   }, []);
 
-  const deleteImage = async (id: string) => {
-    const confirmDelete = confirm("Are you sure you want to delete this image?");
+  async function getCurrentUser() {
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    if (error) throw error;
+    if (!session?.user) throw new Error('Please log in first.');
+
+    return {
+      user: session.user,
+      accessToken: session.access_token,
+    };
+  }
+
+  async function uploadFileAndGetCdnUrl(file: File, accessToken: string) {
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    };
+
+    const s1Res = await fetch(
+      'https://api.almostcrackd.ai/pipeline/generate-presigned-url',
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ contentType: file.type }),
+      }
+    );
+
+    if (!s1Res.ok) {
+      throw new Error('Failed to get presigned upload URL.');
+    }
+
+    const { presignedUrl, cdnUrl } = await s1Res.json();
+
+    if (!presignedUrl || !cdnUrl) {
+      throw new Error('Upload API did not return presignedUrl/cdnUrl.');
+    }
+
+    const uploadRes = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error('Failed to upload image bytes.');
+    }
+
+    return cdnUrl as string;
+  }
+
+  async function registerUploadedImage(cdnUrl: string, accessToken: string) {
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    };
+
+    const res = await fetch(
+      'https://api.almostcrackd.ai/pipeline/upload-image-from-url',
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          imageUrl: cdnUrl,
+          isCommonUse: false,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error('Failed to register image in pipeline.');
+    }
+
+    return await res.json();
+  }
+
+  async function handleCreateNewImage(file: File) {
+    try {
+      setUploadingNew(true);
+
+      const { accessToken } = await getCurrentUser();
+
+      const cdnUrl = await uploadFileAndGetCdnUrl(file, accessToken);
+      const registrationResult = await registerUploadedImage(cdnUrl, accessToken);
+
+      console.log('Image registration result:', registrationResult);
+
+      // 大概率 upload-image-from-url 已经自动创建 images row
+      // 所以这里直接刷新列表最稳
+      await loadImages();
+
+      alert('New image uploaded successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert(`Upload failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setUploadingNew(false);
+    }
+  }
+
+  async function handleReplaceImage(imageId: string, file: File) {
+    try {
+      setReplacingId(imageId);
+
+      const { accessToken } = await getCurrentUser();
+
+      const cdnUrl = await uploadFileAndGetCdnUrl(file, accessToken);
+
+      // 这里也先注册一下，确保这个 URL 是系统认识的有效图片
+      const registrationResult = await registerUploadedImage(cdnUrl, accessToken);
+      console.log('Replacement registration result:', registrationResult);
+
+      const now = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('images')
+        .update({
+          url: cdnUrl,
+          modified_datetime_utc: now,
+        })
+        .eq('id', imageId);
+
+      if (error) throw error;
+
+      setImages((prev) =>
+        prev.map((img) =>
+          img.id === imageId
+            ? {
+                ...img,
+                url: cdnUrl,
+                modified_datetime_utc: now,
+              }
+            : img
+        )
+      );
+
+      alert('Image replaced successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert(`Replace failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setReplacingId(null);
+    }
+  }
+
+  async function deleteImage(id: string) {
+    const confirmDelete = confirm('Are you sure you want to delete this image?');
     if (!confirmDelete) return;
 
-    const { error } = await supabase.from('images').delete().eq('id', id);
-    if (error) {
-      alert(error.message);
-    } else {
-      setImages(images.filter(img => img.id !== id)); // 局部更新 UI
-      alert("Deleted successfully!");
+    try {
+      setDeletingId(id);
+
+      const { error } = await supabase.from('images').delete().eq('id', id);
+
+      if (error) throw error;
+
+      setImages((prev) => prev.filter((img) => img.id !== id));
+      alert('Deleted successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert(`Delete failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setDeletingId(null);
     }
-  };
+  }
+
+  if (loading) {
+    return <div className="p-10 text-slate-500">Loading images...</div>;
+  }
 
   return (
-    <div className="p-10">
-      <h2 className="text-2xl font-bold mb-6 text-slate-800">Manage Images 🖼️</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {images.map(img => (
-          <div key={img.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 relative group">
-            <img src={img.url} className="w-full h-32 object-cover rounded-lg mb-4" alt="Meme" />
-            <button
-              onClick={() => deleteImage(img.id)}
-              className="w-full bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-all text-sm"
-            >
-              Delete
-            </button>
+    <div className="p-10 bg-slate-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">Manage Images 🖼️</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Upload new images, replace old ones, or delete image records.
+            </p>
           </div>
-        ))}
+
+          <label className="inline-flex items-center gap-3 rounded-2xl bg-blue-600 px-5 py-3 text-white font-bold cursor-pointer hover:bg-blue-700 transition">
+            <span>{uploadingNew ? 'Uploading...' : 'Upload New Image'}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={uploadingNew}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.currentTarget.value = '';
+                if (!file) return;
+                await handleCreateNewImage(file);
+              }}
+            />
+          </label>
+        </div>
+
+        {images.length === 0 ? (
+          <p className="text-slate-500">No images found.</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {images.map((img) => {
+              const isReplacing = replacingId === img.id;
+              const isDeleting = deletingId === img.id;
+
+              return (
+                <div
+                  key={img.id}
+                  className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"
+                >
+                  <img
+                    src={img.url || ''}
+                    className="w-full h-32 object-cover rounded-lg mb-4 bg-slate-100"
+                    alt="Meme"
+                  />
+
+                  <p className="mb-2 text-[10px] text-slate-400 font-mono break-all">
+                    {img.id}
+                  </p>
+
+                  <p className="mb-3 text-[11px] text-slate-500">
+                    Public: {img.is_public ? 'Yes' : 'No'} · Common Use:{' '}
+                    {img.is_common_use ? 'Yes' : 'No'}
+                  </p>
+
+                  <div className="flex flex-col gap-2">
+                    <label
+                      className={`w-full text-center py-2 rounded-xl font-bold text-sm transition cursor-pointer ${
+                        isReplacing
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {isReplacing ? 'Replacing...' : 'Replace Image'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={isReplacing}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          e.currentTarget.value = '';
+                          if (!file) return;
+                          await handleReplaceImage(img.id, file);
+                        }}
+                      />
+                    </label>
+
+                    <button
+                      onClick={() => deleteImage(img.id)}
+                      disabled={isDeleting}
+                      className="w-full bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-all text-sm disabled:opacity-50"
+                    >
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

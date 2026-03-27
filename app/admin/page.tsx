@@ -74,6 +74,22 @@ export default function MainPage() {
           color: 'bg-violet-500 hover:bg-violet-600',
         },
 
+    {
+              href: '/admin/terms',
+              icon: '📝️',
+              label: 'Manage Terms',
+              desc: 'See term explanations️',
+              color: 'bg-violet-500 hover:bg-violet-600',
+            },
+
+    {
+                  href: '/admin/llm_models',
+                  icon: '🤖',
+                  label: 'Manage llm_models',
+                  desc: 'See what are models using️',
+                  color: 'bg-violet-500 hover:bg-violet-600',
+                },
+
   ];
 
   return (

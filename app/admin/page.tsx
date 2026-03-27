@@ -69,7 +69,7 @@ export default function MainPage() {
     {
           href: '/admin/humor-flavors',
           icon: '☑️',
-          label: 'Manage Human flavors',
+          label: 'Manage Humor flavors',
           desc: 'See humor flavors️',
           color: 'bg-violet-500 hover:bg-violet-600',
         },
@@ -89,6 +89,14 @@ export default function MainPage() {
                   desc: 'See what are models using️',
                   color: 'bg-violet-500 hover:bg-violet-600',
                 },
+
+    {
+                      href: '/admin/llm_prompt_chain',
+                      icon: '🔗',
+                      label: 'Manage See llm prompt chains',
+                      desc: 'See what are create/modify time for captions️',
+                      color: 'bg-violet-500 hover:bg-violet-600',
+                    },
 
   ];
 

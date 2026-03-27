@@ -75,7 +75,7 @@ export default function MainPage() {
         },
 
     {
-              href: '/admin/terms',
+              href: '/admin/term',
               icon: '📝️',
               label: 'Manage Terms',
               desc: 'See term explanations️',

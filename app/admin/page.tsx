@@ -118,6 +118,13 @@ export default function MainPage() {
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 
+    {
+          href: '/admin/captions',
+          label: 'Meme Captions',
+          desc: 'See existing meme Captions',
+          color: 'bg-blue-500 hover:bg-blue-600',
+        },
+
   ];
 
   const analyticsButtons = dashboardButtons.filter(

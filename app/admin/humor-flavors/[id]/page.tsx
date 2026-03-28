@@ -82,7 +82,7 @@ export default function FlavorDetailPage() {
           {steps.map((step) => (
             <div
               key={step.id}
-              className="border border-gray-300 rounded-xl p-6 bg-white shadow-sm space-y-4"
+              className="border border-gray-300 rounded-xl p-6 text-zinc-900 shadow-sm space-y-4"
             >
               <div className="text-2xl font-bold text-gray-900">
                 Step {step.order_by}

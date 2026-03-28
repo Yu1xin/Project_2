@@ -19,7 +19,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="p-8 bg-white shadow-xl rounded-2xl text-center">
+      <div className="p-8 text-zinc-900 shadow-xl rounded-2xl text-center">
         <h1 className="text-3xl font-bold text-blue-600 mb-6">🙂‍↔️✋not until you log in</h1>
         <p className="mb-8 text-gray-600">Login with Google</p>
         <button

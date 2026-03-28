@@ -237,7 +237,7 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
       {!previewUrl ? (
-        <div className="w-full max-w-md p-8 bg-white border border-slate-200 rounded-3xl shadow-xl">
+        <div className="w-full max-w-md p-8 text-zinc-900 border border-slate-200 rounded-3xl shadow-xl">
           <h1 className="text-2xl font-bold mb-6 text-slate-800">
             Upload & Caption 📸
           </h1>
@@ -264,7 +264,7 @@ export default function UploadPage() {
           )}
         </div>
       ) : (
-        <div className="w-full max-w-md p-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300">
+        <div className="w-full max-w-md p-8 text-zinc-900 border border-slate-200 rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300">
           <h2 className="text-xl font-bold mb-6 text-center text-slate-800">
             Final Result ✨
           </h2>

@@ -90,7 +90,7 @@ export default function ListPage() {
                 ref={(el) => {
                   cardRefs.current[index] = el
                 }}
-                className="bg-white border border-gray-200 p-4 rounded-lg transition-all duration-300"
+                className="text-zinc-900 border border-gray-200 p-4 rounded-lg transition-all duration-300"
                 style={{
                   transform: `scale(${isActive ? 1.02 : 0.94})`,
                   opacity: isActive ? 1 : 0.72,

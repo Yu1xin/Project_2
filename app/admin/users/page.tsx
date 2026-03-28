@@ -74,7 +74,7 @@ export default function ManageUsersPage() {
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
+        <div className="text-zinc-900 rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-background border-b border-slate-100">
               <tr>

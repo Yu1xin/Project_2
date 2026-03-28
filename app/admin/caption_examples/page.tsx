@@ -246,7 +246,7 @@ export default function AdminCaptionExamplesPage() {
           Caption Examples Management
         </h1>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-8">
+        <div className="text-zinc-900 p-6 rounded-3xl border border-slate-200 shadow-sm mb-8">
           <h2 className="text-xl font-bold text-slate-800 mb-4">
             Create New Caption Example
           </h2>
@@ -310,7 +310,7 @@ export default function AdminCaptionExamplesPage() {
               <select
                 value={newImageId}
                 onChange={(e) => setNewImageId(e.target.value)}
-                className="w-full rounded-2xl border border-gray-600 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full rounded-2xl border border-gray-600 px-4 py-3 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-orange-400"
               >
                 <option value="">Choose an image...</option>
                 {images.map((img) => (
@@ -345,7 +345,7 @@ export default function AdminCaptionExamplesPage() {
 
         <div className="grid gap-4">
           {captionExamples.length === 0 ? (
-            <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+            <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
               <p className="text-slate-400 font-medium">No caption example data for now...</p>
             </div>
           ) : (
@@ -355,7 +355,7 @@ export default function AdminCaptionExamplesPage() {
               return (
                 <div
                   key={item.id}
-                  className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                  className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
                 >
                   <div className="flex justify-between items-start gap-6">
                     <div className="flex-1">

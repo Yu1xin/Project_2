@@ -262,7 +262,7 @@ export default function AdminImagesPage() {
               return (
                 <div
                   key={img.id}
-                  className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100"
+                  className="text-zinc-900 p-4 rounded-2xl shadow-sm border border-slate-100"
                 >
                   <img
                     src={img.url || ''}

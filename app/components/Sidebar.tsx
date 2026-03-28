@@ -18,7 +18,7 @@ export default function Sidebar() {
       }`}
     >
       {/* 顶部 Logo & 切换按钮 */}
-      <div className="h-20 flex items-center justify-between px-6 border-b border-slate-50">
+      <div className="h-20 flex items-center justify-between px-6 border-b border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
         {isOpen && <span className="text-xl font-black text-blue-600 animate-in fade-in">MemeLab</span>}
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -36,7 +36,7 @@ export default function Sidebar() {
       </nav>
 
       {/* 底部退出 */}
-      <div className="p-4 border-t border-slate-100">
+      <div className="p-4 border-t border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
         <Link
           href="/login"
           className="flex items-center gap-4 px-4 py-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"

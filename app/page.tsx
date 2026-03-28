@@ -304,7 +304,7 @@ export default function ListPage() {
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className={`overflow-hidden rounded-[2.5rem] border border-zinc-800 bg-zinc-950 transition-all duration-500 ${
+              className={`overflow-hidden rounded-[2.5rem] border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 bg-zinc-950 px-4 py-3 text-zinc-100 bg-zinc-950 transition-all duration-500 ${
                 isActive
                   ? 'scale-105 opacity-100 shadow-2xl'
                   : 'scale-90 opacity-50 shadow-sm'

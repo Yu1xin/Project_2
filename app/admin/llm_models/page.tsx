@@ -58,7 +58,7 @@ export default function LlmModelsPage() {
         </h1>
 
         {models.length === 0 ? (
-          <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+          <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 text-center">
             <p className="text-slate-400 font-medium">No model data found...</p>
           </div>
         ) : (
@@ -66,7 +66,7 @@ export default function LlmModelsPage() {
             {models.map((model) => (
               <div
                 key={model.id}
-                className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-start gap-4 mb-3">
                   <div>

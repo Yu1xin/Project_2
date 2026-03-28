@@ -57,7 +57,7 @@ export default function LlmPromptChainsPage() {
         </h1>
 
         {chains.length === 0 ? (
-          <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+          <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 text-center">
             <p className="text-slate-400 font-medium">No prompt chains found...</p>
           </div>
         ) : (
@@ -65,7 +65,7 @@ export default function LlmPromptChainsPage() {
             {chains.map((chain) => (
               <div
                 key={chain.id}
-                className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 hover:shadow-md transition-shadow"
               >
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded uppercase font-mono">

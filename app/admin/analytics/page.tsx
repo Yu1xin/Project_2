@@ -86,7 +86,7 @@ export default function AdminAnalytics() {
   }, []);
 
   const renderFactorList = (title: string, icon: string, colorClass: string, factors: FactorCard[]) => (
-    <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+    <div className="bg-slate-800 p-6 rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
       <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 flex items-center gap-2 ${colorClass}`}>
         <span>{icon}</span> {title}
       </h3>
@@ -97,7 +97,7 @@ export default function AdminAnalytics() {
           factors.map((c) => (
             <div
               key={c.factor}
-              className="flex justify-between items-center bg-slate-950 p-3 px-4 rounded-lg border border-slate-700"
+              className="flex justify-between items-center bg-slate-950 p-3 px-4 rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100"
             >
               <div className="min-w-0 pr-4">
                 <div className="text-sm text-slate-200 break-words">{c.factor}</div>
@@ -138,7 +138,7 @@ export default function AdminAnalytics() {
     const sortedItems = sortLeaderboard(items).slice(0, 8);
 
     return (
-      <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+      <div className="bg-slate-800 p-6 rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
         <div className="flex items-center justify-between gap-4 mb-4">
           <h3 className={`text-sm font-bold uppercase tracking-wide flex items-center gap-2 ${colorClass}`}>
             <span>{icon}</span>
@@ -153,7 +153,7 @@ export default function AdminAnalytics() {
             sortedItems.map((item, idx) => (
               <div
                 key={`${item.name}-${idx}`}
-                className="bg-slate-950 p-4 rounded-xl border border-slate-700"
+                className="bg-slate-950 p-4 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100"
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="min-w-0">
@@ -202,7 +202,7 @@ export default function AdminAnalytics() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+            <div className="bg-slate-800 p-6 rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
               <div className="flex flex-wrap gap-3 mb-6">
                 {Object.entries(xLabels).map(([key, { icon, name }]) => (
                   <button
@@ -223,7 +223,7 @@ export default function AdminAnalytics() {
                 Simple regression analysis: Likes ~ {label.name}
               </h3>
 
-              <div className="bg-slate-950 p-5 rounded-xl font-mono text-sm mb-4 border border-slate-700">
+              <div className="bg-slate-950 p-5 rounded-xl font-mono text-sm mb-4 border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
                 <span className="text-emerald-400 font-bold">Likes</span> ≈{' '}
                 <span className="text-blue-300">{currentReg.slope.toFixed(6)}</span> ×{' '}
                 <span className="text-blue-400">{label.unit}</span> +{' '}

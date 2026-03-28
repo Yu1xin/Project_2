@@ -246,7 +246,7 @@ export default function AdminCaptionExamplesPage() {
           Caption Examples Management
         </h1>
 
-        <div className="text-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-sm mb-8">
+        <div className="text-zinc-900 p-6 rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 shadow-sm mb-8">
           <h2 className="text-xl font-bold text-slate-800 mb-4">
             Create New Caption Example
           </h2>
@@ -327,7 +327,7 @@ export default function AdminCaptionExamplesPage() {
                   <img
                     src={selectedImage.url || ''}
                     alt={selectedImage.image_description || 'Selected'}
-                    className="w-40 h-28 object-cover rounded-xl border border-slate-100"
+                    className="w-40 h-28 object-cover rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100"
                   />
                 </div>
               )}
@@ -345,7 +345,7 @@ export default function AdminCaptionExamplesPage() {
 
         <div className="grid gap-4">
           {captionExamples.length === 0 ? (
-            <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+            <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 text-center">
               <p className="text-zinc-500 font-medium">No caption example data for now...</p>
             </div>
           ) : (
@@ -355,7 +355,7 @@ export default function AdminCaptionExamplesPage() {
               return (
                 <div
                   key={item.id}
-                  className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                  className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 hover:shadow-md transition-shadow"
                 >
                   <div className="flex justify-between items-start gap-6">
                     <div className="flex-1">
@@ -369,7 +369,7 @@ export default function AdminCaptionExamplesPage() {
                               value={editingCaption}
                               onChange={(e) => setEditingCaption(e.target.value)}
                               rows={3}
-                              className="w-full rounded-2xl border border-zinc-800 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
 
@@ -381,7 +381,7 @@ export default function AdminCaptionExamplesPage() {
                               value={editingExplanation}
                               onChange={(e) => setEditingExplanation(e.target.value)}
                               rows={3}
-                              className="w-full rounded-2xl border border-zinc-800 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
 
@@ -393,7 +393,7 @@ export default function AdminCaptionExamplesPage() {
                               type="text"
                               value={editingImageDescription}
                               onChange={(e) => setEditingImageDescription(e.target.value)}
-                              className="w-full rounded-2xl border border-zinc-800 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
 
@@ -405,7 +405,7 @@ export default function AdminCaptionExamplesPage() {
                               type="number"
                               value={editingPriority}
                               onChange={(e) => setEditingPriority(e.target.value)}
-                              className="w-full rounded-2xl border border-zinc-800 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
 

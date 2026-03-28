@@ -131,7 +131,7 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-10 rounded-[2rem] text-zinc-900 p-8 shadow-xl border border-zinc-800">
+        <div className="mb-10 rounded-[2rem] text-zinc-900 p-8 shadow-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
           <h1 className="text-4xl font-black text-slate-900 mb-2">
             Welcome To Admin Panel 🔓,
           </h1>

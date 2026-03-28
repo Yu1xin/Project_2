@@ -69,14 +69,14 @@ export default function ManageUsersPage() {
             placeholder="Search by first name, last name, or profile ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-5 py-3 rounded-2xl border border-zinc-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            className="w-full px-5 py-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
           />
         </div>
 
         {/* TABLE */}
-        <div className="text-zinc-900 rounded-[2rem] shadow-xl border border-zinc-800 overflow-hidden">
+        <div className="text-zinc-900 rounded-[2rem] shadow-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 overflow-hidden">
           <table className="w-full text-left">
-            <thead className="bg-background border-b border-slate-100">
+            <thead className="bg-background border-b border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
               <tr>
                 <th className="px-6 py-4 text-xs font-black text-zinc-500 uppercase tracking-widest">Profile ID</th>
                 <th className="px-6 py-4 text-xs font-black text-zinc-500 uppercase tracking-widest">Name</th>

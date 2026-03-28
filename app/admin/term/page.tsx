@@ -57,7 +57,7 @@ export default function TermsPage() {
         </h1>
 
         {terms.length === 0 ? (
-          <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+          <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 text-center">
             <p className="text-zinc-500 font-medium">
               No terms found...
             </p>
@@ -67,7 +67,7 @@ export default function TermsPage() {
             {terms.map((t) => (
               <div
                 key={t.id}
-                className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+                className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 hover:shadow-md transition-shadow"
               >
                 {/* TERM */}
                 <div className="flex justify-between items-center mb-3">
@@ -89,7 +89,7 @@ export default function TermsPage() {
 
                 {/* EXAMPLE */}
                 {t.example && (
-                  <div className="bg-background border border-zinc-800 rounded-xl p-3 text-sm text-zinc-300 italic">
+                  <div className="bg-background border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 rounded-xl p-3 text-sm text-zinc-300 italic">
                     Example: {t.example}
                   </div>
                 )}

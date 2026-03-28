@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       // 🎯 确保这里跳转到 /main
-      return NextResponse.redirect(`${origin}/main`)
+      return NextResponse.redirect(`${origin}/`)
     }
     console.error('Auth error:', error.message)
   }

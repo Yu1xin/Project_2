@@ -261,7 +261,7 @@ export default function AdminCaptionExamplesPage() {
                 onChange={(e) => setNewCaption(e.target.value)}
                 rows={3}
                 placeholder="Write a new caption..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full rounded-2xl border border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
 
@@ -274,7 +274,7 @@ export default function AdminCaptionExamplesPage() {
                 onChange={(e) => setNewExplanation(e.target.value)}
                 rows={3}
                 placeholder="Optional explanation..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full rounded-2xl border border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
 
@@ -287,7 +287,7 @@ export default function AdminCaptionExamplesPage() {
                 value={newImageDescription}
                 onChange={(e) => setNewImageDescription(e.target.value)}
                 placeholder="Optional image description..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full rounded-2xl border border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
 
@@ -299,7 +299,7 @@ export default function AdminCaptionExamplesPage() {
                 type="number"
                 value={newPriority}
                 onChange={(e) => setNewPriority(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full rounded-2xl border border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
 
@@ -310,7 +310,7 @@ export default function AdminCaptionExamplesPage() {
               <select
                 value={newImageId}
                 onChange={(e) => setNewImageId(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full rounded-2xl border border-gray-600 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
               >
                 <option value="">Choose an image...</option>
                 {images.map((img) => (

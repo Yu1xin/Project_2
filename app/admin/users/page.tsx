@@ -53,7 +53,7 @@ export default function ManageUsersPage() {
   if (loading) return <div className="p-10 font-mono">Loading user database...</div>;
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen">
+    <div className="p-8 bg-background min-h-screen">
       <div className="max-w-5xl mx-auto">
 
         {/* HEADER */}
@@ -76,7 +76,7 @@ export default function ManageUsersPage() {
         {/* TABLE */}
         <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
           <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-100">
+            <thead className="bg-background border-b border-slate-100">
               <tr>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Profile ID</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Name</th>

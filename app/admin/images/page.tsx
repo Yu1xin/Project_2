@@ -224,7 +224,7 @@ export default function AdminImagesPage() {
   }
 
   return (
-    <div className="p-10 bg-slate-50 min-h-screen">
+    <div className="p-10 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>

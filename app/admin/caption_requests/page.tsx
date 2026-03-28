@@ -50,7 +50,7 @@ export default function CaptionRequestsPage() {
   }
 
   return (
-    <div className="p-10 bg-slate-50 min-h-screen">
+    <div className="p-10 bg-background min-h-screen">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
           <span className="bg-pink-600 text-white p-2 rounded-lg text-xl">🖼️</span>

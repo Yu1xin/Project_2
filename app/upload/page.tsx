@@ -235,7 +235,7 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
       {!previewUrl ? (
         <div className="w-full max-w-md p-8 bg-white border border-slate-200 rounded-3xl shadow-xl">
           <h1 className="text-2xl font-bold mb-6 text-slate-800">
@@ -276,7 +276,7 @@ export default function UploadPage() {
               className="w-full h-auto object-cover"
             />
 
-            <div className="p-6 bg-slate-50 border-t border-slate-100">
+            <div className="p-6 bg-background border-t border-slate-100">
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Edit your meme caption
               </label>

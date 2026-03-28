@@ -129,7 +129,7 @@ export default function MainPage() {
     );
 
   return (
-    <div className="min-h-screen bg-slate-50 px-6 py-10">
+    <div className="min-h-screen bg-background px-6 py-10">
       <div className="mx-auto max-w-5xl">
         <div className="mb-10 rounded-[2rem] bg-white p-8 shadow-xl border border-slate-200">
           <h1 className="text-4xl font-black text-slate-900 mb-2">

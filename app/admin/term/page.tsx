@@ -49,7 +49,7 @@ export default function TermsPage() {
   }
 
   return (
-    <div className="p-10 bg-slate-50 min-h-screen">
+    <div className="p-10 bg-background min-h-screen">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
           <span className="bg-purple-600 text-white p-2 rounded-lg text-xl">📚</span>
@@ -89,7 +89,7 @@ export default function TermsPage() {
 
                 {/* EXAMPLE */}
                 {t.example && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-600 italic">
+                  <div className="bg-background border border-slate-200 rounded-xl p-3 text-sm text-slate-600 italic">
                     Example: {t.example}
                   </div>
                 )}

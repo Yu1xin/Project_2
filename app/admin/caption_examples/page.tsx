@@ -239,7 +239,7 @@ export default function AdminCaptionExamplesPage() {
   }
 
   return (
-    <div className="p-10 ml-64 bg-slate-50 min-h-screen">
+    <div className="p-10 ml-64 bg-background min-h-screen">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
           <span className="bg-orange-500 text-white p-2 rounded-lg text-xl">📝</span>

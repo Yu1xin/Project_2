@@ -98,6 +98,30 @@ export default function MainPage() {
                       color: 'bg-violet-500 hover:bg-violet-600',
                     },
 
+    {
+                          href: '/admin/caption_requests',
+                          icon: '✍️',
+                          label: 'Manage caption request info',
+                          desc: 'See the time and profile making and editing caption requests',
+                          color: 'bg-violet-500 hover:bg-violet-600',
+                        },
+
+    {
+                          href: '/admin/sign_up_domains',
+                          icon: '🏫',
+                          label: 'Manage See sign up domains',
+                          desc: 'Manage emails from what domains can sign up',
+                          color: 'bg-violet-500 hover:bg-violet-600',
+                        },
+
+    {
+                          href: '/admin/whitelist_emails',
+                          icon: '📧',
+                          label: 'Manage See whitelist email addresses',
+                          desc: 'See and manage whitelist email addresses',
+                          color: 'bg-violet-500 hover:bg-violet-600',
+                        },
+
   ];
 
   return (

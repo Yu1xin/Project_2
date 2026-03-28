@@ -44,6 +44,7 @@ export default function MainPage() {
       label: 'Data Analytics',
       desc: 'See how votes change',
       color: 'bg-blue-600 hover:bg-blue-700',
+      span: 'sm:col-span-2',
     },
     {
       href: '/admin/captions',

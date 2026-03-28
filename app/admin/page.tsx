@@ -160,7 +160,7 @@ export default function MainPage() {
                 className={`${item.color} ${item.span || ''} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
               >
                 <div className="p-7 text-left">
-                  <div className="text-3xl mb-4">{item.icon}</div>
+
                   <div className="text-xl font-bold mb-2">{item.label}</div>
                   <div className="text-sm text-white/85">{item.desc}</div>
                 </div>
@@ -186,7 +186,7 @@ export default function MainPage() {
                 className={`${item.color} ${item.span || ''} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
               >
                 <div className="p-7 text-left">
-                  <div className="text-3xl mb-4">{item.icon}</div>
+
                   <div className="text-xl font-bold mb-2">{item.label}</div>
                   <div className="text-sm text-white/85">{item.desc}</div>
                 </div>

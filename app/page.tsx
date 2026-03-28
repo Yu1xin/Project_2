@@ -38,7 +38,7 @@ export default function MainPage() {
 
   const dashboardButtons: DashboardButton[] = [
     {
-      href: '/',
+      href: '/main',
       icon: '🖼️',
       label: 'Vote Memes',
       desc: 'Browse memes and vote 👍👎',

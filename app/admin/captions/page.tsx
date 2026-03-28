@@ -17,6 +17,7 @@ type CaptionRow = {
 type ImageRow = {
   id: string;
   url: string | null;
+  image_description: string | null;
 };
 
 export default function AdminCaptionsPage() {
@@ -48,7 +49,7 @@ export default function AdminCaptionsPage() {
         .order('created_datetime_utc', { ascending: false }),
       supabase
         .from('images')
-        .select('id, url')
+        .select('id, url, image_description')
         .order('created_datetime_utc', { ascending: false }),
     ]);
 
@@ -239,7 +240,7 @@ export default function AdminCaptionsPage() {
                 <option value="">Choose an image...</option>
                 {images.map((img) => (
                   <option key={img.id} value={img.id}>
-                    {img.id.substring(0, 8)}
+                    {img.image_description || img.id.substring(0, 8)}
                   </option>
                 ))}
               </select>

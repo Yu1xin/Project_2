@@ -4,20 +4,20 @@ import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 type CaptionExampleRow = {
-  id: string;
+  id: number; // bigint in DB
   caption: string | null;
   explanation: string | null;
   image_description: string | null;
   priority: number | null;
-  image_id: string | null;
+  image_id: string | null; // uuid
   created_by_user_id: string | null;
   modified_by_user_id: string | null;
-  created_datetime_utc?: string | null;
-  modified_datetime_utc?: string | null;
+  created_datetime_utc: string | null;
+  modified_datetime_utc: string | null;
 };
 
 type ImageRow = {
-  id: string;
+  id: string; // uuid
   url: string | null;
   image_description: string | null;
 };
@@ -31,14 +31,14 @@ export default function AdminCaptionExamplesPage() {
   const [newCaption, setNewCaption] = useState('');
   const [newExplanation, setNewExplanation] = useState('');
   const [newImageDescription, setNewImageDescription] = useState('');
-  const [newPriority, setNewPriority] = useState('');
+  const [newPriority, setNewPriority] = useState('0');
   const [newImageId, setNewImageId] = useState('');
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [editingCaption, setEditingCaption] = useState('');
   const [editingExplanation, setEditingExplanation] = useState('');
   const [editingImageDescription, setEditingImageDescription] = useState('');
-  const [editingPriority, setEditingPriority] = useState('');
+  const [editingPriority, setEditingPriority] = useState('0');
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -90,6 +90,14 @@ export default function AdminCaptionExamplesPage() {
     return session.user.id;
   }
 
+  const resetCreateForm = () => {
+    setNewCaption('');
+    setNewExplanation('');
+    setNewImageDescription('');
+    setNewPriority('0');
+    setNewImageId('');
+  };
+
   const handleCreate = async () => {
     if (!newCaption.trim()) {
       alert('Caption cannot be empty.');
@@ -101,19 +109,17 @@ export default function AdminCaptionExamplesPage() {
       return;
     }
 
+    const parsedPriority = Number(newPriority);
+    if (Number.isNaN(parsedPriority)) {
+      alert('Priority must be a number.');
+      return;
+    }
+
     try {
       setCreating(true);
 
       const userId = await getCurrentUserId();
       const now = new Date().toISOString();
-
-      const priorityValue =
-        newPriority.trim() === '' ? null : Number.parseInt(newPriority, 10);
-
-      if (newPriority.trim() !== '' && Number.isNaN(priorityValue)) {
-        alert('Priority must be a number.');
-        return;
-      }
 
       const { data, error } = await supabase
         .from('caption_examples')
@@ -121,7 +127,7 @@ export default function AdminCaptionExamplesPage() {
           caption: newCaption.trim(),
           explanation: newExplanation.trim() || null,
           image_description: newImageDescription.trim() || null,
-          priority: priorityValue,
+          priority: parsedPriority,
           image_id: newImageId,
           created_datetime_utc: now,
           modified_datetime_utc: now,
@@ -134,12 +140,7 @@ export default function AdminCaptionExamplesPage() {
       if (error) throw error;
 
       setCaptionExamples((prev) => [data as CaptionExampleRow, ...prev]);
-      setNewCaption('');
-      setNewExplanation('');
-      setNewImageDescription('');
-      setNewPriority('');
-      setNewImageId('');
-
+      resetCreateForm();
       alert('New caption example created successfully!');
     } catch (err: any) {
       console.error(err);
@@ -149,12 +150,12 @@ export default function AdminCaptionExamplesPage() {
     }
   };
 
-  const startEdit = (row: CaptionExampleRow) => {
-    setEditingId(row.id);
-    setEditingCaption(row.caption || '');
-    setEditingExplanation(row.explanation || '');
-    setEditingImageDescription(row.image_description || '');
-    setEditingPriority(row.priority == null ? '' : String(row.priority));
+  const startEdit = (item: CaptionExampleRow) => {
+    setEditingId(item.id);
+    setEditingCaption(item.caption || '');
+    setEditingExplanation(item.explanation || '');
+    setEditingImageDescription(item.image_description || '');
+    setEditingPriority(String(item.priority ?? 0));
   };
 
   const cancelEdit = () => {
@@ -162,12 +163,18 @@ export default function AdminCaptionExamplesPage() {
     setEditingCaption('');
     setEditingExplanation('');
     setEditingImageDescription('');
-    setEditingPriority('');
+    setEditingPriority('0');
   };
 
-  const handleUpdate = async (id: string) => {
+  const handleUpdate = async (id: number) => {
     if (!editingCaption.trim()) {
       alert('Caption cannot be empty.');
+      return;
+    }
+
+    const parsedPriority = Number(editingPriority);
+    if (Number.isNaN(parsedPriority)) {
+      alert('Priority must be a number.');
       return;
     }
 
@@ -175,21 +182,13 @@ export default function AdminCaptionExamplesPage() {
       const userId = await getCurrentUserId();
       const now = new Date().toISOString();
 
-      const priorityValue =
-        editingPriority.trim() === '' ? null : Number.parseInt(editingPriority, 10);
-
-      if (editingPriority.trim() !== '' && Number.isNaN(priorityValue)) {
-        alert('Priority must be a number.');
-        return;
-      }
-
       const { error } = await supabase
         .from('caption_examples')
         .update({
           caption: editingCaption.trim(),
           explanation: editingExplanation.trim() || null,
           image_description: editingImageDescription.trim() || null,
-          priority: priorityValue,
+          priority: parsedPriority,
           modified_datetime_utc: now,
           modified_by_user_id: userId,
         })
@@ -198,18 +197,18 @@ export default function AdminCaptionExamplesPage() {
       if (error) throw error;
 
       setCaptionExamples((prev) =>
-        prev.map((row) =>
-          row.id === id
+        prev.map((item) =>
+          item.id === id
             ? {
-                ...row,
+                ...item,
                 caption: editingCaption.trim(),
                 explanation: editingExplanation.trim() || null,
                 image_description: editingImageDescription.trim() || null,
-                priority: priorityValue,
+                priority: parsedPriority,
                 modified_datetime_utc: now,
                 modified_by_user_id: userId,
               }
-            : row
+            : item
         )
       );
 
@@ -221,7 +220,7 @@ export default function AdminCaptionExamplesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this caption example?')) return;
 
     const { error } = await supabase.from('caption_examples').delete().eq('id', id);
@@ -229,9 +228,11 @@ export default function AdminCaptionExamplesPage() {
     if (error) {
       alert('Failed to delete: ' + error.message);
     } else {
-      setCaptionExamples((prev) => prev.filter((row) => row.id !== id));
+      setCaptionExamples((prev) => prev.filter((item) => item.id !== id));
     }
   };
+
+  const selectedImage = images.find((img) => img.id === newImageId);
 
   if (loading) {
     return <div className="p-10 ml-64 font-mono">loading...</div>;
@@ -258,8 +259,8 @@ export default function AdminCaptionExamplesPage() {
               <textarea
                 value={newCaption}
                 onChange={(e) => setNewCaption(e.target.value)}
-                rows={4}
-                placeholder="Write a new caption here..."
+                rows={3}
+                placeholder="Write a new caption..."
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
@@ -281,11 +282,11 @@ export default function AdminCaptionExamplesPage() {
               <label className="block text-sm font-bold text-slate-600 mb-2">
                 Image Description
               </label>
-              <textarea
+              <input
+                type="text"
                 value={newImageDescription}
                 onChange={(e) => setNewImageDescription(e.target.value)}
-                rows={3}
-                placeholder="Optional image description for this example..."
+                placeholder="Optional image description..."
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
@@ -298,7 +299,6 @@ export default function AdminCaptionExamplesPage() {
                 type="number"
                 value={newPriority}
                 onChange={(e) => setNewPriority(e.target.value)}
-                placeholder="Optional priority"
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
@@ -316,17 +316,17 @@ export default function AdminCaptionExamplesPage() {
                 {images.map((img) => (
                   <option key={img.id} value={img.id}>
                     {img.image_description
-                      ? `${img.image_description} (${img.id.substring(0, 8)})`
+                      ? `${img.image_description}`
                       : img.id.substring(0, 8)}
                   </option>
                 ))}
               </select>
 
-              {newImageId && (
+              {selectedImage && (
                 <div className="mt-3">
                   <img
-                    src={images.find((img) => img.id === newImageId)?.url || ''}
-                    alt="Selected"
+                    src={selectedImage.url || ''}
+                    alt={selectedImage.image_description || 'Selected'}
                     className="w-40 h-28 object-cover rounded-xl border border-slate-100"
                   />
                 </div>
@@ -346,17 +346,15 @@ export default function AdminCaptionExamplesPage() {
         <div className="grid gap-4">
           {captionExamples.length === 0 ? (
             <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
-              <p className="text-slate-400 font-medium">
-                No caption example data for now...
-              </p>
+              <p className="text-slate-400 font-medium">No caption example data for now...</p>
             </div>
           ) : (
-            captionExamples.map((row) => {
-              const isEditing = editingId === row.id;
+            captionExamples.map((item) => {
+              const isEditing = editingId === item.id;
 
               return (
                 <div
-                  key={row.id}
+                  key={item.id}
                   className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
                 >
                   <div className="flex justify-between items-start gap-6">
@@ -370,7 +368,7 @@ export default function AdminCaptionExamplesPage() {
                             <textarea
                               value={editingCaption}
                               onChange={(e) => setEditingCaption(e.target.value)}
-                              rows={4}
+                              rows={3}
                               className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
@@ -391,10 +389,10 @@ export default function AdminCaptionExamplesPage() {
                             <label className="block text-sm font-bold text-slate-600 mb-2">
                               Image Description
                             </label>
-                            <textarea
+                            <input
+                              type="text"
                               value={editingImageDescription}
                               onChange={(e) => setEditingImageDescription(e.target.value)}
-                              rows={3}
                               className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
@@ -413,7 +411,7 @@ export default function AdminCaptionExamplesPage() {
 
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleUpdate(row.id)}
+                              onClick={() => handleUpdate(item.id)}
                               className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-black hover:bg-emerald-600 transition-all"
                             >
                               SAVE
@@ -429,35 +427,35 @@ export default function AdminCaptionExamplesPage() {
                       ) : (
                         <>
                           <p className="text-slate-800 text-lg font-medium italic mb-2">
-                            "{row.caption}"
+                            "{item.caption}"
                           </p>
 
-                          {row.explanation && (
+                          {item.explanation && (
                             <p className="text-sm text-slate-600 mb-3">
-                              Explanation: {row.explanation}
-                            </p>
-                          )}
-
-                          {row.image_description && (
-                            <p className="text-sm text-slate-600 mb-3">
-                              Image Description: {row.image_description}
+                              {item.explanation}
                             </p>
                           )}
 
                           <div className="flex flex-wrap gap-2 mb-4">
                             <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded uppercase font-mono">
-                              ID: {row.id.substring(0, 8)}
+                              ID: {String(item.id)}
                             </span>
                             <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded uppercase font-mono">
-                              User: {row.created_by_user_id?.substring(0, 8)}
+                              User: {item.created_by_user_id?.substring(0, 8) || 'N/A'}
                             </span>
                             <span className="text-[10px] bg-violet-50 text-violet-600 px-2 py-1 rounded uppercase font-mono">
-                              Image: {row.image_id?.substring(0, 8)}
+                              Image: {item.image_id?.substring(0, 8) || 'N/A'}
                             </span>
                             <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded font-bold">
-                              Priority: {row.priority ?? 0}
+                              Priority: {item.priority ?? 0}
                             </span>
                           </div>
+
+                          {item.image_description && (
+                            <p className="text-xs text-slate-500">
+                              Image description: {item.image_description}
+                            </p>
+                          )}
                         </>
                       )}
                     </div>
@@ -465,13 +463,13 @@ export default function AdminCaptionExamplesPage() {
                     {!isEditing && (
                       <div className="flex flex-col gap-2">
                         <button
-                          onClick={() => startEdit(row)}
+                          onClick={() => startEdit(item)}
                           className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-black hover:bg-blue-600 hover:text-white transition-all"
                         >
                           EDIT
                         </button>
                         <button
-                          onClick={() => handleDelete(row.id)}
+                          onClick={() => handleDelete(item.id)}
                           className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white transition-all"
                         >
                           DELETE

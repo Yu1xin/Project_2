@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
+
+
 type DashboardButton = {
   href: string;
   icon: string;
@@ -38,13 +40,21 @@ export default function MainPage() {
     loadSession();
   }, [supabase]);
 
+  const analyticsButtons = dashboardButtons.filter(
+    (item) => item.label === 'Data Analytics'
+  );
+
+  const managementButtons = dashboardButtons.filter(
+    (item) => item.label !== 'Data Analytics'
+  );
+
   const dashboardButtons: DashboardButton[] = [
     {
       href: '/admin/analytics',
       icon: '📊',
       label: 'Data Analytics',
       desc: 'See how votes change',
-      color: 'bg-blue-600 hover:bg-blue-700',
+      color: 'bg-blue-500 hover:bg-blue-600',
       span: 'sm:col-span-2',
     },
     {
@@ -52,28 +62,28 @@ export default function MainPage() {
       icon: '📚',
       label: 'Manage Captions',
       desc: 'View, edit, and delete Captions',
-      color: 'bg-emerald-500 hover:bg-emerald-600',
+      color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
       href: '/admin/images',
       icon: '🖼️',
       label: 'Manage Images',
       desc: 'view and delete Images',
-      color: 'bg-rose-500 hover:bg-rose-600',
+      color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
       href: '/admin/users',
       icon: '👥',
       label: 'Manage User',
       desc: 'Search users and see user info️',
-      color: 'bg-violet-500 hover:bg-violet-600',
+      color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
           href: '/admin/humor-flavors',
           icon: '☑️',
           label: 'Manage Humor flavors',
           desc: 'See humor flavors️',
-          color: 'bg-violet-500 hover:bg-violet-600',
+          color: 'bg-blue-500 hover:bg-blue-600',
         },
 
     {
@@ -81,7 +91,7 @@ export default function MainPage() {
               icon: '📝️',
               label: 'Manage Terms',
               desc: 'See term explanations️',
-              color: 'bg-violet-500 hover:bg-violet-600',
+              color: 'bg-blue-500 hover:bg-blue-600',
             },
 
     {
@@ -89,7 +99,7 @@ export default function MainPage() {
                   icon: '🤖',
                   label: 'Manage llm_models',
                   desc: 'See what are models using️',
-                  color: 'bg-violet-500 hover:bg-violet-600',
+                  color: 'bg-blue-500 hover:bg-blue-600',
                 },
 
     {
@@ -97,7 +107,7 @@ export default function MainPage() {
                       icon: '🔗',
                       label: 'Manage See llm prompt chains',
                       desc: 'See what are create/modify time for captions️',
-                      color: 'bg-violet-500 hover:bg-violet-600',
+                      color: 'bg-blue-500 hover:bg-blue-600',
                     },
 
     {
@@ -105,7 +115,7 @@ export default function MainPage() {
                           icon: '✍️',
                           label: 'Manage caption request info',
                           desc: 'See the time and profile making and editing caption requests',
-                          color: 'bg-violet-500 hover:bg-violet-600',
+                          color: 'bg-blue-500 hover:bg-blue-600',
                         },
 
     {
@@ -113,7 +123,7 @@ export default function MainPage() {
                           icon: '🏫',
                           label: 'Manage See sign up domains',
                           desc: 'Manage emails from what domains can sign up',
-                          color: 'bg-violet-500 hover:bg-violet-600',
+                          color: 'bg-blue-500 hover:bg-blue-600',
                         },
 
     {
@@ -121,7 +131,7 @@ export default function MainPage() {
                           icon: '📧',
                           label: 'Manage See whitelist email addresses',
                           desc: 'See and manage whitelist email addresses',
-                          color: 'bg-violet-500 hover:bg-violet-600',
+                          color: 'bg-blue-500 hover:bg-blue-600',
                         },
 
   ];
@@ -145,23 +155,58 @@ export default function MainPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {dashboardButtons.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`${item.color} ${item.span || ''} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
-            >
-              <div className="p-7 text-left">
-                <div className="text-3xl mb-4">{item.icon}</div>
-                <div className="text-xl font-bold mb-2">{item.label}</div>
-                <div className="text-sm text-white/85 leading-relaxed">
-                  {item.desc}
+        {/* ===== Data Analytics Section ===== */}
+        <div className="mb-10">
+          <h3 className="text-lg font-semibold text-slate-800 mb-3">
+            📊 Data Analytics
+          </h3>
+          <p className="text-sm text-slate-500 mb-4">
+            View insights and performance trends
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {analyticsButtons.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`${item.color} ${item.span || ''} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
+              >
+                <div className="p-7 text-left">
+                  <div className="text-3xl mb-4">{item.icon}</div>
+                  <div className="text-xl font-bold mb-2">{item.label}</div>
+                  <div className="text-sm text-white/85">{item.desc}</div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
         </div>
+
+        {/* ===== Data Management Section ===== */}
+        <div>
+          <h3 className="text-lg font-semibold text-slate-800 mb-3">
+            🗂️ Data Management
+          </h3>
+          <p className="text-sm text-slate-500 mb-4">
+            Manage captions, users, images, and system configurations
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {managementButtons.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`${item.color} ${item.span || ''} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
+              >
+                <div className="p-7 text-left">
+                  <div className="text-3xl mb-4">{item.icon}</div>
+                  <div className="text-xl font-bold mb-2">{item.label}</div>
+                  <div className="text-sm text-white/85">{item.desc}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );

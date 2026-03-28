@@ -42,7 +42,7 @@ export default function LlmPromptChainsPage() {
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-slate-500 font-mono">
+      <div className="p-10 text-center text-zinc-100 font-mono">
         Loading llm prompt chains...
       </div>
     );
@@ -51,14 +51,14 @@ export default function LlmPromptChainsPage() {
   return (
     <div className="p-10 bg-background min-h-screen">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
+        <h1 className="text-3xl font-black text-zinc-100 mb-8 flex items-center gap-3">
           <span className="bg-cyan-600 text-white p-2 rounded-lg text-xl">⛓️</span>
           LLM Prompt Chains
         </h1>
 
         {chains.length === 0 ? (
           <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 text-center">
-            <p className="text-slate-400 font-medium">No prompt chains found...</p>
+            <p className="text-zinc-100 font-medium">No prompt chains found...</p>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -68,7 +68,7 @@ export default function LlmPromptChainsPage() {
                 className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 hover:shadow-md transition-shadow"
               >
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded uppercase font-mono">
+                  <span className="text-[10px] bg-slate-100 text-zinc-100 px-2 py-1 rounded uppercase font-mono">
                     ID: {chain.id}
                   </span>
 
@@ -77,23 +77,23 @@ export default function LlmPromptChainsPage() {
                   </span>
                 </div>
 
-                <div className="space-y-2 text-sm text-slate-700">
+                <div className="space-y-2 text-sm text-zinc-100">
                   <p>
-                    <span className="font-bold text-slate-500">Created By:</span>{' '}
+                    <span className="font-bold text-zinc-100">Created By:</span>{' '}
                     <span className="font-mono text-xs">
                       {chain.created_by_user_id || 'N/A'}
                     </span>
                   </p>
 
                   <p>
-                    <span className="font-bold text-slate-500">Modified By:</span>{' '}
+                    <span className="font-bold text-zinc-100">Modified By:</span>{' '}
                     <span className="font-mono text-xs">
                       {chain.modified_by_user_id || 'N/A'}
                     </span>
                   </p>
                 </div>
 
-                <div className="mt-4 text-[10px] text-slate-400 font-mono">
+                <div className="mt-4 text-[10px] text-zinc-100 font-mono">
                   {chain.created_datetime_utc && (
                     <>Created: {new Date(chain.created_datetime_utc).toLocaleString()}</>
                   )}

@@ -42,7 +42,7 @@ export default function WhitelistEmailAddressesPage() {
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-slate-500 font-mono">
+      <div className="p-10 text-center text-zinc-100 font-mono">
         Loading whitelist email addresses...
       </div>
     );
@@ -51,14 +51,14 @@ export default function WhitelistEmailAddressesPage() {
   return (
     <div className="p-10 bg-background min-h-screen">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
+        <h1 className="text-3xl font-black text-zinc-100 mb-8 flex items-center gap-3">
           <span className="bg-amber-600 text-white p-2 rounded-lg text-xl">📧</span>
           Whitelist Email Addresses
         </h1>
 
         {emails.length === 0 ? (
           <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 text-center">
-            <p className="text-slate-400 font-medium">No whitelist email addresses found...</p>
+            <p className="text-zinc-100 font-medium">No whitelist email addresses found...</p>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -74,27 +74,27 @@ export default function WhitelistEmailAddressesPage() {
                     </h2>
                   </div>
 
-                  <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded uppercase font-mono">
+                  <span className="text-[10px] bg-slate-100 text-zinc-100 px-2 py-1 rounded uppercase font-mono">
                     ID: {email.id}
                   </span>
                 </div>
 
-                <div className="space-y-2 text-sm text-slate-700">
+                <div className="space-y-2 text-sm text-zinc-100">
                   <p>
-                    <span className="font-bold text-slate-500">Created By:</span>{' '}
+                    <span className="font-bold text-zinc-100">Created By:</span>{' '}
                     <span className="font-mono text-xs">
                       {email.created_by_user_id || 'N/A'}
                     </span>
                   </p>
                   <p>
-                    <span className="font-bold text-slate-500">Modified By:</span>{' '}
+                    <span className="font-bold text-zinc-100">Modified By:</span>{' '}
                     <span className="font-mono text-xs">
                       {email.modified_by_user_id || 'N/A'}
                     </span>
                   </p>
                 </div>
 
-                <div className="mt-4 text-[10px] text-slate-400 font-mono">
+                <div className="mt-4 text-[10px] text-zinc-100 font-mono">
                   {email.created_datetime_utc && (
                     <>Created: {new Date(email.created_datetime_utc).toLocaleString()}</>
                   )}

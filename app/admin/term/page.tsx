@@ -51,7 +51,7 @@ export default function TermsPage() {
   return (
     <div className="p-10 bg-background min-h-screen">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
+        <h1 className="text-3xl font-black text-zinc-100 mb-8 flex items-center gap-3">
           <span className="bg-purple-600 text-white p-2 rounded-lg text-xl">📚</span>
           Terms Glossary
         </h1>
@@ -83,7 +83,7 @@ export default function TermsPage() {
                 </div>
 
                 {/* DEFINITION */}
-                <p className="text-slate-700 mb-3 leading-relaxed">
+                <p className="text-zinc-100 mb-3 leading-relaxed">
                   {t.definition || 'No definition provided.'}
                 </p>
 

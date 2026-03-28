@@ -57,7 +57,7 @@ export default function ManageUsersPage() {
       <div className="max-w-5xl mx-auto">
 
         {/* HEADER */}
-        <h1 className="text-3xl font-black text-slate-900 mb-6 flex items-center gap-3">
+        <h1 className="text-3xl font-black text-zinc-100 mb-6 flex items-center gap-3">
           <span className="bg-blue-600 text-white p-2 rounded-lg text-xl">👥</span>
           User Management
         </h1>
@@ -95,12 +95,12 @@ export default function ManageUsersPage() {
                   </td>
 
                   {/* 👇 新增 Name 列 */}
-                  <td className="px-6 py-4 text-slate-700 font-semibold">
+                  <td className="px-6 py-4 text-zinc-100 font-semibold">
                     {(user.first_name || '') + ' ' + (user.last_name || '')}
                   </td>
 
                   <td className="px-6 py-4">
-                    <span className="font-bold text-slate-700">{user.email}</span>
+                    <span className="font-bold text-zinc-100">{user.email}</span>
                   </td>
 
                   <td className="px-6 py-4">

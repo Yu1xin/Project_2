@@ -43,7 +43,7 @@ export default function LlmModelsPage() {
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-slate-500 font-mono">
+      <div className="p-10 text-center text-zinc-100 font-mono">
         Loading llm models...
       </div>
     );
@@ -52,14 +52,14 @@ export default function LlmModelsPage() {
   return (
     <div className="p-10 bg-background min-h-screen">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
+        <h1 className="text-3xl font-black text-zinc-100 mb-8 flex items-center gap-3">
           <span className="bg-indigo-600 text-white p-2 rounded-lg text-xl">🤖</span>
           LLM Models
         </h1>
 
         {models.length === 0 ? (
           <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 text-center">
-            <p className="text-slate-400 font-medium">No model data found...</p>
+            <p className="text-zinc-100 font-medium">No model data found...</p>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -73,7 +73,7 @@ export default function LlmModelsPage() {
                     <h2 className="text-xl font-bold text-indigo-700">
                       {model.name || 'Unnamed Model'}
                     </h2>
-                    <p className="text-sm text-slate-500 font-mono mt-1">
+                    <p className="text-sm text-zinc-100 font-mono mt-1">
                       provider_model_id: {model.provider_model_id || 'N/A'}
                     </p>
                   </div>
@@ -82,7 +82,7 @@ export default function LlmModelsPage() {
                     className={`text-xs px-3 py-1 rounded-full font-bold ${
                       model.is_temperature_supported
                         ? 'bg-emerald-50 text-emerald-600'
-                        : 'bg-slate-100 text-slate-500'
+                        : 'bg-slate-100 text-zinc-100'
                     }`}
                   >
                     {model.is_temperature_supported
@@ -92,7 +92,7 @@ export default function LlmModelsPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded uppercase font-mono">
+                  <span className="text-[10px] bg-slate-100 text-zinc-100 px-2 py-1 rounded uppercase font-mono">
                     ID: {model.id}
                   </span>
                   <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded uppercase font-mono">
@@ -100,7 +100,7 @@ export default function LlmModelsPage() {
                   </span>
                 </div>
 
-                <div className="text-[10px] text-slate-400 font-mono">
+                <div className="text-[10px] text-zinc-100 font-mono">
                   {model.created_datetime_utc && (
                     <>Created: {new Date(model.created_datetime_utc).toLocaleDateString()}</>
                   )}

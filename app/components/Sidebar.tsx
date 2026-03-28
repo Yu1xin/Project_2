@@ -39,7 +39,7 @@ export default function Sidebar() {
       <div className="p-4 border-t border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
         <Link
           href="/login"
-          className="flex items-center gap-4 px-4 py-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+          className="flex items-center gap-4 px-4 py-3 text-zinc-100 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
         >
           <span className="text-xl">🚪</span>
           {isOpen && <span className="font-medium">Logout</span>}
@@ -56,7 +56,7 @@ function SidebarLink({ href, icon, label, isOpen, active }: { href: string; icon
       className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all active:scale-95 ${
         active
           ? 'bg-blue-50 text-blue-600'
-          : 'text-slate-600 hover:bg-zinc-950 hover:text-blue-500'
+          : 'text-zinc-100 hover:bg-zinc-950 hover:text-blue-500'
       }`}
     >
       <span className="text-xl">{icon}</span>

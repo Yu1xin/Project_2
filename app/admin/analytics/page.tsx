@@ -92,7 +92,7 @@ export default function AdminAnalytics() {
       </h3>
       <div className="space-y-3">
         {factors.length === 0 ? (
-          <div className="text-slate-500 text-sm">No data available</div>
+          <div className="text-zinc-100 text-sm">No data available</div>
         ) : (
           factors.map((c) => (
             <div
@@ -100,8 +100,8 @@ export default function AdminAnalytics() {
               className="flex justify-between items-center bg-slate-950 p-3 px-4 rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100"
             >
               <div className="min-w-0 pr-4">
-                <div className="text-sm text-slate-200 break-words">{c.factor}</div>
-                <div className="text-[11px] text-slate-500">{c.desc}</div>
+                <div className="text-sm text-zinc-100 break-words">{c.factor}</div>
+                <div className="text-[11px] text-zinc-100">{c.desc}</div>
               </div>
               <span
                 className={`font-mono font-bold ${
@@ -148,7 +148,7 @@ export default function AdminAnalytics() {
 
         <div className="space-y-3">
           {sortedItems.length === 0 ? (
-            <div className="text-slate-500 text-sm">No data available</div>
+            <div className="text-zinc-100 text-sm">No data available</div>
           ) : (
             sortedItems.map((item, idx) => (
               <div
@@ -157,10 +157,10 @@ export default function AdminAnalytics() {
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="min-w-0">
-                    <div className="text-sm text-slate-200 break-words">
+                    <div className="text-sm text-zinc-100 break-words">
                       #{idx + 1} {item.name}
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-1">
+                    <div className="text-[11px] text-zinc-100 mt-1">
                       avg likes {item.avgLikes.toFixed(6)} · total likes {item.totalLikes.toFixed(0)} · captions {item.captionCount}
                     </div>
                   </div>
@@ -186,18 +186,18 @@ export default function AdminAnalytics() {
         <div className="p-3 bg-blue-500 rounded-2xl text-3xl">📈</div>
         <div>
           <h2 className="text-2xl font-bold">Caption Analytics Dashboard</h2>
-          <p className="text-slate-400 text-xs">
+          <p className="text-zinc-100 text-xs">
             Caption-level factors associated with likes
           </p>
         </div>
       </div>
 
-      {loading && <div className="text-center text-slate-400 py-10">Loading may take some time...(we have over 100k captions)</div>}
+      {loading && <div className="text-center text-zinc-100 py-10">Loading may take some time...(we have over 100k captions)</div>}
       {error && <div className="text-center text-red-400 py-10">Error: {error}</div>}
 
       {!loading && !error && (
         <>
-          <div className="mb-6 text-sm text-slate-400">
+          <div className="mb-6 text-sm text-zinc-100">
             Total analyzed captions: <strong>{sampleSize}</strong>
           </div>
 
@@ -211,7 +211,7 @@ export default function AdminAnalytics() {
                     className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                       selectedX === key
                         ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                        : 'bg-slate-700 hover:bg-slate-600 text-zinc-100'
                     }`}
                   >
                     {icon} {name}
@@ -230,7 +230,7 @@ export default function AdminAnalytics() {
                 <span className="text-purple-300">{currentReg.intercept.toFixed(6)}</span>
               </div>
 
-              <div className="text-xs text-slate-400 space-y-1.5">
+              <div className="text-xs text-zinc-100 space-y-1.5">
                 <p>R² = {currentReg.r2.toFixed(6)}</p>
                 <p>Samples = {currentReg.n}</p>
                 <p className="pt-2">
@@ -254,7 +254,7 @@ export default function AdminAnalytics() {
               className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                 leaderboardSortBy === 'avgLikes'
                   ? 'bg-emerald-600 text-white shadow-md'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                  : 'bg-slate-700 hover:bg-slate-600 text-zinc-100'
               }`}
             >
               Sort by Avg Likes
@@ -265,7 +265,7 @@ export default function AdminAnalytics() {
               className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                 leaderboardSortBy === 'totalLikes'
                   ? 'bg-emerald-600 text-white shadow-md'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                  : 'bg-slate-700 hover:bg-slate-600 text-zinc-100'
               }`}
             >
               Sort by Total Likes

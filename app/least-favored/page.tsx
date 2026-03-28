@@ -280,7 +280,7 @@ export default function LeastFavoredPage() {
                 />
               )}
 
-              <p className="text-sm text-slate-700 italic line-clamp-4 mb-3">
+              <p className="text-sm text-zinc-100 italic line-clamp-4 mb-3">
                 "{item.content || 'No caption content'}"
               </p>
 

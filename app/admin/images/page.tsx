@@ -220,7 +220,7 @@ export default function AdminImagesPage() {
   }
 
   if (loading) {
-    return <div className="p-10 text-slate-500">Loading images...</div>;
+    return <div className="p-10 text-zinc-100">Loading images...</div>;
   }
 
   return (
@@ -228,8 +228,8 @@ export default function AdminImagesPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Manage Images 🖼️</h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <h2 className="text-2xl font-bold text-zinc-100">Manage Images 🖼️</h2>
+            <p className="text-sm text-zinc-100 mt-1">
               Upload new images, replace old ones, or delete image records.
             </p>
           </div>
@@ -252,7 +252,7 @@ export default function AdminImagesPage() {
         </div>
 
         {images.length === 0 ? (
-          <p className="text-slate-500">No images found.</p>
+          <p className="text-zinc-100">No images found.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {images.map((img) => {
@@ -270,11 +270,11 @@ export default function AdminImagesPage() {
                     alt="Meme"
                   />
 
-                  <p className="mb-2 text-[10px] text-slate-400 font-mono break-all">
+                  <p className="mb-2 text-[10px] text-zinc-100 font-mono break-all">
                     {img.id}
                   </p>
 
-                  <p className="mb-3 text-[11px] text-slate-500">
+                  <p className="mb-3 text-[11px] text-zinc-100">
                     Public: {img.is_public ? 'Yes' : 'No'} · Common Use:{' '}
                     {img.is_common_use ? 'Yes' : 'No'}
                   </p>
@@ -284,7 +284,7 @@ export default function AdminImagesPage() {
                       className={`w-full text-center py-2 rounded-xl font-bold text-sm transition cursor-pointer ${
                         isReplacing
                           ? 'bg-amber-100 text-amber-700'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          : 'bg-slate-100 text-zinc-100 hover:bg-slate-200'
                       }`}
                     >
                       {isReplacing ? 'Replacing...' : 'Replace Image'}

@@ -238,7 +238,7 @@ export default function UploadPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
       {!previewUrl ? (
         <div className="w-full max-w-md p-8 text-zinc-900 border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 rounded-3xl shadow-xl">
-          <h1 className="text-2xl font-bold mb-6 text-slate-800">
+          <h1 className="text-2xl font-bold mb-6 text-zinc-100">
             Upload & Caption 📸
           </h1>
 
@@ -265,7 +265,7 @@ export default function UploadPage() {
         </div>
       ) : (
         <div className="w-full max-w-md p-8 text-zinc-900 border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300">
-          <h2 className="text-xl font-bold mb-6 text-center text-slate-800">
+          <h2 className="text-xl font-bold mb-6 text-center text-zinc-100">
             Final Result ✨
           </h2>
 
@@ -277,7 +277,7 @@ export default function UploadPage() {
             />
 
             <div className="p-6 bg-background border-t border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
+              <label className="block text-sm font-semibold text-zinc-100 mb-2">
                 Edit your meme caption
               </label>
 
@@ -285,7 +285,7 @@ export default function UploadPage() {
                 value={editedCaption}
                 onChange={(e) => setEditedCaption(e.target.value)}
                 rows={4}
-                className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 p-4 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 p-4 text-base text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
                 placeholder="Rewrite the meme caption here..."
               />
 

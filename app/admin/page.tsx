@@ -1,4 +1,3 @@
-//这里还没有放，其实是需要做一个dashboard收到保护才行的
 'use client';
 
 import Link from 'next/link';
@@ -40,13 +39,7 @@ export default function MainPage() {
     loadSession();
   }, [supabase]);
 
-  const analyticsButtons = dashboardButtons.filter(
-    (item) => item.label === 'Data Analytics'
-  );
 
-  const managementButtons = dashboardButtons.filter(
-    (item) => item.label !== 'Data Analytics'
-  );
 
   const dashboardButtons: DashboardButton[] = [
     {
@@ -135,6 +128,14 @@ export default function MainPage() {
                         },
 
   ];
+
+  const analyticsButtons = dashboardButtons.filter(
+      (item) => item.label === 'Data Analytics'
+    );
+
+    const managementButtons = dashboardButtons.filter(
+      (item) => item.label !== 'Data Analytics'
+    );
 
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-10">

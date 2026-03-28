@@ -50,10 +50,10 @@ export default function MainPage() {
       span: 'sm:col-span-2',
     },
     {
-      href: '/admin/captions',
+      href: '/admin/caption_examples',
 
-      label: 'Captions',
-      desc: 'View, edit, and delete Captions',
+      label: 'Caption Examples',
+      desc: 'View, edit, and delete Caption Examples',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
@@ -72,7 +72,7 @@ export default function MainPage() {
     {
       href: '/admin/humor-flavors',
       label: 'Humor flavors',
-      desc: 'See humor flavors️, steps, and edit',
+      desc: 'See humor flavors️ and steps',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 

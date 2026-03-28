@@ -246,14 +246,14 @@ export default function AdminCaptionExamplesPage() {
           Caption Examples Management
         </h1>
 
-        <div className="text-zinc-900 p-6 rounded-3xl border border-slate-200 shadow-sm mb-8">
+        <div className="text-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-sm mb-8">
           <h2 className="text-xl font-bold text-slate-800 mb-4">
             Create New Caption Example
           </h2>
 
           <div className="grid gap-4">
             <div>
-              <label className="block text-sm font-bold text-slate-600 mb-2">
+              <label className="block text-sm font-bold text-zinc-300 mb-2">
                 Caption
               </label>
               <textarea
@@ -266,7 +266,7 @@ export default function AdminCaptionExamplesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-600 mb-2">
+              <label className="block text-sm font-bold text-zinc-300 mb-2">
                 Explanation
               </label>
               <textarea
@@ -279,7 +279,7 @@ export default function AdminCaptionExamplesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-600 mb-2">
+              <label className="block text-sm font-bold text-zinc-300 mb-2">
                 Image Description
               </label>
               <input
@@ -292,7 +292,7 @@ export default function AdminCaptionExamplesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-600 mb-2">
+              <label className="block text-sm font-bold text-zinc-300 mb-2">
                 Priority
               </label>
               <input
@@ -304,7 +304,7 @@ export default function AdminCaptionExamplesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-600 mb-2">
+              <label className="block text-sm font-bold text-zinc-300 mb-2">
                 Select Image
               </label>
               <select
@@ -346,7 +346,7 @@ export default function AdminCaptionExamplesPage() {
         <div className="grid gap-4">
           {captionExamples.length === 0 ? (
             <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
-              <p className="text-slate-400 font-medium">No caption example data for now...</p>
+              <p className="text-zinc-500 font-medium">No caption example data for now...</p>
             </div>
           ) : (
             captionExamples.map((item) => {
@@ -362,50 +362,50 @@ export default function AdminCaptionExamplesPage() {
                       {isEditing ? (
                         <div className="space-y-4">
                           <div>
-                            <label className="block text-sm font-bold text-slate-600 mb-2">
+                            <label className="block text-sm font-bold text-zinc-300 mb-2">
                               Caption
                             </label>
                             <textarea
                               value={editingCaption}
                               onChange={(e) => setEditingCaption(e.target.value)}
                               rows={3}
-                              className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-2xl border border-zinc-800 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-sm font-bold text-slate-600 mb-2">
+                            <label className="block text-sm font-bold text-zinc-300 mb-2">
                               Explanation
                             </label>
                             <textarea
                               value={editingExplanation}
                               onChange={(e) => setEditingExplanation(e.target.value)}
                               rows={3}
-                              className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-2xl border border-zinc-800 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-sm font-bold text-slate-600 mb-2">
+                            <label className="block text-sm font-bold text-zinc-300 mb-2">
                               Image Description
                             </label>
                             <input
                               type="text"
                               value={editingImageDescription}
                               onChange={(e) => setEditingImageDescription(e.target.value)}
-                              className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-2xl border border-zinc-800 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-sm font-bold text-slate-600 mb-2">
+                            <label className="block text-sm font-bold text-zinc-300 mb-2">
                               Priority
                             </label>
                             <input
                               type="number"
                               value={editingPriority}
                               onChange={(e) => setEditingPriority(e.target.value)}
-                              className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-2xl border border-zinc-800 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                           </div>
 
@@ -418,7 +418,7 @@ export default function AdminCaptionExamplesPage() {
                             </button>
                             <button
                               onClick={cancelEdit}
-                              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-black hover:bg-slate-200 transition-all"
+                              className="px-4 py-2 bg-slate-100 text-zinc-300 rounded-xl text-xs font-black hover:bg-slate-200 transition-all"
                             >
                               CANCEL
                             </button>
@@ -431,13 +431,13 @@ export default function AdminCaptionExamplesPage() {
                           </p>
 
                           {item.explanation && (
-                            <p className="text-sm text-slate-600 mb-3">
+                            <p className="text-sm text-zinc-300 mb-3">
                               {item.explanation}
                             </p>
                           )}
 
                           <div className="flex flex-wrap gap-2 mb-4">
-                            <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded uppercase font-mono">
+                            <span className="text-[10px] bg-slate-100 text-zinc-400 px-2 py-1 rounded uppercase font-mono">
                               ID: {String(item.id)}
                             </span>
                             <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded uppercase font-mono">
@@ -452,7 +452,7 @@ export default function AdminCaptionExamplesPage() {
                           </div>
 
                           {item.image_description && (
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-zinc-400">
                               Image description: {item.image_description}
                             </p>
                           )}

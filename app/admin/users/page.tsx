@@ -69,20 +69,20 @@ export default function ManageUsersPage() {
             placeholder="Search by first name, last name, or profile ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-5 py-3 rounded-2xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            className="w-full px-5 py-3 rounded-2xl border border-zinc-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
           />
         </div>
 
         {/* TABLE */}
-        <div className="text-zinc-900 rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
+        <div className="text-zinc-900 rounded-[2rem] shadow-xl border border-zinc-800 overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-background border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Profile ID</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Name</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Email</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Joined At</th>
+                <th className="px-6 py-4 text-xs font-black text-zinc-500 uppercase tracking-widest">Profile ID</th>
+                <th className="px-6 py-4 text-xs font-black text-zinc-500 uppercase tracking-widest">Name</th>
+                <th className="px-6 py-4 text-xs font-black text-zinc-500 uppercase tracking-widest">Email</th>
+                <th className="px-6 py-4 text-xs font-black text-zinc-500 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-xs font-black text-zinc-500 uppercase tracking-widest">Joined At</th>
               </tr>
             </thead>
 
@@ -90,7 +90,7 @@ export default function ManageUsersPage() {
               {filteredProfiles.map((user) => (
                 <tr key={user.id} className="hover:bg-blue-50/50 transition-colors">
 
-                  <td className="px-6 py-4 font-mono text-[10px] text-slate-400">
+                  <td className="px-6 py-4 font-mono text-[10px] text-zinc-500">
                     {user.id}
                   </td>
 
@@ -109,13 +109,13 @@ export default function ManageUsersPage() {
                         SUPERADMIN
                       </span>
                     ) : (
-                      <span className="text-slate-400 text-xs font-bold px-3 py-1 bg-slate-100 rounded-full">
+                      <span className="text-zinc-500 text-xs font-bold px-3 py-1 bg-slate-100 rounded-full">
                         USER
                       </span>
                     )}
                   </td>
 
-                  <td className="px-6 py-4 text-sm text-slate-500">
+                  <td className="px-6 py-4 text-sm text-zinc-400">
                     {user.created_datetime_utc
                       ? new Date(user.created_datetime_utc).toLocaleDateString()
                       : 'N/A'}
@@ -127,7 +127,7 @@ export default function ManageUsersPage() {
         </div>
 
         {/* FOOTER */}
-        <p className="mt-6 text-center text-slate-400 text-xs font-medium italic">
+        <p className="mt-6 text-center text-zinc-500 text-xs font-medium italic">
           Showing {filteredProfiles.length} / {profiles.length} users
         </p>
 

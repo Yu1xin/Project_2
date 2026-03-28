@@ -151,7 +151,7 @@ function VotingGroup({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-xs font-mono text-slate-400">
+      <div className="text-xs font-mono text-zinc-500">
         likes: <span className="text-red-500 font-bold">{initialLikeCount}</span>
       </div>
 
@@ -184,7 +184,7 @@ function VotingGroup({
           <button
             onClick={handleUndo}
             disabled={isSubmitting}
-            className="px-3 py-2 rounded-xl text-xs font-bold border text-zinc-900 text-slate-600 border-slate-200 hover:bg-slate-100 disabled:opacity-40"
+            className="px-3 py-2 rounded-xl text-xs font-bold border text-zinc-900 text-zinc-300 border-slate-200 hover:bg-slate-100 disabled:opacity-40"
           >
             Reset
           </button>
@@ -258,19 +258,19 @@ export default function LeastFavoredPage() {
         <h1 className="text-3xl font-black text-red-600 mb-2">
           Bottom 25 Memes
         </h1>
-        <p className="text-slate-500">
+        <p className="text-zinc-400">
           The 25 captions with the lowest current vote counts. (total up - total down)
         </p>
       </header>
 
       {leastFavored.length === 0 ? (
-        <p className="text-slate-500">No caption data found.</p>
+        <p className="text-zinc-400">No caption data found.</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {leastFavored.map((item) => (
             <div
               key={item.id}
-              className="bg-background rounded-2xl border border-slate-200 p-3 opacity-90 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+              className="bg-background rounded-2xl border border-zinc-800 p-3 opacity-90 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300"
             >
               {item.images?.url && (
                 <img

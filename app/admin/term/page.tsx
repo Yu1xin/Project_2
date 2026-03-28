@@ -42,7 +42,7 @@ export default function TermsPage() {
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-slate-500 font-mono">
+      <div className="p-10 text-center text-zinc-400 font-mono">
         Loading terms...
       </div>
     );
@@ -58,7 +58,7 @@ export default function TermsPage() {
 
         {terms.length === 0 ? (
           <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-slate-200 text-center">
-            <p className="text-slate-400 font-medium">
+            <p className="text-zinc-500 font-medium">
               No terms found...
             </p>
           </div>
@@ -89,13 +89,13 @@ export default function TermsPage() {
 
                 {/* EXAMPLE */}
                 {t.example && (
-                  <div className="bg-background border border-slate-200 rounded-xl p-3 text-sm text-slate-600 italic">
+                  <div className="bg-background border border-zinc-800 rounded-xl p-3 text-sm text-zinc-300 italic">
                     Example: {t.example}
                   </div>
                 )}
 
                 {/* META */}
-                <div className="mt-4 text-[10px] text-slate-400 font-mono">
+                <div className="mt-4 text-[10px] text-zinc-500 font-mono">
                   ID: {t.id}
                   {t.created_datetime_utc && (
                     <> · {new Date(t.created_datetime_utc).toLocaleDateString()}</>

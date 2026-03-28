@@ -131,11 +131,11 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-10 rounded-[2rem] text-zinc-900 p-8 shadow-xl border border-slate-200">
+        <div className="mb-10 rounded-[2rem] text-zinc-900 p-8 shadow-xl border border-zinc-800">
           <h1 className="text-4xl font-black text-slate-900 mb-2">
             Welcome To Admin Panel 🔓,
           </h1>
-          <p className="text-slate-500 italic break-words">
+          <p className="text-zinc-400 italic break-words">
             Here you can view data analysis and manage profile, images, as well as captions
           </p>
         </div>
@@ -148,7 +148,7 @@ export default function MainPage() {
           <h3 className="text-lg font-semibold text-slate-800 mb-3">
             📊 Data Analytics
           </h3>
-          <p className="text-sm text-slate-500 mb-4">
+          <p className="text-sm text-zinc-400 mb-4">
             View insights and performance trends
           </p>
 
@@ -174,7 +174,7 @@ export default function MainPage() {
           <h3 className="text-lg font-semibold text-slate-800 mb-3">
             🗂️ Data Management
           </h3>
-          <p className="text-sm text-slate-500 mb-4">
+          <p className="text-sm text-zinc-400 mb-4">
             Manage captions, users, images, and system configurations
           </p>
 

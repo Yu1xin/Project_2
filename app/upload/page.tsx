@@ -237,7 +237,7 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
       {!previewUrl ? (
-        <div className="w-full max-w-md p-8 text-zinc-900 border border-slate-200 rounded-3xl shadow-xl">
+        <div className="w-full max-w-md p-8 text-zinc-900 border border-zinc-800 rounded-3xl shadow-xl">
           <h1 className="text-2xl font-bold mb-6 text-slate-800">
             Upload & Caption 📸
           </h1>
@@ -246,7 +246,7 @@ export default function UploadPage() {
             type="file"
             accept="image/*"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="mb-6 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="mb-6 block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
 
           <button
@@ -264,7 +264,7 @@ export default function UploadPage() {
           )}
         </div>
       ) : (
-        <div className="w-full max-w-md p-8 text-zinc-900 border border-slate-200 rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300">
+        <div className="w-full max-w-md p-8 text-zinc-900 border border-zinc-800 rounded-[2.5rem] shadow-2xl animate-in zoom-in duration-300">
           <h2 className="text-xl font-bold mb-6 text-center text-slate-800">
             Final Result ✨
           </h2>
@@ -285,16 +285,16 @@ export default function UploadPage() {
                 value={editedCaption}
                 onChange={(e) => setEditedCaption(e.target.value)}
                 rows={4}
-                className="w-full rounded-2xl border border-slate-200 p-4 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                className="w-full rounded-2xl border border-zinc-800 p-4 text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
                 placeholder="Rewrite the meme caption here..."
               />
 
-              <p className="mt-2 text-xs text-slate-400 break-words">
+              <p className="mt-2 text-xs text-zinc-500 break-words">
                 AI draft: {generatedCaption}
               </p>
 
               {imageId && (
-                <p className="mt-1 text-[11px] text-slate-400 break-words">
+                <p className="mt-1 text-[11px] text-zinc-500 break-words">
                   Image ID: {imageId}
                 </p>
               )}
@@ -321,7 +321,7 @@ export default function UploadPage() {
             <button
               onClick={resetPage}
               disabled={loading}
-              className="w-full bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-50"
+              className="w-full bg-slate-100 text-zinc-400 py-3 rounded-xl font-bold hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-50"
             >
               🙂‍↔️ Delete this
             </button>

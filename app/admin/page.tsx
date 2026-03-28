@@ -53,52 +53,52 @@ export default function MainPage() {
     {
       href: '/admin/captions',
       icon: '📚',
-      label: 'Manage Captions',
+      label: 'Captions',
       desc: 'View, edit, and delete Captions',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
       href: '/admin/images',
       icon: '🖼️',
-      label: 'Manage Images',
-      desc: 'view and delete Images',
+      label: 'Images',
+      desc: 'view, update, and delete Images',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
       href: '/admin/users',
       icon: '👥',
-      label: 'Manage User',
+      label: 'User Profiles',
       desc: 'Search users and see user info️',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
           href: '/admin/humor-flavors',
           icon: '☑️',
-          label: 'Manage Humor flavors',
-          desc: 'See humor flavors️',
+          label: 'Humor flavors',
+          desc: 'See humor flavors️, steps, and edit',
           color: 'bg-blue-500 hover:bg-blue-600',
         },
 
     {
               href: '/admin/term',
               icon: '📝️',
-              label: 'Manage Terms',
-              desc: 'See term explanations️',
+              label: 'Terms',
+              desc: 'See Terms and explanations, or add new ones',
               color: 'bg-blue-500 hover:bg-blue-600',
             },
 
     {
                   href: '/admin/llm_models',
                   icon: '🤖',
-                  label: 'Manage llm_models',
-                  desc: 'See what are models using️',
+                  label: 'llm_models',
+                  desc: 'See what are models being used; update data',
                   color: 'bg-blue-500 hover:bg-blue-600',
                 },
 
     {
                       href: '/admin/llm_prompt_chain',
                       icon: '🔗',
-                      label: 'Manage See llm prompt chains',
+                      label: 'llm prompt chains',
                       desc: 'See what are create/modify time for captions️',
                       color: 'bg-blue-500 hover:bg-blue-600',
                     },
@@ -106,7 +106,7 @@ export default function MainPage() {
     {
                           href: '/admin/caption_requests',
                           icon: '✍️',
-                          label: 'Manage caption request info',
+                          label: 'Caption request info',
                           desc: 'See the time and profile making and editing caption requests',
                           color: 'bg-blue-500 hover:bg-blue-600',
                         },
@@ -114,7 +114,7 @@ export default function MainPage() {
     {
                           href: '/admin/sign_up_domains',
                           icon: '🏫',
-                          label: 'Manage See sign up domains',
+                          label: 'Sign up domains',
                           desc: 'Manage emails from what domains can sign up',
                           color: 'bg-blue-500 hover:bg-blue-600',
                         },
@@ -122,7 +122,7 @@ export default function MainPage() {
     {
                           href: '/admin/whitelist_emails',
                           icon: '📧',
-                          label: 'Manage See whitelist email addresses',
+                          label: 'Whitelist email addresses',
                           desc: 'See and manage whitelist email addresses',
                           color: 'bg-blue-500 hover:bg-blue-600',
                         },
@@ -150,10 +150,6 @@ export default function MainPage() {
         </div>
 
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
-          <p className="text-slate-500 text-sm mt-1">
-            Choose where you want to go next.
-          </p>
         </div>
 
         {/* ===== Data Analytics Section ===== */}

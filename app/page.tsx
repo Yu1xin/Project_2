@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { useRouter } from 'next/navigation';
 
 type DashboardButton = {
   href: string;
@@ -14,6 +15,8 @@ type DashboardButton = {
 
 export default function MainPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const supabase = useMemo(
     () =>
@@ -30,11 +33,17 @@ export default function MainPage() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      setUserEmail(session?.user?.email || 'Student');
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
+      setUserEmail(session.user.email || 'Student');
+      setLoading(false);
     }
 
     loadSession();
-  }, [supabase]);
+  }, [supabase, router]);
 
   const dashboardButtons: DashboardButton[] = [
     {
@@ -67,36 +76,42 @@ export default function MainPage() {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-10 text-center font-mono text-zinc-300">
+        LOADING...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background px-6 py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-10 rounded-[2rem] text-zinc-900 p-8 shadow-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
-          <h1 className="text-4xl font-black text-zinc-100 mb-2">
+        <div className="mb-10 rounded-[2rem] border border-zinc-800 bg-zinc-950 p-8 shadow-xl text-zinc-100">
+          <h1 className="mb-2 text-4xl font-black text-zinc-100">
             Welcome back,
           </h1>
-          <p className="text-zinc-400 italic break-words">
-            {userEmail}
-          </p>
+          <p className="break-words italic text-zinc-400">{userEmail}</p>
         </div>
 
         <div className="mb-6">
           <h2 className="text-xl font-bold text-zinc-100">Dashboard</h2>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="mt-1 text-sm text-zinc-400">
             Choose where you want to go next.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {dashboardButtons.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className={`${item.color} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
+              className={`${item.color} rounded-[2rem] text-white shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
             >
               <div className="p-7 text-left">
-                <div className="text-3xl mb-4">{item.icon}</div>
-                <div className="text-xl font-bold mb-2">{item.label}</div>
-                <div className="text-sm text-white/85 leading-relaxed">
+                <div className="mb-4 text-3xl">{item.icon}</div>
+                <div className="mb-2 text-xl font-bold">{item.label}</div>
+                <div className="text-sm leading-relaxed text-white/85">
                   {item.desc}
                 </div>
               </div>

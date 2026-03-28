@@ -270,7 +270,7 @@ export default function LeastFavoredPage() {
           {leastFavored.map((item) => (
             <div
               key={item.id}
-              className="bg-background rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 p-3 opacity-90 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+              className="bg-background rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 p-3 opacity-90 hover:opacity-100 transition-all duration-300"
             >
               {item.images?.url && (
                 <img

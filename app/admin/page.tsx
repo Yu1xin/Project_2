@@ -11,6 +11,7 @@ type DashboardButton = {
   label: string;
   desc: string;
   color: string;
+  span?: string;
 };
 
 export default function MainPage() {

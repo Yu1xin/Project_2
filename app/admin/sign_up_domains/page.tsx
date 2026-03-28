@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 type AllowedSignupDomainRow = {
@@ -15,95 +15,313 @@ type AllowedSignupDomainRow = {
 export default function AllowedSignupDomainsPage() {
   const [domains, setDomains] = useState<AllowedSignupDomainRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const [newDomain, setNewDomain] = useState('');
+
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingDomain, setEditingDomain] = useState('');
+
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      ),
+    []
   );
 
-  useEffect(() => {
-    async function fetchDomains() {
-      const { data, error } = await supabase
-        .from('allowed_signup_domains')
-        .select('*')
-        .order('created_datetime_utc', { ascending: false });
+  async function loadDomains() {
+    setLoading(true);
 
-      if (error) {
-        console.error('Fetch error:', error.message);
-      } else {
-        setDomains((data || []) as AllowedSignupDomainRow[]);
-      }
+    const { data, error } = await supabase
+      .from('allowed_signup_domains')
+      .select('*')
+      .order('created_datetime_utc', { ascending: false });
 
-      setLoading(false);
+    if (error) {
+      console.error('Fetch error:', error.message);
+    } else {
+      setDomains((data || []) as AllowedSignupDomainRow[]);
     }
 
-    fetchDomains();
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadDomains();
   }, []);
+
+  async function getCurrentUserId() {
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    if (error) throw error;
+    if (!session?.user) throw new Error('Please log in first.');
+
+    return session.user.id;
+  }
+
+  function resetCreateForm() {
+    setNewDomain('');
+  }
+
+  function startEdit(row: AllowedSignupDomainRow) {
+    setEditingId(row.id);
+    setEditingDomain(row.apex_domain || '');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditingDomain('');
+  }
+
+  async function handleCreate() {
+    if (!newDomain.trim()) {
+      alert('Domain cannot be empty.');
+      return;
+    }
+
+    try {
+      setCreating(true);
+
+      const userId = await getCurrentUserId();
+      const now = new Date().toISOString();
+
+      const { data, error } = await supabase
+        .from('allowed_signup_domains')
+        .insert({
+          apex_domain: newDomain.trim(),
+          created_datetime_utc: now,
+          modified_datetime_utc: now,
+          created_by_user_id: userId,
+          modified_by_user_id: userId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDomains((prev) => [data as AllowedSignupDomainRow, ...prev]);
+      resetCreateForm();
+      alert('Allowed signup domain added successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to create domain: ${err.message || 'Unknown error'}`);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function handleUpdate(id: number) {
+    if (!editingDomain.trim()) {
+      alert('Domain cannot be empty.');
+      return;
+    }
+
+    try {
+      const userId = await getCurrentUserId();
+      const now = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('allowed_signup_domains')
+        .update({
+          apex_domain: editingDomain.trim(),
+          modified_datetime_utc: now,
+          modified_by_user_id: userId,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setDomains((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                apex_domain: editingDomain.trim(),
+                modified_datetime_utc: now,
+                modified_by_user_id: userId,
+              }
+            : item
+        )
+      );
+
+      cancelEdit();
+      alert('Allowed signup domain updated successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to update domain: ${err.message || 'Unknown error'}`);
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm('Are you sure you want to delete this allowed domain?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('allowed_signup_domains')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setDomains((prev) => prev.filter((item) => item.id !== id));
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to delete domain: ${err.message || 'Unknown error'}`);
+    }
+  }
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-zinc-100 font-mono">
+      <div className="min-h-screen bg-background p-10 text-center font-mono text-zinc-100">
         Loading allowed signup domains...
       </div>
     );
   }
 
   return (
-    <div className="p-10 bg-background min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-black text-zinc-100 mb-8 flex items-center gap-3">
-          <span className="bg-emerald-600 text-white p-2 rounded-lg text-xl">🌐</span>
+    <div className="min-h-screen bg-background p-10">
+      <div className="mx-auto max-w-4xl">
+        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-100">
+          <span className="rounded-lg bg-emerald-600 p-2 text-xl text-white">🌐</span>
           Allowed Signup Domains
         </h1>
 
+        <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold text-zinc-100">
+            Add New Domain
+          </h2>
+
+          <div className="grid gap-4">
+            <div>
+              <label className="mb-2 block text-sm font-bold text-zinc-300">
+                Apex Domain
+              </label>
+              <input
+                type="text"
+                value={newDomain}
+                onChange={(e) => setNewDomain(e.target.value)}
+                placeholder="Enter domain..."
+                className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              className="w-fit rounded-2xl bg-emerald-600 px-5 py-3 font-black text-white transition hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {creating ? 'Creating...' : 'Add Domain'}
+            </button>
+          </div>
+        </div>
+
         {domains.length === 0 ? (
-          <div className="text-zinc-900 p-12 rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 text-center">
-            <p className="text-zinc-100 font-medium">No allowed domains found...</p>
+          <div className="rounded-3xl border-2 border-dashed border-zinc-800 bg-zinc-950 p-12 text-center text-zinc-100">
+            <p className="font-medium text-zinc-100">No allowed domains found...</p>
           </div>
         ) : (
           <div className="grid gap-4">
-            {domains.map((domain) => (
-              <div
-                key={domain.id}
-                className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 hover:shadow-md transition-shadow"
-              >
-                <div className="flex justify-between items-start gap-4 mb-3">
-                  <div>
-                    <h2 className="text-xl font-bold text-emerald-700">
-                      {domain.apex_domain || 'Unnamed Domain'}
-                    </h2>
-                  </div>
+            {domains.map((domain) => {
+              const isEditing = editingId === domain.id;
 
-                  <span className="text-[10px] bg-slate-100 text-zinc-100 px-2 py-1 rounded uppercase font-mono">
-                    ID: {domain.id}
-                  </span>
-                </div>
+              return (
+                <div
+                  key={domain.id}
+                  className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-2 block text-sm font-bold text-zinc-300">
+                          Apex Domain
+                        </label>
+                        <input
+                          type="text"
+                          value={editingDomain}
+                          onChange={(e) => setEditingDomain(e.target.value)}
+                          className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
 
-                <div className="space-y-2 text-sm text-zinc-100">
-                  <p>
-                    <span className="font-bold text-zinc-100">Created By:</span>{' '}
-                    <span className="font-mono text-xs">
-                      {domain.created_by_user_id || 'N/A'}
-                    </span>
-                  </p>
-                  <p>
-                    <span className="font-bold text-zinc-100">Modified By:</span>{' '}
-                    <span className="font-mono text-xs">
-                      {domain.modified_by_user_id || 'N/A'}
-                    </span>
-                  </p>
-                </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleUpdate(domain.id)}
+                          className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-black text-white transition-all hover:bg-emerald-600"
+                        >
+                          SAVE
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="rounded-xl bg-zinc-800 px-4 py-2 text-xs font-black text-zinc-300 transition-all hover:bg-zinc-700"
+                        >
+                          CANCEL
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-3 flex justify-between items-start gap-4">
+                        <div>
+                          <h2 className="text-xl font-bold text-emerald-400">
+                            {domain.apex_domain || 'Unnamed Domain'}
+                          </h2>
+                        </div>
 
-                <div className="mt-4 text-[10px] text-zinc-100 font-mono">
-                  {domain.created_datetime_utc && (
-                    <>Created: {new Date(domain.created_datetime_utc).toLocaleString()}</>
+                        <span className="rounded uppercase bg-zinc-800 px-2 py-1 text-[10px] font-mono text-zinc-100">
+                          ID: {domain.id}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2 text-sm text-zinc-100">
+                        <p>
+                          <span className="font-bold text-zinc-100">Created By:</span>{' '}
+                          <span className="font-mono text-xs">
+                            {domain.created_by_user_id || 'N/A'}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="font-bold text-zinc-100">Modified By:</span>{' '}
+                          <span className="font-mono text-xs">
+                            {domain.modified_by_user_id || 'N/A'}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-4">
+                        <div className="text-[10px] font-mono text-zinc-100">
+                          {domain.created_datetime_utc && (
+                            <>Created: {new Date(domain.created_datetime_utc).toLocaleString()}</>
+                          )}
+                          {domain.modified_datetime_utc && (
+                            <> · Modified: {new Date(domain.modified_datetime_utc).toLocaleString()}</>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startEdit(domain)}
+                            className="rounded-xl bg-blue-50 px-4 py-2 text-xs font-black text-blue-600 transition-all hover:bg-blue-600 hover:text-white"
+                          >
+                            EDIT
+                          </button>
+                          <button
+                            onClick={() => handleDelete(domain.id)}
+                            className="rounded-xl bg-red-50 px-4 py-2 text-xs font-black text-red-600 transition-all hover:bg-red-600 hover:text-white"
+                          >
+                            DELETE
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   )}
-                  {domain.modified_datetime_utc && (
-                    <> · Modified: {new Date(domain.modified_datetime_utc).toLocaleString()}</>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

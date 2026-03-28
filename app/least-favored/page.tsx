@@ -162,7 +162,7 @@ function VotingGroup({
           className={`px-3 py-2 rounded-xl text-xs font-bold border transition ${
             votedType === 'up'
               ? 'bg-green-600 text-white border-green-600'
-              : 'text-zinc-900 text-green-700 border-green-200 hover:bg-green-50 disabled:opacity-50'
+              : 'text-white border-green-500 hover:bg-green-900/30 disabled:opacity-50'
           }`}
         >
           {votedType === 'up' ? '⬆ Upvoted' : '⬆ Up'}
@@ -174,7 +174,7 @@ function VotingGroup({
           className={`px-3 py-2 rounded-xl text-xs font-bold border transition ${
             votedType === 'down'
               ? 'bg-red-600 text-white border-red-600'
-              : 'text-zinc-900 text-red-700 border-red-200 hover:bg-red-50 disabled:opacity-50'
+              : 'text-white border-red-500 hover:bg-red-900/30 disabled:opacity-50'
           }`}
         >
           {votedType === 'down' ? '⬇ Downvoted' : '⬇ Down'}

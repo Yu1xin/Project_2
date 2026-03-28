@@ -30,7 +30,7 @@ export default function Sidebar() {
 
       {/* 导航区域 */}
       <nav className="flex-1 flex flex-col gap-2 p-3 mt-4">
-        <SidebarLink href="/main" icon="🏠" label="Dashboard" isOpen={isOpen} active={pathname === '/main'} />
+        <SidebarLink href="/" icon="🏠" label="Dashboard" isOpen={isOpen} active={pathname === '/main'} />
         <SidebarLink href="/admin" icon="💻" label="Admin Page" isOpen={isOpen} active={pathname === '/admin'} />
 
       </nav>

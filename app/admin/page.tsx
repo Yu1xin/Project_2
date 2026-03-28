@@ -8,7 +8,6 @@ import { createBrowserClient } from '@supabase/ssr';
 
 type DashboardButton = {
   href: string;
-  icon: string;
   label: string;
   desc: string;
   color: string;

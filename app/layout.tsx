@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar'; // 确保路径指向你创建 Sideb
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-slate-50 min-h-screen">
+      <body className="bg-zinc-950 min-h-screen">
         {/* 全局侧边栏组件 */}
         <Sidebar />
 

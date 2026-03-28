@@ -43,7 +43,7 @@ export default function MainPage() {
   const dashboardButtons: DashboardButton[] = [
     {
       href: '/admin/analytics',
-      icon: '📊',
+
       label: 'Data Analytics',
       desc: 'See how votes change',
       color: 'bg-blue-500 hover:bg-blue-600',

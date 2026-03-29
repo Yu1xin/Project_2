@@ -85,7 +85,7 @@ export default function MainPage() {
 
     {
       href: '/admin/llm_models',
-      label: 'llm_models',
+      label: 'llm models',
       desc: 'See what are models being used; update data',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
@@ -125,15 +125,58 @@ export default function MainPage() {
           color: 'bg-blue-500 hover:bg-blue-600',
         },
 
+
+    {
+              href: '/admin/llm_providers',
+              label: 'llm provider companies',
+              desc: 'See company names',
+              color: 'bg-blue-500 hover:bg-blue-600',
+            },
+
+
+    {
+              href: '/admin/llm_responses',
+              label: 'llm responses',
+              desc: 'See llm outputs with user input',
+              color: 'bg-blue-500 hover:bg-blue-600',
+            },
+
+
+
+
   ];
 
   const analyticsButtons = dashboardButtons.filter(
-      (item) => item.label === 'Data Analytics'
-    );
+    (item) => item.label === 'Data Analytics'
+  );
 
-    const managementButtons = dashboardButtons.filter(
-      (item) => item.label !== 'Data Analytics'
-    );
+  const llmButtons = dashboardButtons.filter((item) =>
+    [
+      'Humor flavors',
+      'llm provider companies',
+      'llm responses',
+      'llm models',
+      'llm prompt chains',
+      'Caption request info',
+    ].includes(item.label)
+  );
+
+  const materialButtons = dashboardButtons.filter((item) =>
+    [
+      'Images',
+      'Meme Captions',
+      'Caption Examples',
+      'Terms',
+    ].includes(item.label)
+  );
+
+  const userButtons = dashboardButtons.filter((item) =>
+    [
+      'Sign up domains',
+      'User Profiles',
+      'Whitelist email addresses',
+    ].includes(item.label)
+  );
 
   return (
     <div className="min-h-screen bg-background px-6 py-10">
@@ -177,23 +220,73 @@ export default function MainPage() {
         </div>
 
         {/* ===== Data Management Section ===== */}
-        <div>
+        {/* ===== LLM Related ===== */}
+        <div className="mb-10">
           <h3 className="text-lg font-semibold text-zinc-100 mb-3">
-            🗂️ Data Management
+            LLM Related
           </h3>
           <p className="text-sm text-zinc-400 mb-4">
-            Manage captions, users, images, and system configurations
+            Manage humor flavors, prompt chains, models, providers, responses, and caption requests
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {managementButtons.map((item) => (
+            {llmButtons.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
                 className={`${item.color} ${item.span || ''} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
               >
                 <div className="p-7 text-left">
+                  <div className="text-xl font-bold mb-2">{item.label}</div>
+                  <div className="text-sm text-white/85">{item.desc}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
 
+        {/* ===== Materials ===== */}
+        <div className="mb-10">
+          <h3 className="text-lg font-semibold text-zinc-100 mb-3">
+            Materials
+          </h3>
+          <p className="text-sm text-zinc-400 mb-4">
+            Manage images, captions, caption examples, and terms
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {materialButtons.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`${item.color} ${item.span || ''} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
+              >
+                <div className="p-7 text-left">
+                  <div className="text-xl font-bold mb-2">{item.label}</div>
+                  <div className="text-sm text-white/85">{item.desc}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* ===== User Related ===== */}
+        <div>
+          <h3 className="text-lg font-semibold text-zinc-100 mb-3">
+            User Related
+          </h3>
+          <p className="text-sm text-zinc-400 mb-4">
+            Manage signup domains, user profiles, and whitelist emails
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {userButtons.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`${item.color} ${item.span || ''} text-white rounded-[2rem] shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
+              >
+                <div className="p-7 text-left">
                   <div className="text-xl font-bold mb-2">{item.label}</div>
                   <div className="text-sm text-white/85">{item.desc}</div>
                 </div>

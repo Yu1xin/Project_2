@@ -283,8 +283,8 @@ export default function AdminImagesPage() {
                     <label
                       className={`w-full text-center py-2 rounded-xl font-bold text-sm transition cursor-pointer ${
                         isReplacing
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-slate-100 text-zinc-100 hover:bg-slate-200'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'
                       }`}
                     >
                       {isReplacing ? 'Replacing...' : 'Replace Image'}

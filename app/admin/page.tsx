@@ -51,77 +51,76 @@ export default function MainPage() {
     },
     {
       href: '/admin/caption_examples',
-
       label: 'Caption Examples',
-      desc: 'View, edit, and delete Caption Examples',
+      desc: 'Edit, and view Caption Examples',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
       href: '/admin/images',
 
       label: 'Images',
-      desc: 'view, update, and delete Images',
+      desc: 'Edit, and view Images',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
       href: '/admin/users',
       label: 'User Profiles',
-      desc: 'Search users and see user info️',
+      desc: 'Search and view user info️',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
       href: '/admin/humor-flavors',
       label: 'Humor flavors',
-      desc: 'See humor flavors️ and steps',
+      desc: 'Add and View humor flavors️ and steps',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 
     {
       href: '/admin/term',
       label: 'Terms',
-      desc: 'See Terms and explanations, or add new ones',
+      desc: 'Edit, and view terms',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 
     {
       href: '/admin/llm_models',
       label: 'llm models',
-      desc: 'See what are models being used; update data',
+      desc: 'Edit, and view Models used',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 
     {
       href: '/admin/llm_prompt_chain',
       label: 'llm prompt chains',
-      desc: 'See what are create/modify time for captions️',
+      desc: 'View prompt chains',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 
     {
       href: '/admin/caption_requests',
       label: 'Caption request info',
-      desc: 'See the time and profile making and editing caption requests',
+      desc: 'View caption requests',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 
     {
       href: '/admin/sign_up_domains',
       label: 'Sign up domains',
-      desc: 'Manage emails from what domains can sign up',
+      desc: 'Edit, and view email domains allowed to sign up',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 
     {
       href: '/admin/whitelist_emails',
       label: 'Whitelist email addresses',
-      desc: 'See and manage whitelist email addresses',
+      desc: 'Edit, and view Whitelist email addresses',
       color: 'bg-blue-500 hover:bg-blue-600',
     },
 
     {
           href: '/admin/captions',
           label: 'Meme Captions',
-          desc: 'See existing meme Captions',
+          desc: 'View meme Captions',
           color: 'bg-blue-500 hover:bg-blue-600',
         },
 
@@ -129,7 +128,7 @@ export default function MainPage() {
     {
               href: '/admin/llm_providers',
               label: 'llm provider companies',
-              desc: 'See company names',
+              desc: 'View company names',
               color: 'bg-blue-500 hover:bg-blue-600',
             },
 
@@ -137,7 +136,7 @@ export default function MainPage() {
     {
               href: '/admin/llm_responses',
               label: 'llm responses',
-              desc: 'See llm outputs with user input',
+              desc: 'View llm outputs with user input',
               color: 'bg-blue-500 hover:bg-blue-600',
             },
 

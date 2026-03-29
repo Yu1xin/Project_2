@@ -37,3 +37,7 @@ html, body {
 a {
   color: inherit;
 }
+
+:root {
+  color-scheme: dark;
+}

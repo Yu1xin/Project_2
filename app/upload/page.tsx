@@ -338,7 +338,7 @@ export default function UploadPage() {
 
       setStatus('Saved successfully! Redirecting...');
       setTimeout(() => {
-        router.push('/list');
+        router.push('/main');
       }, 800);
     } catch (err: any) {
       console.error(err);

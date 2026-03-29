@@ -111,8 +111,18 @@ Help teams make data-driven decisions about content creation
 Identify which factors are associated with higher engagement
 Provide usable insights without requiring technical expertise
 ## Demo
-
-Add screenshots or deployed link here.
+Home page:
+![img.png](img.png)
+Meme voting:
+![img_1.png](img_1.png)
+Create new meme:
+![img_2.png](img_2.png)
+25 memes with lowest score:
+![img_3.png](img_3.png)
+admin page:
+![img_4.png](img_4.png)
+data analysis panel
+![img_5.png](img_5.png)
 
 ## Project Structure
 app/

@@ -1,9 +1,8 @@
 # Current Tasks: 
-- meme disappears as voted in /admin/images (fixed)
-- admin images need delete/edit/add function
-- user voting need to show number of finished and remaining memes
-- main need an admin button linked to admin dashboard (fixed)
-- sidebar UI need adjustments
+-prompt chaining feature not done
+-something went wrong when fetching user names on profile page
+-profile searching not fully functioning
+-caption pages should show image instead of image id
 
 # Humor Analytics Dashboard
 

@@ -41,3 +41,8 @@ a {
 :root {
   color-scheme: dark;
 }
+
+input::placeholder,
+textarea::placeholder {
+  color: #71717a;
+}

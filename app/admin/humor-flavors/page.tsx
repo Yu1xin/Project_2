@@ -21,6 +21,7 @@ type ExistingStep = {
   llm_input_type_id: number | null;
   llm_output_type_id: number | null;
   llm_model_id: number | null;
+  humor_flavor_step_type_id: number | null;
   flavor_slug?: string;
 };
 
@@ -33,6 +34,7 @@ type PendingStep = {
   llm_input_type_id: number;
   llm_output_type_id: number;
   llm_model_id: number;
+  humor_flavor_step_type_id: number;
 };
 
 const INPUT_TYPES = [
@@ -43,6 +45,12 @@ const INPUT_TYPES = [
 const OUTPUT_TYPES = [
   { id: 1, label: 'String' },
   { id: 2, label: 'Array' },
+];
+
+const STEP_TYPES = [
+  { id: 1, label: 'Celebrity recognition' },
+  { id: 2, label: 'Image description' },
+  { id: 3, label: 'General' },
 ];
 
 const LLM_MODELS = [
@@ -75,6 +83,7 @@ const EMPTY_STEP: Omit<PendingStep, 'key'> = {
   llm_input_type_id: 1,
   llm_output_type_id: 1,
   llm_model_id: 5,
+  humor_flavor_step_type_id: 3,
 };
 
 export default function HumorFlavorsPage() {
@@ -106,7 +115,7 @@ export default function HumorFlavorsPage() {
     const [stepsRes, flavorsRes] = await Promise.all([
       supabase
         .from('humor_flavor_steps')
-        .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature')
+        .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature, llm_input_type_id, llm_output_type_id, llm_model_id, humor_flavor_step_type_id')
         .order('humor_flavor_id', { ascending: true })
         .order('order_by', { ascending: true }),
       supabase.from('humor_flavors').select('id, slug'),
@@ -148,6 +157,7 @@ export default function HumorFlavorsPage() {
         llm_input_type_id: step.llm_input_type_id ?? 1,
         llm_output_type_id: step.llm_output_type_id ?? 1,
         llm_model_id: step.llm_model_id ?? 5,
+        humor_flavor_step_type_id: step.humor_flavor_step_type_id ?? 3,
       },
     ]);
   }
@@ -214,6 +224,7 @@ export default function HumorFlavorsPage() {
               llm_input_type_id: s.llm_input_type_id,
               llm_output_type_id: s.llm_output_type_id,
               llm_model_id: s.llm_model_id,
+              humor_flavor_step_type_id: s.humor_flavor_step_type_id,
             }))
           );
         if (stepsError) throw stepsError;
@@ -395,6 +406,18 @@ export default function HumorFlavorsPage() {
                   >
                     {LLM_MODELS.map((m) => (
                       <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-700 font-medium">Step type</label>
+                  <select
+                    value={newStep.humor_flavor_step_type_id}
+                    onChange={(e) => setNewStep((p) => ({ ...p, humor_flavor_step_type_id: Number(e.target.value) }))}
+                    className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    {STEP_TYPES.map((t) => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
                     ))}
                   </select>
                 </div>

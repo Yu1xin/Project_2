@@ -180,11 +180,11 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-10 rounded-[2rem] text-zinc-900 p-8 shadow-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100">
-          <h1 className="text-4xl font-black text-zinc-100 mb-2">
+        <div className="mb-10 rounded-[2rem] p-8 shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 mb-2">
             Welcome To Admin Panel 🔓,
           </h1>
-          <p className="text-zinc-400 italic break-words">
+          <p className="text-zinc-600 dark:text-zinc-400 italic break-words">
             Here you can view data analysis and manage profile, images, as well as captions
           </p>
         </div>
@@ -194,10 +194,10 @@ export default function MainPage() {
 
         {/* ===== Data Analytics Section ===== */}
         <div className="mb-10">
-          <h3 className="text-lg font-semibold text-zinc-100 mb-3">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
             📊 Data Analytics
           </h3>
-          <p className="text-sm text-zinc-400 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
             View insights and performance trends
           </p>
 
@@ -221,10 +221,10 @@ export default function MainPage() {
         {/* ===== Data Management Section ===== */}
         {/* ===== LLM Related ===== */}
         <div className="mb-10">
-          <h3 className="text-lg font-semibold text-zinc-100 mb-3">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
             LLM Related
           </h3>
-          <p className="text-sm text-zinc-400 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
             Manage humor flavors, prompt chains, models, providers, responses, and caption requests
           </p>
 
@@ -246,10 +246,10 @@ export default function MainPage() {
 
         {/* ===== Materials ===== */}
         <div className="mb-10">
-          <h3 className="text-lg font-semibold text-zinc-100 mb-3">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
             Materials
           </h3>
-          <p className="text-sm text-zinc-400 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
             Manage images, captions, caption examples, and terms
           </p>
 
@@ -271,10 +271,10 @@ export default function MainPage() {
 
         {/* ===== User Related ===== */}
         <div>
-          <h3 className="text-lg font-semibold text-zinc-100 mb-3">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
             User Related
           </h3>
-          <p className="text-sm text-zinc-400 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
             Manage signup domains, user profiles, and whitelist emails
           </p>
 

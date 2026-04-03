@@ -402,12 +402,12 @@ export default function UploadPage() {
         </div>
       ) : (
         <div className="w-full max-w-md rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 text-zinc-900 dark:text-zinc-100 shadow-2xl animate-in zoom-in duration-300">
-          <h2 className="mb-6 text-center text-xl font-bold text-zinc-100">
+          <h2 className="mb-6 text-center text-xl font-bold text-zinc-900 dark:text-zinc-100">
             Final Result ✨
           </h2>
 
           <div className="mb-4">
-            <label className="mb-2 block text-sm font-semibold text-zinc-200">
+            <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-200">
               Humor Flavor
             </label>
             <FlavorPicker
@@ -427,7 +427,7 @@ export default function UploadPage() {
             />
 
             <div className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 text-zinc-900 dark:text-zinc-100">
-              <label className="mb-2 block text-sm font-semibold text-zinc-100">
+              <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-100">
                 Edit your meme caption
               </label>
 
@@ -435,7 +435,7 @@ export default function UploadPage() {
                 value={editedCaption}
                 onChange={(e) => setEditedCaption(e.target.value)}
                 rows={4}
-                className="w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-950 p-4 text-base text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full resize-none rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4 text-base text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Rewrite the meme caption here..."
               />
 
@@ -479,7 +479,7 @@ export default function UploadPage() {
             <button
               onClick={resetPage}
               disabled={loading || isRevising}
-              className="w-full rounded-xl bg-slate-100 py-3 font-bold text-zinc-400 transition-all hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+              className="w-full rounded-xl bg-slate-100 dark:bg-zinc-800 py-3 font-bold text-zinc-600 dark:text-zinc-400 transition-all hover:bg-red-50 dark:hover:bg-zinc-700 hover:text-red-500 disabled:opacity-50"
             >
               🙂‍↔️ Delete this
             </button>
@@ -538,7 +538,7 @@ function FlavorPicker({
 
   if (loading) {
     return (
-      <div className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-500">
+      <div className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-4 py-3 text-sm text-zinc-500">
         Loading flavors...
       </div>
     );
@@ -548,19 +548,19 @@ function FlavorPicker({
     <div ref={ref} className="relative">
       <div
         onClick={() => { if (!disabled) setOpen((v) => !v); }}
-        className={`flex cursor-pointer items-center rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 focus-within:ring-2 focus-within:ring-blue-400 ${disabled ? 'pointer-events-none opacity-50' : ''}`}
+        className={`flex cursor-pointer items-center rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-4 py-3 focus-within:ring-2 focus-within:ring-blue-400 ${disabled ? 'pointer-events-none opacity-50' : ''}`}
       >
         {open ? (
           <input
             autoFocus
-            className="flex-1 bg-transparent text-sm text-zinc-100 outline-none placeholder-zinc-500"
+            className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 outline-none placeholder-zinc-500"
             placeholder="Search flavor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span className="flex-1 truncate text-sm text-zinc-100">
+          <span className="flex-1 truncate text-sm text-zinc-900 dark:text-zinc-100">
             {selected ? getFlavorLabel(selected) : 'Select a flavor'}
           </span>
         )}
@@ -568,7 +568,7 @@ function FlavorPicker({
       </div>
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900 shadow-xl">
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl">
           <div className="max-h-56 overflow-y-auto">
             {filtered.length === 0 ? (
               <div className="px-4 py-3 text-sm text-zinc-500">No flavors match</div>
@@ -578,7 +578,7 @@ function FlavorPicker({
                   key={String(f.id)}
                   type="button"
                   onClick={() => { onChange(String(f.id)); setSearch(''); setOpen(false); }}
-                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-zinc-800 ${String(f.id) === value ? 'font-semibold text-blue-400' : 'text-zinc-100'}`}
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${String(f.id) === value ? 'font-semibold text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'}`}
                 >
                   {getFlavorLabel(f)}
                 </button>

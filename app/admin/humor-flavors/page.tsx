@@ -149,6 +149,18 @@ export default function HumorFlavorsPage() {
 
     setCreating(true);
     try {
+      const { data: existing } = await supabase
+        .from('humor_flavors')
+        .select('id')
+        .eq('slug', slug.trim())
+        .maybeSingle();
+
+      if (existing) {
+        alert(`A flavor with slug "${slug.trim()}" already exists. Please choose a different slug.`);
+        setCreating(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('humor_flavors')
         .insert({

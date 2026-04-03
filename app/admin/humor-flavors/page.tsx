@@ -20,6 +20,7 @@ type ExistingStep = {
   llm_temperature: number | null;
   llm_input_type_id: number | null;
   llm_output_type_id: number | null;
+  llm_model_id: number | null;
   flavor_slug?: string;
 };
 
@@ -31,6 +32,7 @@ type PendingStep = {
   llm_temperature: number;
   llm_input_type_id: number;
   llm_output_type_id: number;
+  llm_model_id: number;
 };
 
 const INPUT_TYPES = [
@@ -43,6 +45,28 @@ const OUTPUT_TYPES = [
   { id: 2, label: 'Array' },
 ];
 
+const LLM_MODELS = [
+  { id: 1, name: 'GPT-4.1' },
+  { id: 2, name: 'GPT-4.1-mini' },
+  { id: 3, name: 'GPT-4.1-nano' },
+  { id: 4, name: 'GPT-4.5-preview' },
+  { id: 5, name: 'GPT-4o' },
+  { id: 6, name: 'GPT-4o-mini' },
+  { id: 7, name: 'o1' },
+  { id: 8, name: 'Grok-2-vision' },
+  { id: 9, name: 'Grok-3' },
+  { id: 10, name: 'Grok-4' },
+  { id: 11, name: 'Gemini 2.5 Pro (was 1.5 Pro)' },
+  { id: 12, name: 'Gemini 2.5 Flash (was 1.5 Flash)' },
+  { id: 13, name: 'Gemini 2.5 Pro' },
+  { id: 14, name: 'Gemini 2.5 Flash' },
+  { id: 15, name: 'Gemini 2.5 Flash Lite' },
+  { id: 16, name: 'GPT 5' },
+  { id: 17, name: 'GPT 5 Mini' },
+  { id: 18, name: 'GPT 5 Nano' },
+  { id: 19, name: 'OpenAI' },
+];
+
 const EMPTY_STEP: Omit<PendingStep, 'key'> = {
   description: '',
   llm_system_prompt: '',
@@ -50,6 +74,7 @@ const EMPTY_STEP: Omit<PendingStep, 'key'> = {
   llm_temperature: 0.7,
   llm_input_type_id: 1,
   llm_output_type_id: 1,
+  llm_model_id: 5,
 };
 
 export default function HumorFlavorsPage() {
@@ -122,6 +147,7 @@ export default function HumorFlavorsPage() {
         llm_temperature: step.llm_temperature ?? 0.7,
         llm_input_type_id: step.llm_input_type_id ?? 1,
         llm_output_type_id: step.llm_output_type_id ?? 1,
+        llm_model_id: step.llm_model_id ?? 5,
       },
     ]);
   }
@@ -187,6 +213,7 @@ export default function HumorFlavorsPage() {
               llm_temperature: s.llm_temperature,
               llm_input_type_id: s.llm_input_type_id,
               llm_output_type_id: s.llm_output_type_id,
+              llm_model_id: s.llm_model_id,
             }))
           );
         if (stepsError) throw stepsError;
@@ -356,6 +383,18 @@ export default function HumorFlavorsPage() {
                   >
                     {OUTPUT_TYPES.map((t) => (
                       <option key={t.id} value={t.id}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-700 font-medium">Model</label>
+                  <select
+                    value={newStep.llm_model_id}
+                    onChange={(e) => setNewStep((p) => ({ ...p, llm_model_id: Number(e.target.value) }))}
+                    className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    {LLM_MODELS.map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
                     ))}
                   </select>
                 </div>

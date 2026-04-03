@@ -18,6 +18,7 @@ type ExistingStep = {
   llm_system_prompt: string | null;
   llm_user_prompt: string | null;
   llm_temperature: number | null;
+  llm_input_type_id: number | null;
   flavor_slug?: string;
 };
 
@@ -27,13 +28,20 @@ type PendingStep = {
   llm_system_prompt: string;
   llm_user_prompt: string;
   llm_temperature: number;
+  llm_input_type_id: number;
 };
+
+const INPUT_TYPES = [
+  { id: 1, label: 'Image + text' },
+  { id: 2, label: 'Text only' },
+];
 
 const EMPTY_STEP: Omit<PendingStep, 'key'> = {
   description: '',
   llm_system_prompt: '',
   llm_user_prompt: '',
   llm_temperature: 0.7,
+  llm_input_type_id: 1,
 };
 
 export default function HumorFlavorsPage() {
@@ -104,6 +112,7 @@ export default function HumorFlavorsPage() {
         llm_system_prompt: step.llm_system_prompt ?? '',
         llm_user_prompt: step.llm_user_prompt ?? '',
         llm_temperature: step.llm_temperature ?? 0.7,
+        llm_input_type_id: step.llm_input_type_id ?? 1,
       },
     ]);
   }
@@ -155,6 +164,7 @@ export default function HumorFlavorsPage() {
               llm_system_prompt: s.llm_system_prompt || null,
               llm_user_prompt: s.llm_user_prompt || null,
               llm_temperature: s.llm_temperature,
+              llm_input_type_id: s.llm_input_type_id,
             }))
           );
         if (stepsError) throw stepsError;
@@ -256,7 +266,9 @@ export default function HumorFlavorsPage() {
                   >✕</button>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">Temperature: {s.llm_temperature}</p>
+              <p className="text-xs text-gray-400">
+                Temp: {s.llm_temperature} · Input: {INPUT_TYPES.find((t) => t.id === s.llm_input_type_id)?.label ?? s.llm_input_type_id}
+              </p>
               {s.llm_system_prompt && (
                 <p className="text-xs text-gray-500 truncate">System: {s.llm_system_prompt}</p>
               )}
@@ -290,15 +302,29 @@ export default function HumorFlavorsPage() {
                 value={newStep.llm_user_prompt}
                 onChange={(e) => setNewStep((p) => ({ ...p, llm_user_prompt: e.target.value }))}
               />
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-700 font-medium">Temperature</label>
-                <input
-                  type="number"
-                  min={0} max={2} step={0.1}
-                  value={newStep.llm_temperature}
-                  onChange={(e) => setNewStep((p) => ({ ...p, llm_temperature: Number(e.target.value) }))}
-                  className="border border-gray-300 p-1.5 w-24 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-700 font-medium">Temperature</label>
+                  <input
+                    type="number"
+                    min={0} max={2} step={0.1}
+                    value={newStep.llm_temperature}
+                    onChange={(e) => setNewStep((p) => ({ ...p, llm_temperature: Number(e.target.value) }))}
+                    className="border border-gray-300 p-1.5 w-24 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-700 font-medium">Input type</label>
+                  <select
+                    value={newStep.llm_input_type_id}
+                    onChange={(e) => setNewStep((p) => ({ ...p, llm_input_type_id: Number(e.target.value) }))}
+                    className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    {INPUT_TYPES.map((t) => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button

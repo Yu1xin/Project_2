@@ -10,7 +10,7 @@ const NAV_LINKS = [
   { href: '/main',         icon: '🖼️', label: 'Vote Memes' },
   { href: '/upload',       icon: '📸', label: 'Upload' },
   { href: '/least-favored',icon: '📉', label: 'Bottom 25' },
-  { href: '/list',         icon: '👀', label: 'Who's Online' },
+  { href: '/list',         icon: '👀', label: 'Who is Online' },
 ];
 
 const ADMIN_LINKS = [

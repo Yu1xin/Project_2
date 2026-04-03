@@ -101,6 +101,7 @@ export default function HumorFlavorsPage() {
   const [showNewStepForm, setShowNewStepForm] = useState(false);
   const [showMixPanel, setShowMixPanel] = useState(false);
   const [newStep, setNewStep] = useState(EMPTY_STEP);
+  const [search, setSearch] = useState('');
 
   async function loadFlavors() {
     const { data, error } = await supabase
@@ -500,7 +501,33 @@ export default function HumorFlavorsPage() {
 
       {/* ── EXISTING FLAVORS ── */}
       <div className="space-y-3">
-        {flavors.map((flavor) => (
+        <div className="flex items-center gap-3">
+          <input
+            className="flex-1 border border-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Search by slug or description..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="text-xs text-gray-400 hover:text-gray-600 transition"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {flavors
+          .filter((f) => {
+            const q = search.toLowerCase();
+            return (
+              !q ||
+              f.slug.toLowerCase().includes(q) ||
+              (f.description ?? '').toLowerCase().includes(q)
+            );
+          })
+          .map((flavor) => (
           <div
             key={flavor.id}
             className="border p-4 rounded-lg text-zinc-900 flex justify-between items-center shadow-sm bg-white"
@@ -527,5 +554,6 @@ export default function HumorFlavorsPage() {
         ))}
       </div>
     </div>
+
   );
 }

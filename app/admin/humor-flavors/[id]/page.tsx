@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useParams } from 'next/navigation';
 
+type Flavor = {
+  id: number;
+  slug: string | null;
+  description: string | null;
+};
+
 type Step = {
   id: string;
   humor_flavor_id: number;
@@ -71,6 +77,11 @@ export default function FlavorDetailPage() {
     []
   );
 
+  const [flavor, setFlavor] = useState<Flavor | null>(null);
+  const [editingFlavor, setEditingFlavor] = useState(false);
+  const [flavorDraft, setFlavorDraft] = useState<{ slug: string; description: string }>({ slug: '', description: '' });
+  const [savingFlavor, setSavingFlavor] = useState(false);
+
   const [steps, setSteps] = useState<Step[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -90,17 +101,50 @@ export default function FlavorDetailPage() {
   });
   const [adding, setAdding] = useState(false);
 
+  async function getUserId() {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    if (!session?.user) throw new Error('Not logged in.');
+    return session.user.id;
+  }
+
   async function loadSteps() {
     if (Number.isNaN(flavorId)) { setLoading(false); return; }
     setLoading(true);
-    const { data, error } = await supabase
-      .from('humor_flavor_steps')
-      .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature, llm_model_id, llm_input_type_id, llm_output_type_id, humor_flavor_step_type_id')
-      .eq('humor_flavor_id', flavorId)
-      .order('order_by', { ascending: true });
-    if (error) { console.error(error); alert(error.message); }
-    else setSteps((data as Step[]) || []);
+
+    const [flavorRes, stepsRes] = await Promise.all([
+      supabase.from('humor_flavors').select('id, slug, description').eq('id', flavorId).single(),
+      supabase
+        .from('humor_flavor_steps')
+        .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature, llm_model_id, llm_input_type_id, llm_output_type_id, humor_flavor_step_type_id')
+        .eq('humor_flavor_id', flavorId)
+        .order('order_by', { ascending: true }),
+    ]);
+
+    if (flavorRes.error) { console.error(flavorRes.error); }
+    else setFlavor(flavorRes.data as Flavor);
+
+    if (stepsRes.error) { console.error(stepsRes.error); alert(stepsRes.error.message); }
+    else setSteps((stepsRes.data as Step[]) || []);
+
     setLoading(false);
+  }
+
+  async function saveFlavor() {
+    if (!flavor) return;
+    setSavingFlavor(true);
+    const userId = await getUserId();
+    const { error } = await supabase
+      .from('humor_flavors')
+      .update({ slug: flavorDraft.slug || null, description: flavorDraft.description || null, modified_by_user_id: userId })
+      .eq('id', flavorId);
+    if (error) {
+      alert(error.message);
+    } else {
+      setFlavor((prev) => prev ? { ...prev, slug: flavorDraft.slug || null, description: flavorDraft.description || null } : prev);
+      setEditingFlavor(false);
+    }
+    setSavingFlavor(false);
   }
 
   useEffect(() => { loadSteps(); }, [flavorId]);
@@ -117,6 +161,7 @@ export default function FlavorDetailPage() {
 
   async function saveEdit(stepId: string) {
     setSaving(true);
+    const userId = await getUserId();
     const { error } = await supabase
       .from('humor_flavor_steps')
       .update({
@@ -128,7 +173,7 @@ export default function FlavorDetailPage() {
         llm_input_type_id: editDraft.llm_input_type_id ?? null,
         llm_output_type_id: editDraft.llm_output_type_id ?? null,
         humor_flavor_step_type_id: editDraft.humor_flavor_step_type_id ?? null,
-        modified_datetime_utc: new Date().toISOString(),
+        modified_by_user_id: userId,
       })
       .eq('id', stepId);
 
@@ -168,6 +213,7 @@ export default function FlavorDetailPage() {
 
   async function addStep() {
     setAdding(true);
+    const userId = await getUserId();
     const nextOrder = steps.length > 0 ? Math.max(...steps.map((s) => s.order_by)) + 1 : 1;
     const { data, error } = await supabase
       .from('humor_flavor_steps')
@@ -182,6 +228,8 @@ export default function FlavorDetailPage() {
         llm_input_type_id: addDraft.llm_input_type_id,
         llm_output_type_id: addDraft.llm_output_type_id,
         humor_flavor_step_type_id: addDraft.humor_flavor_step_type_id,
+        created_by_user_id: userId,
+        modified_by_user_id: userId,
       })
       .select()
       .single();
@@ -222,8 +270,58 @@ export default function FlavorDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8 space-y-6">
+      {/* Flavor metadata */}
+      <div className="border border-gray-200 rounded-xl bg-white shadow-sm p-5">
+        {editingFlavor ? (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Name (slug)</label>
+              <input
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={flavorDraft.slug}
+                onChange={(e) => setFlavorDraft((d) => ({ ...d, slug: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Description</label>
+              <textarea
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={flavorDraft.description}
+                onChange={(e) => setFlavorDraft((d) => ({ ...d, description: e.target.value }))}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={saveFlavor}
+                disabled={savingFlavor}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50"
+              >{savingFlavor ? 'Saving...' : 'Save'}</button>
+              <button
+                onClick={() => setEditingFlavor(false)}
+                disabled={savingFlavor}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-lg transition"
+              >Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{flavor?.slug ?? `Flavor ${flavorId}`}</h1>
+              {flavor?.description && (
+                <p className="mt-1 text-sm text-gray-500">{flavor.description}</p>
+              )}
+            </div>
+            <button
+              onClick={() => { setFlavorDraft({ slug: flavor?.slug ?? '', description: flavor?.description ?? '' }); setEditingFlavor(true); }}
+              className="shrink-0 px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition"
+            >Edit name &amp; description</button>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Flavor Steps</h1>
+        <h2 className="text-xl font-bold text-gray-900">Steps</h2>
         <div className="flex items-center gap-3">
           <p className="text-sm text-gray-500">{steps.length} step{steps.length !== 1 ? 's' : ''}</p>
           <button

@@ -331,6 +331,8 @@ export default function UploadPage() {
         humor_flavor_id: Number(selectedFlavorId),
         is_public: true,
         like_count: 0,
+        created_by_user_id: userId,
+        modified_by_user_id: userId,
       };
 
       const { error } = await supabase.from('captions').insert(payload);

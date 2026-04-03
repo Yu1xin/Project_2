@@ -225,6 +225,8 @@ export default function HumorFlavorsPage() {
               llm_output_type_id: s.llm_output_type_id,
               llm_model_id: s.llm_model_id,
               humor_flavor_step_type_id: s.humor_flavor_step_type_id,
+              created_by_user_id: session.user.id,
+              modified_by_user_id: session.user.id,
             }))
           );
         if (stepsError) throw stepsError;

@@ -86,6 +86,13 @@ export default function TermsPage() {
     setEditingPriority('');
   }
 
+  async function getCurrentUserId() {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    if (!session?.user) throw new Error('Please log in first.');
+    return session.user.id;
+  }
+
   async function handleCreate() {
     if (!newTerm.trim()) {
       alert('Term cannot be empty.');
@@ -103,7 +110,7 @@ export default function TermsPage() {
     try {
       setCreating(true);
 
-      const now = new Date().toISOString();
+      const userId = await getCurrentUserId();
 
       const { data, error } = await supabase
         .from('terms')
@@ -112,8 +119,8 @@ export default function TermsPage() {
           definition: newDefinition.trim() || null,
           example: newExample.trim() || null,
           priority: parsedPriority,
-          created_datetime_utc: now,
-          modified_datetime_utc: now,
+          created_by_user_id: userId,
+          modified_by_user_id: userId,
         })
         .select()
         .single();
@@ -154,7 +161,7 @@ export default function TermsPage() {
     }
 
     try {
-      const now = new Date().toISOString();
+      const userId = await getCurrentUserId();
 
       const { error } = await supabase
         .from('terms')
@@ -163,7 +170,7 @@ export default function TermsPage() {
           definition: editingDefinition.trim() || null,
           example: editingExample.trim() || null,
           priority: parsedPriority,
-          modified_datetime_utc: now,
+          modified_by_user_id: userId,
         })
         .eq('id', id);
 
@@ -178,7 +185,7 @@ export default function TermsPage() {
                 definition: editingDefinition.trim() || null,
                 example: editingExample.trim() || null,
                 priority: parsedPriority,
-                modified_datetime_utc: now,
+                modified_by_user_id: userId,
               }
             : item
         );

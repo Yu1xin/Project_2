@@ -18,7 +18,7 @@ type CaptionItem = {
   } | null;
 };
 
-async function refreshCaptionLikeCount(captionId: string) {
+async function refreshCaptionLikeCount(captionId: string, userId: string) {
   const { data, error } = await supabase
     .from('caption_votes')
     .select('vote_value')
@@ -33,7 +33,7 @@ async function refreshCaptionLikeCount(captionId: string) {
 
   const { error: updateError } = await supabase
     .from('captions')
-    .update({ like_count: score })
+    .update({ like_count: score, modified_by_user_id: userId })
     .eq('id', captionId);
 
   if (updateError) throw updateError;
@@ -105,8 +105,8 @@ function VotingGroup({
             vote_value: type === 'up' ? 1 : -1,
             profile_id: userId,
             caption_id: captionId,
-            modified_datetime_utc: now,
-            created_datetime_utc: now,
+            created_by_user_id: userId,
+            modified_by_user_id: userId,
           },
           { onConflict: 'profile_id,caption_id' }
         );
@@ -115,7 +115,7 @@ function VotingGroup({
 
       setVotedType(type);
 
-      const newLikeCount = await refreshCaptionLikeCount(captionId);
+      const newLikeCount = await refreshCaptionLikeCount(captionId, userId);
       onLikeCountChange(captionId, newLikeCount);
     } catch (err: any) {
       alert(`Vote failed: ${err.message || 'Unknown error'}`);
@@ -139,7 +139,7 @@ function VotingGroup({
 
       setVotedType(null);
 
-      const newLikeCount = await refreshCaptionLikeCount(captionId);
+      const newLikeCount = await refreshCaptionLikeCount(captionId, userId!);
       onLikeCountChange(captionId, newLikeCount);
     } catch (err: any) {
       alert(`Undo failed: ${err.message || 'Unknown error'}`);

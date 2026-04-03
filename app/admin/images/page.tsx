@@ -166,7 +166,7 @@ export default function AdminImagesPage() {
     try {
       setReplacingId(imageId);
 
-      const { accessToken } = await getCurrentUser();
+      const { user, accessToken } = await getCurrentUser();
 
       const cdnUrl = await uploadFileAndGetCdnUrl(file, accessToken);
 
@@ -174,13 +174,11 @@ export default function AdminImagesPage() {
       const registrationResult = await registerUploadedImage(cdnUrl, accessToken);
       console.log('Replacement registration result:', registrationResult);
 
-      const now = new Date().toISOString();
-
       const { error } = await supabase
         .from('images')
         .update({
           url: cdnUrl,
-          modified_datetime_utc: now,
+          modified_by_user_id: user.id,
         })
         .eq('id', imageId);
 
@@ -189,11 +187,7 @@ export default function AdminImagesPage() {
       setImages((prev) =>
         prev.map((img) =>
           img.id === imageId
-            ? {
-                ...img,
-                url: cdnUrl,
-                modified_datetime_utc: now,
-              }
+            ? { ...img, url: cdnUrl }
             : img
         )
       );

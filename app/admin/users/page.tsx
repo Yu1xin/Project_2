@@ -40,10 +40,12 @@ export default function ManageUsersPage() {
     const keyword = search.toLowerCase();
 
     const filtered = profiles.filter((user) => {
+      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
       return (
         user.id?.toLowerCase().includes(keyword) ||
         user.first_name?.toLowerCase().includes(keyword) ||
-        user.last_name?.toLowerCase().includes(keyword)
+        user.last_name?.toLowerCase().includes(keyword) ||
+        fullName.includes(keyword)
       );
     });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
@@ -25,6 +25,16 @@ type HumorFlavorRow = {
   label?: string | null;
   description?: string | null;
 };
+
+function getFlavorLabel(flavor: HumorFlavorRow) {
+  return (
+    flavor.name ||
+    flavor.label ||
+    flavor.humor_flavor ||
+    flavor.description ||
+    `Flavor ${flavor.id}`
+  );
+}
 
 export default function UploadPage() {
   const router = useRouter();
@@ -78,16 +88,6 @@ export default function UploadPage() {
 
     loadHumorFlavors();
   }, [supabase]);
-
-  function getFlavorLabel(flavor: HumorFlavorRow) {
-    return (
-      flavor.name ||
-      flavor.label ||
-      flavor.humor_flavor ||
-      flavor.description ||
-      `Flavor ${flavor.id}`
-    );
-  }
 
   function extractCaption(payload: CaptionApiResponse, fallbackImageId?: string) {
     let finalCaption = '';
@@ -369,24 +369,13 @@ export default function UploadPage() {
             <label className="mb-2 block text-sm font-semibold text-zinc-200">
               Humor Flavor
             </label>
-            <select
+            <FlavorPicker
+              flavors={humorFlavors}
               value={selectedFlavorId}
-              onChange={(e) => setSelectedFlavorId(e.target.value)}
+              onChange={setSelectedFlavorId}
               disabled={loadingFlavors || loading}
-              className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              {loadingFlavors ? (
-                <option value="">Loading flavors...</option>
-              ) : humorFlavors.length === 0 ? (
-                <option value="">No flavors found</option>
-              ) : (
-                humorFlavors.map((flavor) => (
-                  <option key={String(flavor.id)} value={String(flavor.id)}>
-                    {getFlavorLabel(flavor)}
-                  </option>
-                ))
-              )}
-            </select>
+              loading={loadingFlavors}
+            />
           </div>
 
           <input
@@ -420,24 +409,13 @@ export default function UploadPage() {
             <label className="mb-2 block text-sm font-semibold text-zinc-200">
               Humor Flavor
             </label>
-            <select
+            <FlavorPicker
+              flavors={humorFlavors}
               value={selectedFlavorId}
-              onChange={(e) => setSelectedFlavorId(e.target.value)}
+              onChange={setSelectedFlavorId}
               disabled={loading || isRevising || loadingFlavors}
-              className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              {loadingFlavors ? (
-                <option value="">Loading flavors...</option>
-              ) : humorFlavors.length === 0 ? (
-                <option value="">No flavors found</option>
-              ) : (
-                humorFlavors.map((flavor) => (
-                  <option key={String(flavor.id)} value={String(flavor.id)}>
-                    {getFlavorLabel(flavor)}
-                  </option>
-                ))
-              )}
-            </select>
+              loading={loadingFlavors}
+            />
           </div>
 
           <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-sm">
@@ -511,6 +489,97 @@ export default function UploadPage() {
               {status}
             </p>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FlavorPicker({
+  flavors,
+  value,
+  onChange,
+  disabled,
+  loading,
+}: {
+  flavors: HumorFlavorRow[];
+  value: string;
+  onChange: (id: string) => void;
+  disabled: boolean;
+  loading: boolean;
+}) {
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const selected = flavors.find((f) => String(f.id) === value);
+
+  const filtered = search.trim()
+    ? flavors.filter((f) =>
+        getFlavorLabel(f).toLowerCase().includes(search.toLowerCase())
+      )
+    : flavors;
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch('');
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-500">
+        Loading flavors...
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <div
+        onClick={() => { if (!disabled) setOpen((v) => !v); }}
+        className={`flex cursor-pointer items-center rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 focus-within:ring-2 focus-within:ring-blue-400 ${disabled ? 'pointer-events-none opacity-50' : ''}`}
+      >
+        {open ? (
+          <input
+            autoFocus
+            className="flex-1 bg-transparent text-sm text-zinc-100 outline-none placeholder-zinc-500"
+            placeholder="Search flavor..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span className="flex-1 truncate text-sm text-zinc-100">
+            {selected ? getFlavorLabel(selected) : 'Select a flavor'}
+          </span>
+        )}
+        <span className="ml-2 text-xs text-zinc-500">{open ? '▲' : '▼'}</span>
+      </div>
+
+      {open && (
+        <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900 shadow-xl">
+          <div className="max-h-56 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-zinc-500">No flavors match</div>
+            ) : (
+              filtered.map((f) => (
+                <button
+                  key={String(f.id)}
+                  type="button"
+                  onClick={() => { onChange(String(f.id)); setSearch(''); setOpen(false); }}
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-zinc-800 ${String(f.id) === value ? 'font-semibold text-blue-400' : 'text-zinc-100'}`}
+                >
+                  {getFlavorLabel(f)}
+                </button>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>

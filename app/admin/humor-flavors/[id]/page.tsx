@@ -12,7 +12,49 @@ type Step = {
   llm_system_prompt: string | null;
   llm_user_prompt: string | null;
   llm_temperature: number | null;
+  llm_model_id: number | null;
+  llm_input_type_id: number | null;
+  llm_output_type_id: number | null;
+  humor_flavor_step_type_id: number | null;
 };
+
+const STEP_TYPES = [
+  { id: 1, label: 'Celebrity recognition' },
+  { id: 2, label: 'Image description' },
+  { id: 3, label: 'General' },
+];
+
+const INPUT_TYPES = [
+  { id: 1, label: 'Image + text' },
+  { id: 2, label: 'Text only' },
+];
+
+const OUTPUT_TYPES = [
+  { id: 1, label: 'String' },
+  { id: 2, label: 'Array' },
+];
+
+const LLM_MODELS = [
+  { id: 1, name: 'GPT-4.1' },
+  { id: 2, name: 'GPT-4.1-mini' },
+  { id: 3, name: 'GPT-4.1-nano' },
+  { id: 4, name: 'GPT-4.5-preview' },
+  { id: 5, name: 'GPT-4o' },
+  { id: 6, name: 'GPT-4o-mini' },
+  { id: 7, name: 'o1' },
+  { id: 8, name: 'Grok-2-vision' },
+  { id: 9, name: 'Grok-3' },
+  { id: 10, name: 'Grok-4' },
+  { id: 11, name: 'Gemini 2.5 Pro (was 1.5 Pro)' },
+  { id: 12, name: 'Gemini 2.5 Flash (was 1.5 Flash)' },
+  { id: 13, name: 'Gemini 2.5 Pro' },
+  { id: 14, name: 'Gemini 2.5 Flash' },
+  { id: 15, name: 'Gemini 2.5 Flash Lite' },
+  { id: 16, name: 'GPT 5' },
+  { id: 17, name: 'GPT 5 Mini' },
+  { id: 18, name: 'GPT 5 Nano' },
+  { id: 19, name: 'OpenAI' },
+];
 
 export default function FlavorDetailPage() {
   const params = useParams();
@@ -20,99 +62,291 @@ export default function FlavorDetailPage() {
   const flavorId =
     typeof rawId === 'string' ? Number(rawId) : Array.isArray(rawId) ? Number(rawId[0]) : NaN;
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      ),
+    []
   );
 
   const [steps, setSteps] = useState<Step[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<Partial<Step>>({});
+  const [saving, setSaving] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   async function loadSteps() {
-    if (Number.isNaN(flavorId)) {
-      setLoading(false);
-      return;
-    }
-
+    if (Number.isNaN(flavorId)) { setLoading(false); return; }
     setLoading(true);
-
     const { data, error } = await supabase
       .from('humor_flavor_steps')
-      .select(
-        'id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature'
-      )
+      .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature, llm_model_id, llm_input_type_id, llm_output_type_id, humor_flavor_step_type_id')
       .eq('humor_flavor_id', flavorId)
       .order('order_by', { ascending: true });
-
-    if (error) {
-      console.error('loadSteps error:', error);
-      alert(error.message);
-    } else {
-      setSteps((data as Step[]) || []);
-    }
-
+    if (error) { console.error(error); alert(error.message); }
+    else setSteps((data as Step[]) || []);
     setLoading(false);
   }
 
-  useEffect(() => {
-    loadSteps();
-  }, [flavorId]);
+  useEffect(() => { loadSteps(); }, [flavorId]);
+
+  function startEdit(step: Step) {
+    setEditingId(step.id);
+    setEditDraft({ ...step });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditDraft({});
+  }
+
+  async function saveEdit(stepId: string) {
+    setSaving(true);
+    const { error } = await supabase
+      .from('humor_flavor_steps')
+      .update({
+        description: editDraft.description || null,
+        llm_system_prompt: editDraft.llm_system_prompt || null,
+        llm_user_prompt: editDraft.llm_user_prompt || null,
+        llm_temperature: editDraft.llm_temperature ?? null,
+        llm_model_id: editDraft.llm_model_id ?? null,
+        llm_input_type_id: editDraft.llm_input_type_id ?? null,
+        llm_output_type_id: editDraft.llm_output_type_id ?? null,
+        humor_flavor_step_type_id: editDraft.humor_flavor_step_type_id ?? null,
+        modified_datetime_utc: new Date().toISOString(),
+      })
+      .eq('id', stepId);
+
+    if (error) { alert(error.message); }
+    else {
+      setSteps((prev) =>
+        prev.map((s) => (s.id === stepId ? { ...s, ...editDraft } as Step : s))
+      );
+      setEditingId(null);
+      setEditDraft({});
+    }
+    setSaving(false);
+  }
+
+  async function moveStep(stepId: string, dir: 'up' | 'down') {
+    const idx = steps.findIndex((s) => s.id === stepId);
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= steps.length) return;
+
+    const reordered = [...steps];
+    [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+
+    // Optimistic update
+    const withNewOrder = reordered.map((s, i) => ({ ...s, order_by: i + 1 }));
+    setSteps(withNewOrder);
+
+    setReordering(true);
+    const updates = [
+      supabase.from('humor_flavor_steps').update({ order_by: idx + 1 }).eq('id', reordered[swapIdx].id),
+      supabase.from('humor_flavor_steps').update({ order_by: swapIdx + 1 }).eq('id', reordered[idx].id),
+    ];
+    const results = await Promise.all(updates);
+    const err = results.find((r) => r.error)?.error;
+    if (err) { alert(err.message); await loadSteps(); }
+    setReordering(false);
+  }
+
+  async function deleteStep(stepId: string) {
+    if (!confirm('Delete this step?')) return;
+    const { error } = await supabase.from('humor_flavor_steps').delete().eq('id', stepId);
+    if (error) { alert(error.message); return; }
+    setSteps((prev) => prev.filter((s) => s.id !== stepId));
+  }
 
   if (Number.isNaN(flavorId)) {
-    return (
-      <div className="p-8 text-red-600">
-        Invalid flavor ID. rawId = {JSON.stringify(rawId)}
-      </div>
-    );
+    return <div className="p-8 text-red-600">Invalid flavor ID.</div>;
   }
 
   if (loading) {
-    return <div className="p-8">Loading steps...</div>;
+    return <div className="p-8 text-gray-600">Loading steps...</div>;
   }
 
   return (
-    <div className="p-8 space-y-6 bg-gray-100 min-h-screen">
-      <h1 className="text-4xl font-bold text-gray-900">Flavor Steps</h1>
-      <p className="text-lg text-gray-700">Flavor ID: {flavorId}</p>
+    <div className="min-h-screen bg-gray-100 p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Flavor Steps</h1>
+        <p className="text-sm text-gray-500">Flavor ID: {flavorId} · {steps.length} step{steps.length !== 1 ? 's' : ''}</p>
+      </div>
 
       {steps.length === 0 ? (
-        <div className="text-gray-600 text-lg">No steps found for this flavor.</div>
+        <div className="text-gray-500 text-lg">No steps found for this flavor.</div>
       ) : (
-        <div className="space-y-6">
-          {steps.map((step) => (
-            <div
-              key={step.id}
-              className="border border-gray-300 rounded-xl p-6 text-zinc-900 shadow-sm space-y-4"
-            >
-              <div className="text-2xl font-bold text-gray-900">
-                Step {step.order_by}
-              </div>
+        <div className="space-y-4">
+          {steps.map((step, idx) => {
+            const isEditing = editingId === step.id;
 
-              <div className="text-gray-800">
-                <span className="font-semibold text-gray-900">Description:</span>{' '}
-                {step.description || 'No description'}
-              </div>
+            return (
+              <div key={step.id} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                {/* Step header */}
+                <div className="flex items-center justify-between bg-gray-50 px-5 py-3 border-b border-gray-200">
+                  <span className="font-bold text-gray-800">Step {idx + 1}</span>
 
-              <div className="text-gray-800">
-                <span className="font-semibold text-gray-900">Temperature:</span>{' '}
-                {step.llm_temperature ?? 'N/A'}
-              </div>
+                  <div className="flex items-center gap-2">
+                    {/* Reorder buttons */}
+                    <button
+                      onClick={() => moveStep(step.id, 'up')}
+                      disabled={idx === 0 || reordering || isEditing}
+                      className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-30 transition"
+                      title="Move up"
+                    >↑</button>
+                    <button
+                      onClick={() => moveStep(step.id, 'down')}
+                      disabled={idx === steps.length - 1 || reordering || isEditing}
+                      className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-30 transition"
+                      title="Move down"
+                    >↓</button>
 
-              <div>
-                <div className="font-semibold text-gray-900 mb-2">System Prompt:</div>
-                <pre className="whitespace-pre-wrap text-sm text-gray-900 bg-gray-100 border border-gray-300 p-4 rounded-lg overflow-x-auto">
-                  {step.llm_system_prompt || 'None'}
-                </pre>
-              </div>
+                    {isEditing ? (
+                      <>
+                        <button
+                          onClick={() => saveEdit(step.id)}
+                          disabled={saving}
+                          className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-50"
+                        >{saving ? 'Saving...' : 'Save'}</button>
+                        <button
+                          onClick={cancelEdit}
+                          disabled={saving}
+                          className="px-3 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 transition"
+                        >Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(step)}
+                          className="px-3 py-1 text-xs rounded bg-green-100 hover:bg-green-200 text-green-700 font-semibold transition"
+                        >Edit</button>
+                        <button
+                          onClick={() => deleteStep(step.id)}
+                          className="px-3 py-1 text-xs rounded bg-red-100 hover:bg-red-200 text-red-600 font-semibold transition"
+                        >Delete</button>
+                      </>
+                    )}
+                  </div>
+                </div>
 
-              <div>
-                <div className="font-semibold text-gray-900 mb-2">User Prompt:</div>
-                <pre className="whitespace-pre-wrap text-sm text-gray-900 bg-gray-100 border border-gray-300 p-4 rounded-lg overflow-x-auto">
-                  {step.llm_user_prompt || 'None'}
-                </pre>
+                {/* Step body */}
+                <div className="p-5 space-y-4">
+                  {isEditing ? (
+                    <>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Description</label>
+                        <input
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          value={editDraft.description ?? ''}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">System Prompt</label>
+                        <textarea
+                          rows={5}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          value={editDraft.llm_system_prompt ?? ''}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, llm_system_prompt: e.target.value }))}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">User Prompt</label>
+                        <textarea
+                          rows={5}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          value={editDraft.llm_user_prompt ?? ''}
+                          onChange={(e) => setEditDraft((d) => ({ ...d, llm_user_prompt: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Temperature</label>
+                          <input
+                            type="number" min={0} max={2} step={0.1}
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            value={editDraft.llm_temperature ?? ''}
+                            onChange={(e) => setEditDraft((d) => ({ ...d, llm_temperature: Number(e.target.value) }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Model</label>
+                          <select
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            value={editDraft.llm_model_id ?? ''}
+                            onChange={(e) => setEditDraft((d) => ({ ...d, llm_model_id: Number(e.target.value) }))}
+                          >
+                            {LLM_MODELS.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Input type</label>
+                          <select
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            value={editDraft.llm_input_type_id ?? ''}
+                            onChange={(e) => setEditDraft((d) => ({ ...d, llm_input_type_id: Number(e.target.value) }))}
+                          >
+                            {INPUT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Output type</label>
+                          <select
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            value={editDraft.llm_output_type_id ?? ''}
+                            onChange={(e) => setEditDraft((d) => ({ ...d, llm_output_type_id: Number(e.target.value) }))}
+                          >
+                            {OUTPUT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Step type</label>
+                          <select
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            value={editDraft.humor_flavor_step_type_id ?? ''}
+                            onChange={(e) => setEditDraft((d) => ({ ...d, humor_flavor_step_type_id: Number(e.target.value) }))}
+                          >
+                            {STEP_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {step.description && (
+                        <p className="text-sm text-gray-700"><span className="font-semibold">Description:</span> {step.description}</p>
+                      )}
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Temp: {step.llm_temperature ?? 'N/A'}</span>
+                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Model: {LLM_MODELS.find((m) => m.id === step.llm_model_id)?.name ?? step.llm_model_id ?? 'N/A'}</span>
+                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Input: {INPUT_TYPES.find((t) => t.id === step.llm_input_type_id)?.label ?? 'N/A'}</span>
+                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Output: {OUTPUT_TYPES.find((t) => t.id === step.llm_output_type_id)?.label ?? 'N/A'}</span>
+                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Type: {STEP_TYPES.find((t) => t.id === step.humor_flavor_step_type_id)?.label ?? 'N/A'}</span>
+                      </div>
+                      {step.llm_system_prompt && (
+                        <div>
+                          <div className="text-xs font-semibold text-gray-500 mb-1">System Prompt</div>
+                          <pre className="whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 border border-gray-200 p-3 rounded-lg overflow-x-auto">{step.llm_system_prompt}</pre>
+                        </div>
+                      )}
+                      {step.llm_user_prompt && (
+                        <div>
+                          <div className="text-xs font-semibold text-gray-500 mb-1">User Prompt</div>
+                          <pre className="whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 border border-gray-200 p-3 rounded-lg overflow-x-auto">{step.llm_user_prompt}</pre>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

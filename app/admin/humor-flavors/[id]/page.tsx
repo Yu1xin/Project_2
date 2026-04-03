@@ -77,6 +77,18 @@ export default function FlavorDetailPage() {
   const [editDraft, setEditDraft] = useState<Partial<Step>>({});
   const [saving, setSaving] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addDraft, setAddDraft] = useState({
+    description: '',
+    llm_system_prompt: '',
+    llm_user_prompt: '',
+    llm_temperature: 0.7,
+    llm_model_id: 5,
+    llm_input_type_id: 1,
+    llm_output_type_id: 1,
+    humor_flavor_step_type_id: 3,
+  });
+  const [adding, setAdding] = useState(false);
 
   async function loadSteps() {
     if (Number.isNaN(flavorId)) { setLoading(false); return; }
@@ -154,6 +166,45 @@ export default function FlavorDetailPage() {
     setReordering(false);
   }
 
+  async function addStep() {
+    setAdding(true);
+    const nextOrder = steps.length > 0 ? Math.max(...steps.map((s) => s.order_by)) + 1 : 1;
+    const { data, error } = await supabase
+      .from('humor_flavor_steps')
+      .insert({
+        humor_flavor_id: flavorId,
+        order_by: nextOrder,
+        description: addDraft.description || null,
+        llm_system_prompt: addDraft.llm_system_prompt || null,
+        llm_user_prompt: addDraft.llm_user_prompt || null,
+        llm_temperature: addDraft.llm_temperature,
+        llm_model_id: addDraft.llm_model_id,
+        llm_input_type_id: addDraft.llm_input_type_id,
+        llm_output_type_id: addDraft.llm_output_type_id,
+        humor_flavor_step_type_id: addDraft.humor_flavor_step_type_id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      alert(error.message);
+    } else {
+      setSteps((prev) => [...prev, data as Step]);
+      setAddDraft({
+        description: '',
+        llm_system_prompt: '',
+        llm_user_prompt: '',
+        llm_temperature: 0.7,
+        llm_model_id: 5,
+        llm_input_type_id: 1,
+        llm_output_type_id: 1,
+        humor_flavor_step_type_id: 3,
+      });
+      setShowAddForm(false);
+    }
+    setAdding(false);
+  }
+
   async function deleteStep(stepId: string) {
     if (!confirm('Delete this step?')) return;
     const { error } = await supabase.from('humor_flavor_steps').delete().eq('id', stepId);
@@ -173,8 +224,111 @@ export default function FlavorDetailPage() {
     <div className="min-h-screen bg-gray-100 p-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Flavor Steps</h1>
-        <p className="text-sm text-gray-500">Flavor ID: {flavorId} · {steps.length} step{steps.length !== 1 ? 's' : ''}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-gray-500">{steps.length} step{steps.length !== 1 ? 's' : ''}</p>
+          <button
+            onClick={() => { setShowAddForm((v) => !v); setEditingId(null); }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"
+          >
+            {showAddForm ? 'Cancel' : '+ Add Step'}
+          </button>
+        </div>
       </div>
+
+      {showAddForm && (
+        <div className="border border-blue-200 rounded-xl bg-blue-50 p-5 space-y-3">
+          <h2 className="font-semibold text-blue-800">New Step {steps.length + 1}</h2>
+
+          <input
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Step description"
+            value={addDraft.description}
+            onChange={(e) => setAddDraft((d) => ({ ...d, description: e.target.value }))}
+          />
+          <textarea
+            rows={4}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="System prompt"
+            value={addDraft.llm_system_prompt}
+            onChange={(e) => setAddDraft((d) => ({ ...d, llm_system_prompt: e.target.value }))}
+          />
+          <textarea
+            rows={4}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="User prompt"
+            value={addDraft.llm_user_prompt}
+            onChange={(e) => setAddDraft((d) => ({ ...d, llm_user_prompt: e.target.value }))}
+          />
+
+          <div className="flex flex-wrap gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Temperature</label>
+              <input
+                type="number" min={0} max={2} step={0.1}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={addDraft.llm_temperature}
+                onChange={(e) => setAddDraft((d) => ({ ...d, llm_temperature: Number(e.target.value) }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Model</label>
+              <select
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={addDraft.llm_model_id}
+                onChange={(e) => setAddDraft((d) => ({ ...d, llm_model_id: Number(e.target.value) }))}
+              >
+                {LLM_MODELS.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Input type</label>
+              <select
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={addDraft.llm_input_type_id}
+                onChange={(e) => setAddDraft((d) => ({ ...d, llm_input_type_id: Number(e.target.value) }))}
+              >
+                {INPUT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Output type</label>
+              <select
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={addDraft.llm_output_type_id}
+                onChange={(e) => setAddDraft((d) => ({ ...d, llm_output_type_id: Number(e.target.value) }))}
+              >
+                {OUTPUT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Step type</label>
+              <select
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={addDraft.humor_flavor_step_type_id}
+                onChange={(e) => setAddDraft((d) => ({ ...d, humor_flavor_step_type_id: Number(e.target.value) }))}
+              >
+                {STEP_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={addStep}
+              disabled={adding}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition disabled:opacity-50"
+            >
+              {adding ? 'Adding...' : 'Add Step'}
+            </button>
+            <button
+              onClick={() => setShowAddForm(false)}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {steps.length === 0 ? (
         <div className="text-gray-500 text-lg">No steps found for this flavor.</div>

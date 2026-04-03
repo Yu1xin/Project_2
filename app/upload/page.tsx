@@ -362,12 +362,12 @@ export default function UploadPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
       {!previewUrl ? (
         <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 text-zinc-900 dark:text-zinc-100 shadow-xl">
-          <h1 className="mb-6 text-2xl font-bold text-zinc-100">
+          <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             Upload & Caption 📸
           </h1>
 
           <div className="mb-4">
-            <label className="mb-2 block text-sm font-semibold text-zinc-200">
+            <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-200">
               Humor Flavor
             </label>
             <FlavorPicker

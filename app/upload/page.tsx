@@ -20,6 +20,7 @@ type CaptionApiResponse =
 
 type HumorFlavorRow = {
   id: number | string;
+  slug?: string | null;
   name?: string | null;
   humor_flavor?: string | null;
   label?: string | null;
@@ -515,9 +516,13 @@ function FlavorPicker({
   const selected = flavors.find((f) => String(f.id) === value);
 
   const filtered = search.trim()
-    ? flavors.filter((f) =>
-        getFlavorLabel(f).toLowerCase().includes(search.toLowerCase())
-      )
+    ? flavors.filter((f) => {
+        const q = search.toLowerCase();
+        return (
+          getFlavorLabel(f).toLowerCase().includes(q) ||
+          (f.slug ?? '').toLowerCase().includes(q)
+        );
+      })
     : flavors;
 
   useEffect(() => {

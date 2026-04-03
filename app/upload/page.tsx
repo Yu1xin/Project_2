@@ -361,7 +361,7 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
       {!previewUrl ? (
-        <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950 p-8 text-zinc-100 shadow-xl">
+        <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 text-zinc-900 dark:text-zinc-100 shadow-xl">
           <h1 className="mb-6 text-2xl font-bold text-zinc-100">
             Upload & Caption 📸
           </h1>
@@ -401,7 +401,7 @@ export default function UploadPage() {
           )}
         </div>
       ) : (
-        <div className="w-full max-w-md rounded-[2.5rem] border border-zinc-800 bg-zinc-950 p-8 text-zinc-100 shadow-2xl animate-in zoom-in duration-300">
+        <div className="w-full max-w-md rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 text-zinc-900 dark:text-zinc-100 shadow-2xl animate-in zoom-in duration-300">
           <h2 className="mb-6 text-center text-xl font-bold text-zinc-100">
             Final Result ✨
           </h2>
@@ -419,14 +419,14 @@ export default function UploadPage() {
             />
           </div>
 
-          <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-sm">
+          <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm">
             <img
               src={previewUrl}
               alt="Meme Preview"
               className="h-auto w-full object-cover"
             />
 
-            <div className="border-t border-zinc-800 bg-zinc-950 p-6 text-zinc-100">
+            <div className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 text-zinc-900 dark:text-zinc-100">
               <label className="mb-2 block text-sm font-semibold text-zinc-100">
                 Edit your meme caption
               </label>

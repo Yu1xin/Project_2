@@ -253,12 +253,12 @@ export default function LeastFavoredPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 text-zinc-900 min-h-screen">
+    <div className="max-w-7xl mx-auto px-6 py-8 text-zinc-900 dark:text-zinc-100 min-h-screen">
       <header className="mb-10">
         <h1 className="text-3xl font-black text-red-600 mb-2">
           Bottom 25 Memes
         </h1>
-        <p className="text-zinc-400">
+        <p className="text-zinc-500 dark:text-zinc-400">
           The 25 captions with the lowest current vote counts. (total up - total down)
         </p>
       </header>
@@ -270,17 +270,17 @@ export default function LeastFavoredPage() {
           {leastFavored.map((item) => (
             <div
               key={item.id}
-              className="bg-background rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 p-3 opacity-90 hover:opacity-100 transition-all duration-300"
+              className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 text-zinc-900 dark:text-zinc-100 opacity-90 hover:opacity-100 transition-all duration-300"
             >
               {item.images?.url && (
                 <img
                   src={item.images.url}
                   alt="Meme"
-                  className="w-full aspect-square object-cover rounded-xl mb-3 border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100"
+                  className="w-full aspect-square object-cover rounded-xl mb-3 border border-zinc-200 dark:border-zinc-800"
                 />
               )}
 
-              <p className="text-sm text-zinc-100 italic line-clamp-4 mb-3">
+              <p className="text-sm text-zinc-800 dark:text-zinc-100 italic line-clamp-4 mb-3">
                 "{item.content || 'No caption content'}"
               </p>
 

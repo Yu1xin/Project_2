@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
+/* Enable dark: variant based on OS preference */
+@variant dark (@media (prefers-color-scheme: dark));
+
 :root {
-  --background: #09090b;
-  --foreground: #f4f4f5;
+  --background: #ffffff;
+  --foreground: #09090b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #09090b;
+    --foreground: #f4f4f5;
+  }
 }
 
 @theme inline {
@@ -15,7 +25,7 @@
 html {
   background: var(--background);
   color: var(--foreground);
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 
 body {
@@ -31,9 +41,17 @@ html, body {
 input,
 textarea,
 select {
-  background-color: #09090b;
-  color: #f4f4f5;
-  border-color: #27272a;
+  background-color: var(--background);
+  color: var(--foreground);
+  border-color: #d4d4d8;
+}
+
+@media (prefers-color-scheme: dark) {
+  input,
+  textarea,
+  select {
+    border-color: #27272a;
+  }
 }
 
 input::placeholder,
@@ -47,13 +65,4 @@ textarea::placeholder {
 
 a {
   color: inherit;
-}
-
-:root {
-  color-scheme: dark;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #71717a;
 }

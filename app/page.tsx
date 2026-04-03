@@ -87,16 +87,16 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-background px-6 py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-10 rounded-[2rem] border border-zinc-800 bg-zinc-950 p-8 shadow-xl text-zinc-100">
-          <h1 className="mb-2 text-4xl font-black text-zinc-100">
+        <div className="mb-10 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 shadow-xl text-zinc-900 dark:text-zinc-100">
+          <h1 className="mb-2 text-4xl font-black text-zinc-900 dark:text-zinc-100">
             Welcome back,
           </h1>
-          <p className="break-words italic text-zinc-400">{userEmail}</p>
+          <p className="break-words italic text-zinc-500 dark:text-zinc-400">{userEmail}</p>
         </div>
 
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-zinc-100">Dashboard</h2>
-          <p className="mt-1 text-sm text-zinc-400">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Dashboard</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Choose where you want to go next.
           </p>
         </div>

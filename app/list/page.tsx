@@ -73,8 +73,8 @@ export default function ListPage() {
   if (error) return <div className="p-4 text-red-500">Error fetching data: {error}</div>
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 ml-20 md:ml-32 lg:ml-40">
-      <h1 className="text-2xl font-bold mb-6 text-black">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 p-8 ml-20 md:ml-32 lg:ml-40">
+      <h1 className="text-2xl font-bold mb-6 text-black dark:text-zinc-100">
         See latest 20 voting results of your classmates
       </h1>
 
@@ -90,7 +90,7 @@ export default function ListPage() {
                 ref={(el) => {
                   cardRefs.current[index] = el
                 }}
-                className="text-zinc-900 border border-gray-200 p-4 rounded-lg transition-all duration-300"
+                className="text-zinc-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 rounded-lg transition-all duration-300"
                 style={{
                   transform: `scale(${isActive ? 1.02 : 0.94})`,
                   opacity: isActive ? 1 : 0.72,

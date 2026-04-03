@@ -150,8 +150,8 @@ function VotingGroup({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-sm font-mono text-zinc-400">
-        likes: <span className="text-blue-400">{initialLikeCount}</span>
+      <div className="text-sm font-mono text-zinc-500 dark:text-zinc-400">
+        likes: <span className="text-blue-500 dark:text-blue-400">{initialLikeCount}</span>
       </div>
 
       <div className="flex items-center gap-4">
@@ -161,8 +161,8 @@ function VotingGroup({
           className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${
             votedType === 'up'
               ? 'border-blue-600 bg-blue-600 text-white'
-              : 'border-zinc-700 bg-zinc-900 text-zinc-200 disabled:opacity-50'
-          } ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-zinc-800' : 'cursor-default'}`}
+              : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'
+          } ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}
         >
           <span>👍</span>
           <span className="text-xs font-bold uppercase">
@@ -176,8 +176,8 @@ function VotingGroup({
           className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${
             votedType === 'down'
               ? 'border-red-600 bg-red-600 text-white'
-              : 'border-zinc-700 bg-zinc-900 text-zinc-200 disabled:opacity-50'
-          } ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-zinc-800' : 'cursor-default'}`}
+              : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'
+          } ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}
         >
           <span>👎</span>
           <span className="text-xs font-bold uppercase">
@@ -189,7 +189,7 @@ function VotingGroup({
           <button
             onClick={handleUndo}
             disabled={isSubmitting}
-            className="ml-2 text-xs text-zinc-400 underline transition-colors hover:text-blue-400 disabled:opacity-50"
+            className="ml-2 text-xs text-zinc-500 dark:text-zinc-400 underline transition-colors hover:text-blue-500 dark:hover:text-blue-400 disabled:opacity-50"
           >
             Reset Vote
           </button>
@@ -287,7 +287,7 @@ export default function ListPage() {
   }
 
   return (
-    <div className="min-h-screen max-w-3xl mx-auto bg-transparent p-6 text-zinc-100">
+    <div className="min-h-screen max-w-3xl mx-auto bg-transparent p-6 text-zinc-900 dark:text-zinc-100">
       <header className="mb-16 text-center">
         <h1 className="mb-4 text-5xl font-black tracking-tight text-blue-400">
           Meme Board
@@ -304,7 +304,7 @@ export default function ListPage() {
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className={`overflow-hidden rounded-[2.5rem] border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 bg-zinc-950 px-4 py-3 text-zinc-100 bg-zinc-950 transition-all duration-500 ${
+              className={`overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-all duration-500 ${
                 isActive
                   ? 'scale-105 opacity-100 shadow-2xl'
                   : 'scale-90 opacity-50 shadow-sm'
@@ -321,7 +321,7 @@ export default function ListPage() {
               )}
 
               <div className="p-8">
-                <blockquote className="mb-8 text-2xl font-semibold italic text-zinc-100">
+                <blockquote className="mb-8 text-2xl font-semibold italic text-zinc-900 dark:text-zinc-100">
                   "{item.content}"
                 </blockquote>
 

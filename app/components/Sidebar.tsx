@@ -36,12 +36,12 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen z-50 flex flex-col bg-zinc-900 border-r border-zinc-800 shadow-xl transition-all duration-300 ease-in-out ${
+      className={`fixed left-0 top-0 h-screen z-50 flex flex-col bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-xl transition-all duration-300 ease-in-out ${
         isOpen ? 'w-56' : 'w-16'
       }`}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-zinc-800 px-3">
+      <div className="flex h-16 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-3">
         {isOpen && (
           <span className="animate-in fade-in text-lg font-black text-blue-500">
             MemeLab
@@ -49,7 +49,7 @@ export default function Sidebar() {
         )}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="ml-auto rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+          className="ml-auto rounded-lg p-2 text-zinc-500 dark:text-zinc-400 transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
           aria-label="Toggle sidebar"
         >
           {isOpen ? (
@@ -76,7 +76,7 @@ export default function Sidebar() {
         {/* Divider + Admin */}
         <div className="my-3 border-t border-zinc-800" />
         {isOpen && (
-          <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+          <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
             Admin
           </p>
         )}
@@ -93,10 +93,10 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="border-t border-zinc-800 p-2">
+      <div className="border-t border-zinc-200 dark:border-zinc-800 p-2">
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-zinc-400 transition-all hover:bg-red-950 hover:text-red-400 active:scale-95"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-zinc-500 dark:text-zinc-400 transition-all hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-400 active:scale-95"
         >
           <span className="flex w-6 shrink-0 items-center justify-center text-lg">🚪</span>
           {isOpen && <span className="whitespace-nowrap text-sm font-medium">Logout</span>}
@@ -126,7 +126,7 @@ function SidebarLink({
       className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all active:scale-95 ${
         active
           ? 'bg-blue-600 text-white'
-          : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'
+          : 'text-zinc-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
       }`}
     >
       <span className="flex w-6 shrink-0 items-center justify-center text-lg">{icon}</span>

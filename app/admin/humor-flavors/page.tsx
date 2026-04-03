@@ -19,6 +19,7 @@ type ExistingStep = {
   llm_user_prompt: string | null;
   llm_temperature: number | null;
   llm_input_type_id: number | null;
+  llm_output_type_id: number | null;
   flavor_slug?: string;
 };
 
@@ -29,11 +30,17 @@ type PendingStep = {
   llm_user_prompt: string;
   llm_temperature: number;
   llm_input_type_id: number;
+  llm_output_type_id: number;
 };
 
 const INPUT_TYPES = [
   { id: 1, label: 'Image + text' },
   { id: 2, label: 'Text only' },
+];
+
+const OUTPUT_TYPES = [
+  { id: 1, label: 'String' },
+  { id: 2, label: 'Array' },
 ];
 
 const EMPTY_STEP: Omit<PendingStep, 'key'> = {
@@ -42,6 +49,7 @@ const EMPTY_STEP: Omit<PendingStep, 'key'> = {
   llm_user_prompt: '',
   llm_temperature: 0.7,
   llm_input_type_id: 1,
+  llm_output_type_id: 1,
 };
 
 export default function HumorFlavorsPage() {
@@ -113,6 +121,7 @@ export default function HumorFlavorsPage() {
         llm_user_prompt: step.llm_user_prompt ?? '',
         llm_temperature: step.llm_temperature ?? 0.7,
         llm_input_type_id: step.llm_input_type_id ?? 1,
+        llm_output_type_id: step.llm_output_type_id ?? 1,
       },
     ]);
   }
@@ -165,6 +174,7 @@ export default function HumorFlavorsPage() {
               llm_user_prompt: s.llm_user_prompt || null,
               llm_temperature: s.llm_temperature,
               llm_input_type_id: s.llm_input_type_id,
+              llm_output_type_id: s.llm_output_type_id,
             }))
           );
         if (stepsError) throw stepsError;
@@ -321,6 +331,18 @@ export default function HumorFlavorsPage() {
                     className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     {INPUT_TYPES.map((t) => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-700 font-medium">Output type</label>
+                  <select
+                    value={newStep.llm_output_type_id}
+                    onChange={(e) => setNewStep((p) => ({ ...p, llm_output_type_id: Number(e.target.value) }))}
+                    className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    {OUTPUT_TYPES.map((t) => (
                       <option key={t.id} value={t.id}>{t.label}</option>
                     ))}
                   </select>

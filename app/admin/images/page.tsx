@@ -6,6 +6,7 @@ import { createBrowserClient } from '@supabase/ssr';
 type ImageRow = {
   id: string;
   url: string | null;
+  image_description?: string | null;
   created_datetime_utc?: string | null;
   modified_datetime_utc?: string | null;
   is_common_use?: boolean | null;
@@ -20,6 +21,8 @@ export default function AdminImagesPage() {
   const [uploadingNew, setUploadingNew] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [newDescription, setNewDescription] = useState('');
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,7 +132,7 @@ export default function AdminImagesPage() {
     return await res.json();
   }
 
-  async function handleCreateNewImage(file: File) {
+  async function handleCreateNewImage(file: File, description: string) {
     try {
       setUploadingNew(true);
 
@@ -138,10 +141,16 @@ export default function AdminImagesPage() {
       const cdnUrl = await uploadFileAndGetCdnUrl(file, accessToken);
       const registrationResult = await registerUploadedImage(cdnUrl, accessToken);
 
-      console.log('Image registration result:', registrationResult);
+      // Save description if provided
+      if (description.trim() && registrationResult?.imageId) {
+        await supabase
+          .from('images')
+          .update({ image_description: description.trim() })
+          .eq('id', registrationResult.imageId);
+      }
 
-      // 大概率 upload-image-from-url 已经自动创建 images row
-      // 所以这里直接刷新列表最稳
+      setPendingFile(null);
+      setNewDescription('');
       await loadImages();
 
       alert('New image uploaded successfully!');
@@ -234,21 +243,49 @@ export default function AdminImagesPage() {
             </p>
           </div>
 
-          <label className="inline-flex items-center gap-3 rounded-2xl bg-blue-600 px-5 py-3 text-white font-bold cursor-pointer hover:bg-blue-700 transition">
-            <span>{uploadingNew ? 'Uploading...' : 'Upload New Image'}</span>
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              disabled={uploadingNew}
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                e.currentTarget.value = '';
-                if (!file) return;
-                await handleCreateNewImage(file);
-              }}
-            />
-          </label>
+          {pendingFile ? (
+            <div className="flex flex-col gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 p-4 w-72">
+              <p className="text-sm font-semibold text-zinc-300 truncate">📎 {pendingFile.name}</p>
+              <input
+                type="text"
+                placeholder="Image description (optional)"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleCreateNewImage(pendingFile, newDescription)}
+                  disabled={uploadingNew}
+                  className="flex-1 rounded-xl bg-blue-600 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition"
+                >
+                  {uploadingNew ? 'Uploading...' : 'Confirm Upload'}
+                </button>
+                <button
+                  onClick={() => { setPendingFile(null); setNewDescription(''); }}
+                  disabled={uploadingNew}
+                  className="rounded-xl bg-zinc-800 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-700 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label className="inline-flex items-center gap-3 rounded-2xl bg-blue-600 px-5 py-3 text-white font-bold cursor-pointer hover:bg-blue-700 transition">
+              <span>Upload New Image</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.currentTarget.value = '';
+                  if (!file) return;
+                  setPendingFile(file);
+                }}
+              />
+            </label>
+          )}
         </div>
 
         {images.length === 0 ? (
@@ -273,6 +310,12 @@ export default function AdminImagesPage() {
                   <p className="mb-2 text-[10px] text-zinc-100 font-mono break-all">
                     {img.id}
                   </p>
+
+                  {img.image_description && (
+                    <p className="mb-2 text-xs text-zinc-300 italic">
+                      {img.image_description}
+                    </p>
+                  )}
 
                   <p className="mb-3 text-[11px] text-zinc-100">
                     Public: {img.is_public ? 'Yes' : 'No'} · Common Use:{' '}

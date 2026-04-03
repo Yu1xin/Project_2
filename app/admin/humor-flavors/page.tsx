@@ -10,6 +10,32 @@ type HumorFlavor = {
   description: string | null;
 };
 
+type ExistingStep = {
+  id: string;
+  humor_flavor_id: number;
+  order_by: number;
+  description: string | null;
+  llm_system_prompt: string | null;
+  llm_user_prompt: string | null;
+  llm_temperature: number | null;
+  flavor_slug?: string;
+};
+
+type PendingStep = {
+  key: string;
+  description: string;
+  llm_system_prompt: string;
+  llm_user_prompt: string;
+  llm_temperature: number;
+};
+
+const EMPTY_STEP: Omit<PendingStep, 'key'> = {
+  description: '',
+  llm_system_prompt: '',
+  llm_user_prompt: '',
+  llm_temperature: 0.7,
+};
+
 export default function HumorFlavorsPage() {
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,66 +43,139 @@ export default function HumorFlavorsPage() {
   );
 
   const [flavors, setFlavors] = useState<HumorFlavor[]>([]);
+  const [allSteps, setAllSteps] = useState<ExistingStep[]>([]);
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [pendingSteps, setPendingSteps] = useState<PendingStep[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [showNewStepForm, setShowNewStepForm] = useState(false);
+  const [showMixPanel, setShowMixPanel] = useState(false);
+  const [newStep, setNewStep] = useState(EMPTY_STEP);
 
   async function loadFlavors() {
     const { data, error } = await supabase
       .from('humor_flavors')
       .select('id, slug, description')
       .order('created_datetime_utc', { ascending: false });
-
-    if (error) {
-      console.error(error);
-      alert(error.message);
-      return;
-    }
-
+    if (error) { console.error(error); alert(error.message); return; }
     setFlavors((data as HumorFlavor[]) || []);
+  }
+
+  async function loadAllSteps() {
+    const [stepsRes, flavorsRes] = await Promise.all([
+      supabase
+        .from('humor_flavor_steps')
+        .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature')
+        .order('humor_flavor_id', { ascending: true })
+        .order('order_by', { ascending: true }),
+      supabase.from('humor_flavors').select('id, slug'),
+    ]);
+
+    if (stepsRes.error) { console.error(stepsRes.error); return; }
+
+    const flavorMap = new Map<number, string>();
+    (flavorsRes.data || []).forEach((f: any) => flavorMap.set(f.id, f.slug));
+
+    setAllSteps(
+      (stepsRes.data || []).map((s: any) => ({
+        ...s,
+        flavor_slug: flavorMap.get(s.humor_flavor_id) ?? `Flavor ${s.humor_flavor_id}`,
+      }))
+    );
   }
 
   useEffect(() => {
     loadFlavors();
+    loadAllSteps();
   }, []);
 
-  async function createFlavor() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+  function addNewStep() {
+    setPendingSteps((prev) => [...prev, { key: crypto.randomUUID(), ...newStep }]);
+    setNewStep(EMPTY_STEP);
+    setShowNewStepForm(false);
+  }
 
-    if (!session) {
-      alert('not logged in');
-      return;
-    }
+  function copyExistingStep(step: ExistingStep) {
+    setPendingSteps((prev) => [
+      ...prev,
+      {
+        key: crypto.randomUUID(),
+        description: step.description ?? '',
+        llm_system_prompt: step.llm_system_prompt ?? '',
+        llm_user_prompt: step.llm_user_prompt ?? '',
+        llm_temperature: step.llm_temperature ?? 0.7,
+      },
+    ]);
+  }
 
-    const { error } = await supabase.from('humor_flavors').insert({
-      slug,
-      description,
-      created_by_user_id: session.user.id,
-      modified_by_user_id: session.user.id,
+  function removeStep(key: string) {
+    setPendingSteps((prev) => prev.filter((s) => s.key !== key));
+  }
+
+  function moveStep(key: string, dir: 'up' | 'down') {
+    setPendingSteps((prev) => {
+      const idx = prev.findIndex((s) => s.key === key);
+      const next = [...prev];
+      const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= next.length) return prev;
+      [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+      return next;
     });
+  }
 
-    if (error) {
-      alert(error.message);
-      return;
+  async function createFlavor() {
+    if (!slug.trim()) { alert('Slug is required.'); return; }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { alert('Not logged in.'); return; }
+
+    setCreating(true);
+    try {
+      const { data, error } = await supabase
+        .from('humor_flavors')
+        .insert({
+          slug: slug.trim(),
+          description: description.trim() || null,
+          created_by_user_id: session.user.id,
+          modified_by_user_id: session.user.id,
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+
+      if (pendingSteps.length > 0) {
+        const { error: stepsError } = await supabase
+          .from('humor_flavor_steps')
+          .insert(
+            pendingSteps.map((s, i) => ({
+              humor_flavor_id: data.id,
+              order_by: i + 1,
+              description: s.description || null,
+              llm_system_prompt: s.llm_system_prompt || null,
+              llm_user_prompt: s.llm_user_prompt || null,
+              llm_temperature: s.llm_temperature,
+            }))
+          );
+        if (stepsError) throw stepsError;
+      }
+
+      setSlug('');
+      setDescription('');
+      setPendingSteps([]);
+      await loadFlavors();
+      await loadAllSteps();
+      alert('Flavor created!');
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setCreating(false);
     }
-
-    setSlug('');
-    setDescription('');
-    loadFlavors();
   }
 
   async function deleteFlavor(id: number) {
-    const { error } = await supabase
-      .from('humor_flavors')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
+    const { error } = await supabase.from('humor_flavors').delete().eq('id', id);
+    if (error) { alert(error.message); return; }
     loadFlavors();
   }
 
@@ -84,12 +183,13 @@ export default function HumorFlavorsPage() {
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800">Humor Flavors</h1>
 
-      <div className="border p-4 rounded-lg space-y-3 text-zinc-900 shadow-sm">
+      {/* ── CREATE FORM ── */}
+      <div className="border rounded-xl p-6 space-y-4 bg-white shadow-sm text-zinc-900">
         <h2 className="font-semibold text-lg text-gray-700">Create Flavor</h2>
 
         <input
           className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          placeholder="slug"
+          placeholder="slug (e.g. dark-humor)"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
         />
@@ -97,31 +197,194 @@ export default function HumorFlavorsPage() {
         <textarea
           className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           placeholder="description"
+          rows={2}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
 
+        {/* ── STEPS BUILDER ── */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-700">
+              Steps{pendingSteps.length > 0 ? ` (${pendingSteps.length})` : ''}
+            </h3>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowMixPanel((v) => !v); setShowNewStepForm(false); }}
+                className="px-3 py-1.5 text-sm rounded-lg bg-violet-100 text-violet-700 hover:bg-violet-200 transition font-medium"
+              >
+                + Copy from existing
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowNewStepForm((v) => !v); setShowMixPanel(false); }}
+                className="px-3 py-1.5 text-sm rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition font-medium"
+              >
+                + New step
+              </button>
+            </div>
+          </div>
+
+          {/* Pending steps list */}
+          {pendingSteps.length === 0 && !showNewStepForm && !showMixPanel && (
+            <p className="text-sm text-gray-400 italic">
+              No steps yet — add a new step or copy from existing flavors.
+            </p>
+          )}
+
+          {pendingSteps.map((s, i) => (
+            <div key={s.key} className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-gray-700">
+                  Step {i + 1}{s.description ? ` — ${s.description}` : ''}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => moveStep(s.key, 'up')}
+                    disabled={i === 0}
+                    className="px-2 py-0.5 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-30"
+                  >↑</button>
+                  <button
+                    onClick={() => moveStep(s.key, 'down')}
+                    disabled={i === pendingSteps.length - 1}
+                    className="px-2 py-0.5 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-30"
+                  >↓</button>
+                  <button
+                    onClick={() => removeStep(s.key)}
+                    className="px-2 py-0.5 text-xs rounded bg-red-100 text-red-600 hover:bg-red-200"
+                  >✕</button>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400">Temperature: {s.llm_temperature}</p>
+              {s.llm_system_prompt && (
+                <p className="text-xs text-gray-500 truncate">System: {s.llm_system_prompt}</p>
+              )}
+              {s.llm_user_prompt && (
+                <p className="text-xs text-gray-500 truncate">User: {s.llm_user_prompt}</p>
+              )}
+            </div>
+          ))}
+
+          {/* New step form */}
+          {showNewStepForm && (
+            <div className="border border-blue-200 rounded-xl p-4 bg-blue-50 space-y-3">
+              <h4 className="font-semibold text-blue-800">New Step</h4>
+              <input
+                className="border border-gray-300 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Step description"
+                value={newStep.description}
+                onChange={(e) => setNewStep((p) => ({ ...p, description: e.target.value }))}
+              />
+              <textarea
+                className="border border-gray-300 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="System prompt"
+                rows={3}
+                value={newStep.llm_system_prompt}
+                onChange={(e) => setNewStep((p) => ({ ...p, llm_system_prompt: e.target.value }))}
+              />
+              <textarea
+                className="border border-gray-300 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="User prompt"
+                rows={3}
+                value={newStep.llm_user_prompt}
+                onChange={(e) => setNewStep((p) => ({ ...p, llm_user_prompt: e.target.value }))}
+              />
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-gray-700 font-medium">Temperature</label>
+                <input
+                  type="number"
+                  min={0} max={2} step={0.1}
+                  value={newStep.llm_temperature}
+                  onChange={(e) => setNewStep((p) => ({ ...p, llm_temperature: Number(e.target.value) }))}
+                  className="border border-gray-300 p-1.5 w-24 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={addNewStep}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition"
+                >
+                  Add Step
+                </button>
+                <button
+                  onClick={() => { setShowNewStepForm(false); setNewStep(EMPTY_STEP); }}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-sm transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Mix panel — copy from existing steps */}
+          {showMixPanel && (
+            <div className="border border-violet-200 rounded-xl p-4 bg-violet-50 space-y-3">
+              <h4 className="font-semibold text-violet-800">Copy from existing steps</h4>
+              {allSteps.length === 0 ? (
+                <p className="text-sm text-gray-500">No existing steps found.</p>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {allSteps.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-start justify-between gap-3 border border-violet-100 bg-white rounded-lg p-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-violet-700">
+                          {s.flavor_slug} · Step {s.order_by}
+                        </p>
+                        {s.description && (
+                          <p className="text-xs text-gray-600">{s.description}</p>
+                        )}
+                        {s.llm_system_prompt && (
+                          <p className="text-xs text-gray-400 truncate">System: {s.llm_system_prompt}</p>
+                        )}
+                        {s.llm_user_prompt && (
+                          <p className="text-xs text-gray-400 truncate">User: {s.llm_user_prompt}</p>
+                        )}
+                        <p className="text-xs text-gray-400">Temp: {s.llm_temperature ?? 'N/A'}</p>
+                      </div>
+                      <button
+                        onClick={() => copyExistingStep(s)}
+                        className="shrink-0 px-3 py-1 text-xs bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-medium"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => setShowMixPanel(false)}
+                className="text-sm text-violet-600 hover:underline"
+              >
+                Close
+              </button>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={createFlavor}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+          disabled={creating || !slug.trim()}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition font-medium disabled:opacity-50"
         >
-          Create
+          {creating ? 'Creating...' : 'Create Flavor'}
         </button>
       </div>
 
+      {/* ── EXISTING FLAVORS ── */}
       <div className="space-y-3">
         {flavors.map((flavor) => (
           <div
             key={flavor.id}
-            className="border p-4 rounded-lg text-zinc-900 flex justify-between items-center shadow-sm"
+            className="border p-4 rounded-lg text-zinc-900 flex justify-between items-center shadow-sm bg-white"
           >
             <div>
               <div className="font-semibold text-gray-800">{flavor.slug}</div>
-              <div className="text-sm text-gray-500">
-                {flavor.description}
-              </div>
+              <div className="text-sm text-gray-500">{flavor.description}</div>
             </div>
-
             <div className="flex gap-2">
               <Link
                 href={`/admin/humor-flavors/${flavor.id}`}
@@ -129,7 +392,6 @@ export default function HumorFlavorsPage() {
               >
                 Open
               </Link>
-
               <button
                 onClick={() => deleteFlavor(flavor.id)}
                 className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition"

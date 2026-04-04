@@ -9,7 +9,7 @@ type CaptionRow = {
   image_id: string | null;
   humor_flavor_id: number | null;
   created_by_user_id: string | null;
-  images?: { url: string | null } | null;
+  images?: { url: string | null }[] | null;
 };
 
 export default function AdminCaptionsInfoPage() {
@@ -93,9 +93,9 @@ export default function AdminCaptionsInfoPage() {
                       {caption.content || '-'}
                     </td>
                     <td className="px-4 py-3">
-                      {caption.images?.url ? (
+                      {caption.images?.[0]?.url ? (
                         <img
-                          src={caption.images.url}
+                          src={caption.images[0].url!}
                           alt="Meme"
                           className="w-16 h-16 object-cover rounded-lg border border-zinc-700"
                         />

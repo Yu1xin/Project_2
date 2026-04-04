@@ -8,6 +8,7 @@ type Flavor = {
   id: number;
   slug: string | null;
   description: string | null;
+  created_by_user_id: string | null;
 };
 
 type Step = {
@@ -77,6 +78,7 @@ export default function FlavorDetailPage() {
     []
   );
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [flavor, setFlavor] = useState<Flavor | null>(null);
   const [editingFlavor, setEditingFlavor] = useState(false);
   const [flavorDraft, setFlavorDraft] = useState<{ slug: string; description: string }>({ slug: '', description: '' });
@@ -114,7 +116,7 @@ export default function FlavorDetailPage() {
     setLoading(true);
 
     const [flavorRes, stepsRes] = await Promise.all([
-      supabase.from('humor_flavors').select('id, slug, description').eq('id', flavorId).single(),
+      supabase.from('humor_flavors').select('id, slug, description, created_by_user_id').eq('id', flavorId).single(),
       supabase
         .from('humor_flavor_steps')
         .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature, llm_model_id, llm_input_type_id, llm_output_type_id, humor_flavor_step_type_id')
@@ -148,7 +150,12 @@ export default function FlavorDetailPage() {
     setSavingFlavor(false);
   }
 
-  useEffect(() => { loadSteps(); }, [flavorId]);
+  useEffect(() => {
+    loadSteps();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
+  }, [flavorId]);
 
   function startEdit(step: Step) {
     setEditingId(step.id);
@@ -281,6 +288,7 @@ export default function FlavorDetailPage() {
   const inputCls = "w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
   const selectCls = "border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
   const labelCls = "block text-xs font-semibold text-gray-500 dark:text-zinc-400 mb-1";
+  const isOwner = !!currentUserId && flavor?.created_by_user_id === currentUserId;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-zinc-900 p-8 space-y-6">
@@ -326,10 +334,12 @@ export default function FlavorDetailPage() {
                 <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">{flavor.description}</p>
               )}
             </div>
-            <button
-              onClick={() => { setFlavorDraft({ slug: flavor?.slug ?? '', description: flavor?.description ?? '' }); setEditingFlavor(true); }}
-              className="shrink-0 px-3 py-1.5 text-xs bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 font-semibold rounded-lg transition"
-            >Edit name &amp; description</button>
+            {isOwner && (
+              <button
+                onClick={() => { setFlavorDraft({ slug: flavor?.slug ?? '', description: flavor?.description ?? '' }); setEditingFlavor(true); }}
+                className="shrink-0 px-3 py-1.5 text-xs bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 font-semibold rounded-lg transition"
+              >Edit name &amp; description</button>
+            )}
           </div>
         )}
       </div>
@@ -338,7 +348,7 @@ export default function FlavorDetailPage() {
         <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">Steps</h2>
         <div className="flex items-center gap-3">
           <p className="text-sm text-gray-500 dark:text-zinc-400">{steps.length} step{steps.length !== 1 ? 's' : ''}</p>
-          {orderDirty && (
+          {isOwner && orderDirty && (
             <>
               <button
                 onClick={saveOrder}
@@ -356,16 +366,18 @@ export default function FlavorDetailPage() {
               </button>
             </>
           )}
-          <button
-            onClick={() => { setShowAddForm((v) => !v); setEditingId(null); }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"
-          >
-            {showAddForm ? 'Cancel' : '+ Add Step'}
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => { setShowAddForm((v) => !v); setEditingId(null); }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"
+            >
+              {showAddForm ? 'Cancel' : '+ Add Step'}
+            </button>
+          )}
         </div>
       </div>
 
-      {showAddForm && (
+      {isOwner && showAddForm && (
         <div className="border border-blue-200 dark:border-blue-800 rounded-xl bg-blue-50 dark:bg-blue-950/30 p-5 space-y-3">
           <h2 className="font-semibold text-blue-800 dark:text-blue-300">New Step {steps.length + 1}</h2>
 
@@ -429,20 +441,24 @@ export default function FlavorDetailPage() {
                   <span className="font-bold text-gray-800 dark:text-zinc-200">Step {idx + 1}</span>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => moveStep(step.id, 'up')}
-                      disabled={idx === 0 || reordering || isEditing}
-                      className="px-2 py-1 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 disabled:opacity-30 transition"
-                      title="Move up"
-                    >↑</button>
-                    <button
-                      onClick={() => moveStep(step.id, 'down')}
-                      disabled={idx === steps.length - 1 || reordering || isEditing}
-                      className="px-2 py-1 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 disabled:opacity-30 transition"
-                      title="Move down"
-                    >↓</button>
+                    {isOwner && (
+                      <>
+                        <button
+                          onClick={() => moveStep(step.id, 'up')}
+                          disabled={idx === 0 || reordering || isEditing}
+                          className="px-2 py-1 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 disabled:opacity-30 transition"
+                          title="Move up"
+                        >↑</button>
+                        <button
+                          onClick={() => moveStep(step.id, 'down')}
+                          disabled={idx === steps.length - 1 || reordering || isEditing}
+                          className="px-2 py-1 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 disabled:opacity-30 transition"
+                          title="Move down"
+                        >↓</button>
+                      </>
+                    )}
 
-                    {isEditing ? (
+                    {isOwner && (isEditing ? (
                       <>
                         <button onClick={() => saveEdit(step.id)} disabled={saving} className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
                         <button onClick={cancelEdit} disabled={saving} className="px-3 py-1 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-zinc-300 transition">Cancel</button>
@@ -452,7 +468,7 @@ export default function FlavorDetailPage() {
                         <button onClick={() => startEdit(step)} className="px-3 py-1 text-xs rounded bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 font-semibold transition">Edit</button>
                         <button onClick={() => deleteStep(step.id)} className="px-3 py-1 text-xs rounded bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-semibold transition">Delete</button>
                       </>
-                    )}
+                    ))}
                   </div>
                 </div>
 

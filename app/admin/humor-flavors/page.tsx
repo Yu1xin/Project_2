@@ -9,6 +9,7 @@ type HumorFlavor = {
   slug: string;
   description: string | null;
   is_pinned: boolean;
+  created_by_user_id: string | null;
 };
 
 type ExistingStep = {
@@ -94,6 +95,7 @@ export default function HumorFlavorsPage() {
   );
 
   const [flavors, setFlavors] = useState<HumorFlavor[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [allSteps, setAllSteps] = useState<ExistingStep[]>([]);
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
@@ -107,7 +109,7 @@ export default function HumorFlavorsPage() {
   async function loadFlavors() {
     const { data, error } = await supabase
       .from('humor_flavors')
-      .select('id, slug, description, is_pinned')
+      .select('id, slug, description, is_pinned, created_by_user_id')
       .order('is_pinned', { ascending: false })
       .order('created_datetime_utc', { ascending: false });
     if (error) { console.error(error); alert(error.message); return; }
@@ -140,6 +142,9 @@ export default function HumorFlavorsPage() {
   useEffect(() => {
     loadFlavors();
     loadAllSteps();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
   }, []);
 
   function addNewStep() {
@@ -564,29 +569,36 @@ export default function HumorFlavorsPage() {
               </div>
               <div className="text-sm text-gray-500 dark:text-zinc-400">{flavor.description}</div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => togglePin(flavor.id, flavor.is_pinned)}
-                className={`px-3 py-2 rounded transition text-sm font-medium ${
-                  flavor.is_pinned
-                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                {flavor.is_pinned ? 'Unpin' : 'Pin'}
-              </button>
+            <div className="flex gap-2 items-center">
+              {currentUserId && flavor.created_by_user_id !== currentUserId && (
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">not yours</span>
+              )}
+              {flavor.created_by_user_id === currentUserId && (
+                <button
+                  onClick={() => togglePin(flavor.id, flavor.is_pinned)}
+                  className={`px-3 py-2 rounded transition text-sm font-medium ${
+                    flavor.is_pinned
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  {flavor.is_pinned ? 'Unpin' : 'Pin'}
+                </button>
+              )}
               <Link
                 href={`/admin/humor-flavors/${flavor.id}`}
                 className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition"
               >
                 Open
               </Link>
-              <button
-                onClick={() => deleteFlavor(flavor.id)}
-                className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition"
-              >
-                Delete
-              </button>
+              {flavor.created_by_user_id === currentUserId && (
+                <button
+                  onClick={() => deleteFlavor(flavor.id)}
+                  className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         ))}

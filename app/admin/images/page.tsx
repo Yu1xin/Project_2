@@ -17,6 +17,7 @@ type ImageRow = {
 
 export default function AdminImagesPage() {
   const [images, setImages] = useState<ImageRow[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadingNew, setUploadingNew] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
@@ -50,6 +51,9 @@ export default function AdminImagesPage() {
 
   useEffect(() => {
     loadImages();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
   }, []);
 
   async function getCurrentUser() {
@@ -316,37 +320,41 @@ export default function AdminImagesPage() {
                     {img.is_common_use ? 'Yes' : 'No'}
                   </p>
 
-                  <div className="flex flex-col gap-2">
-                    <label
-                      className={`w-full text-center py-2 rounded-xl font-bold text-sm transition cursor-pointer ${
-                        isReplacing
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'
-                      }`}
-                    >
-                      {isReplacing ? 'Replacing...' : 'Replace Image'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={isReplacing}
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          e.currentTarget.value = '';
-                          if (!file) return;
-                          await handleReplaceImage(img.id, file);
-                        }}
-                      />
-                    </label>
+                  {currentUserId && img.created_by_user_id !== currentUserId ? (
+                    <p className="text-xs text-zinc-500 italic text-center mt-2">not yours</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <label
+                        className={`w-full text-center py-2 rounded-xl font-bold text-sm transition cursor-pointer ${
+                          isReplacing
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'
+                        }`}
+                      >
+                        {isReplacing ? 'Replacing...' : 'Replace Image'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={isReplacing}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            e.currentTarget.value = '';
+                            if (!file) return;
+                            await handleReplaceImage(img.id, file);
+                          }}
+                        />
+                      </label>
 
-                    <button
-                      onClick={() => deleteImage(img.id)}
-                      disabled={isDeleting}
-                      className="w-full bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-all text-sm disabled:opacity-50"
-                    >
-                      {isDeleting ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => deleteImage(img.id)}
+                        disabled={isDeleting}
+                        className="w-full bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-all text-sm disabled:opacity-50"
+                      >
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}

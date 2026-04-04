@@ -42,6 +42,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from 'recharts';
+
 import { RegressionResult, FactorCard } from '@/types/analytics';
 
 type LeaderboardCard = {
@@ -64,7 +65,7 @@ type PlatformStats = {
   minLikes: number;
 };
 
-type DailyActivity = { day: string; captions: number; votes: number };
+type DailyActivity = { day: string; captions: number; votes: number; newUsers: number; newImages: number; newFlavors: number };
 
 type FlavorPerformance = { slug: string; captionCount: number; avgLikes: number };
 
@@ -345,19 +346,26 @@ export default function AdminAnalytics() {
           {/* ── (2) ACTIVITY CHART ── */}
           {dailyActivity.length > 0 && (
             <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 mb-8">
-              <h3 className="text-sm font-bold uppercase tracking-wide text-blue-400 mb-4">📅 Activity Over Last 30 Days</h3>
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={dailyActivity} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+              <h3 className="text-sm font-bold uppercase tracking-wide text-blue-400 mb-1">📅 Activity Over Last 30 Days</h3>
+              <p className="text-[11px] text-zinc-500 mb-4">Left axis: votes / users / images / flavors &nbsp;·&nbsp; Right axis: captions</p>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dailyActivity} margin={{ top: 4, right: 48, left: 0, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
                   <XAxis dataKey="day" tick={{ fill: '#a1a1aa', fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-                  <YAxis tick={{ fill: '#a1a1aa', fontSize: 11 }} />
+                  {/* Left Y-axis: small numbers */}
+                  <YAxis yAxisId="left" tick={{ fill: '#a1a1aa', fontSize: 11 }} width={36} />
+                  {/* Right Y-axis: captions (large numbers) */}
+                  <YAxis yAxisId="right" orientation="right" tick={{ fill: '#60a5fa', fontSize: 11 }} width={48} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: 12 }}
                     labelStyle={{ color: '#e4e4e7' }}
                   />
                   <Legend wrapperStyle={{ color: '#a1a1aa', fontSize: 12 }} />
-                  <Line type="monotone" dataKey="captions" stroke="#60a5fa" strokeWidth={2} dot={false} name="Captions Created" />
-                  <Line type="monotone" dataKey="votes" stroke="#34d399" strokeWidth={2} dot={false} name="Votes Cast" />
+                  <Line yAxisId="left"  type="monotone" dataKey="votes"      stroke="#34d399" strokeWidth={2} dot={false} name="Votes" />
+                  <Line yAxisId="left"  type="monotone" dataKey="newUsers"   stroke="#fbbf24" strokeWidth={2} dot={false} name="New Users" />
+                  <Line yAxisId="left"  type="monotone" dataKey="newImages"  stroke="#22d3ee" strokeWidth={2} dot={false} name="New Images" />
+                  <Line yAxisId="left"  type="monotone" dataKey="newFlavors" stroke="#f472b6" strokeWidth={2} dot={false} name="New Flavors" />
+                  <Line yAxisId="right" type="monotone" dataKey="captions"   stroke="#60a5fa" strokeWidth={2.5} dot={false} name="Captions Created" />
                 </LineChart>
               </ResponsiveContainer>
             </div>

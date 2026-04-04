@@ -200,7 +200,7 @@ export async function GET() {
 
   const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [captions, flavors, profiles, votesRes, , imageCountRes, dailyVotesRes] = await Promise.all([
+  const [captions, flavors, profiles, votesRes, , imageCountRes, dailyVotesRes, dailyUsersRes, dailyImagesRes, dailyFlavorsRes] = await Promise.all([
     fetchAllRows<CaptionRow>(supabase, 'captions', 'id, like_count, content, image_id, humor_flavor_id, profile_id, created_datetime_utc'),
     fetchAllRows<FlavorRow>(supabase, 'humor_flavors', 'id, description, slug'),
     fetchAllRows<ProfileRow>(supabase, 'profiles', 'id, first_name, last_name'),
@@ -208,6 +208,9 @@ export async function GET() {
     Promise.resolve(null),
     supabase.from('images').select('id', { count: 'exact', head: true }),
     supabase.from('caption_votes').select('created_datetime_utc, vote_value').gte('created_datetime_utc', since30d),
+    supabase.from('profiles').select('created_datetime_utc').gte('created_datetime_utc', since30d),
+    supabase.from('images').select('created_datetime_utc').gte('created_datetime_utc', since30d),
+    supabase.from('humor_flavors').select('created_datetime_utc').gte('created_datetime_utc', since30d),
   ]);
 
 
@@ -292,11 +295,36 @@ export async function GET() {
     const day = toDay(v.created_datetime_utc);
     votesByDay.set(day, (votesByDay.get(day) ?? 0) + 1);
   }
-  const allDays = Array.from(new Set([...captionsByDay.keys(), ...votesByDay.keys()])).sort();
+  const usersByDay = new Map<string, number>();
+  for (const r of (dailyUsersRes.data ?? [])) {
+    if (!r.created_datetime_utc) continue;
+    const day = toDay(r.created_datetime_utc);
+    usersByDay.set(day, (usersByDay.get(day) ?? 0) + 1);
+  }
+  const imagesByDay = new Map<string, number>();
+  for (const r of (dailyImagesRes.data ?? [])) {
+    if (!r.created_datetime_utc) continue;
+    const day = toDay(r.created_datetime_utc);
+    imagesByDay.set(day, (imagesByDay.get(day) ?? 0) + 1);
+  }
+  const flavorsByDay = new Map<string, number>();
+  for (const r of (dailyFlavorsRes.data ?? [])) {
+    if (!r.created_datetime_utc) continue;
+    const day = toDay(r.created_datetime_utc);
+    flavorsByDay.set(day, (flavorsByDay.get(day) ?? 0) + 1);
+  }
+
+  const allDays = Array.from(new Set([
+    ...captionsByDay.keys(), ...votesByDay.keys(),
+    ...usersByDay.keys(), ...imagesByDay.keys(), ...flavorsByDay.keys(),
+  ])).sort();
   const dailyActivity = allDays.map(day => ({
     day,
     captions: captionsByDay.get(day) ?? 0,
     votes: votesByDay.get(day) ?? 0,
+    newUsers: usersByDay.get(day) ?? 0,
+    newImages: imagesByDay.get(day) ?? 0,
+    newFlavors: flavorsByDay.get(day) ?? 0,
   }));
 
   // ── Flavor usage vs performance ──

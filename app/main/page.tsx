@@ -153,14 +153,13 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
   ];
 
   return (
-    <div className={`fixed right-4 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ${collapsed ? 'w-10' : 'w-56'}`}>
+    <div className={`fixed right-4 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ${collapsed ? 'w-44' : 'w-56'}`}>
       {collapsed ? (
         <button
           onClick={() => setCollapsed(false)}
-          className="w-10 h-10 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center text-lg hover:bg-violet-700 transition-all"
-          title="Duplicate the Humor"
+          className="w-full rounded-2xl border border-violet-300/30 dark:border-violet-700/40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm shadow-xl px-3 py-2.5 text-left hover:border-violet-400 dark:hover:border-violet-500 transition-all"
         >
-          🎭
+          <span className="text-xs font-black text-violet-600 dark:text-violet-300 uppercase tracking-wide">want to make your own?</span>
         </button>
       ) : (
         <div className="rounded-2xl border border-violet-300/30 dark:border-violet-700/40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm shadow-2xl p-4">
@@ -228,9 +227,12 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
 
           <button
             onClick={() => router.push('/upload')}
-            className="w-full mt-2 rounded-xl border border-zinc-200 dark:border-zinc-700 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-zinc-700 dark:hover:text-zinc-200 transition-all"
+            className="w-full mt-2 rounded-xl border border-violet-300/30 dark:border-violet-700/40 py-2.5 px-3 text-left transition-all hover:border-violet-400 dark:hover:border-violet-500 hover:bg-violet-50/50 dark:hover:bg-violet-900/10"
           >
-            ✏️ Start from scratch
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">✏️</span>
+              <span className="text-xs font-black text-violet-600 dark:text-violet-300 uppercase tracking-wide">Start from Scratch</span>
+            </div>
           </button>
         </div>
       )}

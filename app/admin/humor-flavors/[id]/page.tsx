@@ -275,28 +275,32 @@ export default function FlavorDetailPage() {
   }
 
   if (loading) {
-    return <div className="p-8 text-gray-600">Loading steps...</div>;
+    return <div className="p-8 text-gray-600 dark:text-zinc-400">Loading steps...</div>;
   }
 
+  const inputCls = "w-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
+  const selectCls = "border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
+  const labelCls = "block text-xs font-semibold text-gray-500 dark:text-zinc-400 mb-1";
+
   return (
-    <div className="min-h-screen bg-gray-100 p-8 space-y-6">
+    <div className="min-h-screen bg-gray-100 dark:bg-zinc-900 p-8 space-y-6">
       {/* Flavor metadata */}
-      <div className="border border-gray-200 rounded-xl bg-white shadow-sm p-5">
+      <div className="border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-950 shadow-sm p-5">
         {editingFlavor ? (
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Name (slug)</label>
+              <label className={labelCls}>Name (slug)</label>
               <input
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={inputCls}
                 value={flavorDraft.slug}
                 onChange={(e) => setFlavorDraft((d) => ({ ...d, slug: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Description</label>
+              <label className={labelCls}>Description</label>
               <textarea
                 rows={3}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={inputCls}
                 value={flavorDraft.description}
                 onChange={(e) => setFlavorDraft((d) => ({ ...d, description: e.target.value }))}
               />
@@ -310,30 +314,30 @@ export default function FlavorDetailPage() {
               <button
                 onClick={() => setEditingFlavor(false)}
                 disabled={savingFlavor}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-lg transition"
+                className="px-4 py-2 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-zinc-300 text-sm rounded-lg transition"
               >Cancel</button>
             </div>
           </div>
         ) : (
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{flavor?.slug ?? `Flavor ${flavorId}`}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">{flavor?.slug ?? `Flavor ${flavorId}`}</h1>
               {flavor?.description && (
-                <p className="mt-1 text-sm text-gray-500">{flavor.description}</p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">{flavor.description}</p>
               )}
             </div>
             <button
               onClick={() => { setFlavorDraft({ slug: flavor?.slug ?? '', description: flavor?.description ?? '' }); setEditingFlavor(true); }}
-              className="shrink-0 px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition"
+              className="shrink-0 px-3 py-1.5 text-xs bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 font-semibold rounded-lg transition"
             >Edit name &amp; description</button>
           </div>
         )}
       </div>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Steps</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">Steps</h2>
         <div className="flex items-center gap-3">
-          <p className="text-sm text-gray-500">{steps.length} step{steps.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-gray-500 dark:text-zinc-400">{steps.length} step{steps.length !== 1 ? 's' : ''}</p>
           {orderDirty && (
             <>
               <button
@@ -346,7 +350,7 @@ export default function FlavorDetailPage() {
               <button
                 onClick={() => { loadSteps(); }}
                 disabled={reordering}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-lg transition disabled:opacity-50"
+                className="px-4 py-2 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-zinc-300 text-sm rounded-lg transition disabled:opacity-50"
               >
                 Discard
               </button>
@@ -362,94 +366,49 @@ export default function FlavorDetailPage() {
       </div>
 
       {showAddForm && (
-        <div className="border border-blue-200 rounded-xl bg-blue-50 p-5 space-y-3">
-          <h2 className="font-semibold text-blue-800">New Step {steps.length + 1}</h2>
+        <div className="border border-blue-200 dark:border-blue-800 rounded-xl bg-blue-50 dark:bg-blue-950/30 p-5 space-y-3">
+          <h2 className="font-semibold text-blue-800 dark:text-blue-300">New Step {steps.length + 1}</h2>
 
-          <input
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Step description"
-            value={addDraft.description}
-            onChange={(e) => setAddDraft((d) => ({ ...d, description: e.target.value }))}
-          />
-          <textarea
-            rows={4}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="System prompt"
-            value={addDraft.llm_system_prompt}
-            onChange={(e) => setAddDraft((d) => ({ ...d, llm_system_prompt: e.target.value }))}
-          />
-          <textarea
-            rows={4}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="User prompt"
-            value={addDraft.llm_user_prompt}
-            onChange={(e) => setAddDraft((d) => ({ ...d, llm_user_prompt: e.target.value }))}
-          />
+          <input className={inputCls} placeholder="Step description" value={addDraft.description} onChange={(e) => setAddDraft((d) => ({ ...d, description: e.target.value }))} />
+          <textarea rows={4} className={inputCls} placeholder="System prompt" value={addDraft.llm_system_prompt} onChange={(e) => setAddDraft((d) => ({ ...d, llm_system_prompt: e.target.value }))} />
+          <textarea rows={4} className={inputCls} placeholder="User prompt" value={addDraft.llm_user_prompt} onChange={(e) => setAddDraft((d) => ({ ...d, llm_user_prompt: e.target.value }))} />
 
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Temperature</label>
-              <input
-                type="number" min={0} max={2} step={0.1}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={addDraft.llm_temperature}
-                onChange={(e) => setAddDraft((d) => ({ ...d, llm_temperature: Number(e.target.value) }))}
-              />
+              <label className={labelCls}>Temperature</label>
+              <input type="number" min={0} max={2} step={0.1} className={`${selectCls} w-24`} value={addDraft.llm_temperature} onChange={(e) => setAddDraft((d) => ({ ...d, llm_temperature: Number(e.target.value) }))} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Model</label>
-              <select
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={addDraft.llm_model_id}
-                onChange={(e) => setAddDraft((d) => ({ ...d, llm_model_id: Number(e.target.value) }))}
-              >
+              <label className={labelCls}>Model</label>
+              <select className={selectCls} value={addDraft.llm_model_id} onChange={(e) => setAddDraft((d) => ({ ...d, llm_model_id: Number(e.target.value) }))}>
                 {LLM_MODELS.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Input type</label>
-              <select
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={addDraft.llm_input_type_id}
-                onChange={(e) => setAddDraft((d) => ({ ...d, llm_input_type_id: Number(e.target.value) }))}
-              >
+              <label className={labelCls}>Input type</label>
+              <select className={selectCls} value={addDraft.llm_input_type_id} onChange={(e) => setAddDraft((d) => ({ ...d, llm_input_type_id: Number(e.target.value) }))}>
                 {INPUT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Output type</label>
-              <select
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={addDraft.llm_output_type_id}
-                onChange={(e) => setAddDraft((d) => ({ ...d, llm_output_type_id: Number(e.target.value) }))}
-              >
+              <label className={labelCls}>Output type</label>
+              <select className={selectCls} value={addDraft.llm_output_type_id} onChange={(e) => setAddDraft((d) => ({ ...d, llm_output_type_id: Number(e.target.value) }))}>
                 {OUTPUT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Step type</label>
-              <select
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={addDraft.humor_flavor_step_type_id}
-                onChange={(e) => setAddDraft((d) => ({ ...d, humor_flavor_step_type_id: Number(e.target.value) }))}
-              >
+              <label className={labelCls}>Step type</label>
+              <select className={selectCls} value={addDraft.humor_flavor_step_type_id} onChange={(e) => setAddDraft((d) => ({ ...d, humor_flavor_step_type_id: Number(e.target.value) }))}>
                 {STEP_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
               </select>
             </div>
           </div>
 
           <div className="flex gap-2 pt-1">
-            <button
-              onClick={addStep}
-              disabled={adding}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition disabled:opacity-50"
-            >
+            <button onClick={addStep} disabled={adding} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition disabled:opacity-50">
               {adding ? 'Adding...' : 'Add Step'}
             </button>
-            <button
-              onClick={() => setShowAddForm(false)}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition"
-            >
+            <button onClick={() => setShowAddForm(false)} className="px-4 py-2 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-zinc-300 rounded-lg text-sm transition">
               Cancel
             </button>
           </div>
@@ -457,56 +416,41 @@ export default function FlavorDetailPage() {
       )}
 
       {steps.length === 0 ? (
-        <div className="text-gray-500 text-lg">No steps found for this flavor.</div>
+        <div className="text-gray-500 dark:text-zinc-400 text-lg">No steps found for this flavor.</div>
       ) : (
         <div className="space-y-4">
           {steps.map((step, idx) => {
             const isEditing = editingId === step.id;
 
             return (
-              <div key={step.id} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+              <div key={step.id} className="border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
                 {/* Step header */}
-                <div className="flex items-center justify-between bg-gray-50 px-5 py-3 border-b border-gray-200">
-                  <span className="font-bold text-gray-800">Step {idx + 1}</span>
+                <div className="flex items-center justify-between bg-gray-50 dark:bg-zinc-900 px-5 py-3 border-b border-gray-200 dark:border-zinc-700">
+                  <span className="font-bold text-gray-800 dark:text-zinc-200">Step {idx + 1}</span>
 
                   <div className="flex items-center gap-2">
-                    {/* Reorder buttons */}
                     <button
                       onClick={() => moveStep(step.id, 'up')}
                       disabled={idx === 0 || reordering || isEditing}
-                      className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-30 transition"
+                      className="px-2 py-1 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 disabled:opacity-30 transition"
                       title="Move up"
                     >↑</button>
                     <button
                       onClick={() => moveStep(step.id, 'down')}
                       disabled={idx === steps.length - 1 || reordering || isEditing}
-                      className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-30 transition"
+                      className="px-2 py-1 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 disabled:opacity-30 transition"
                       title="Move down"
                     >↓</button>
 
                     {isEditing ? (
                       <>
-                        <button
-                          onClick={() => saveEdit(step.id)}
-                          disabled={saving}
-                          className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-50"
-                        >{saving ? 'Saving...' : 'Save'}</button>
-                        <button
-                          onClick={cancelEdit}
-                          disabled={saving}
-                          className="px-3 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 transition"
-                        >Cancel</button>
+                        <button onClick={() => saveEdit(step.id)} disabled={saving} className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
+                        <button onClick={cancelEdit} disabled={saving} className="px-3 py-1 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-zinc-300 transition">Cancel</button>
                       </>
                     ) : (
                       <>
-                        <button
-                          onClick={() => startEdit(step)}
-                          className="px-3 py-1 text-xs rounded bg-green-100 hover:bg-green-200 text-green-700 font-semibold transition"
-                        >Edit</button>
-                        <button
-                          onClick={() => deleteStep(step.id)}
-                          className="px-3 py-1 text-xs rounded bg-red-100 hover:bg-red-200 text-red-600 font-semibold transition"
-                        >Delete</button>
+                        <button onClick={() => startEdit(step)} className="px-3 py-1 text-xs rounded bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 font-semibold transition">Edit</button>
+                        <button onClick={() => deleteStep(step.id)} className="px-3 py-1 text-xs rounded bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-semibold transition">Delete</button>
                       </>
                     )}
                   </div>
@@ -517,81 +461,43 @@ export default function FlavorDetailPage() {
                   {isEditing ? (
                     <>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Description</label>
-                        <input
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          value={editDraft.description ?? ''}
-                          onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))}
-                        />
+                        <label className={labelCls}>Description</label>
+                        <input className={inputCls} value={editDraft.description ?? ''} onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))} />
                       </div>
-
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">System Prompt</label>
-                        <textarea
-                          rows={5}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          value={editDraft.llm_system_prompt ?? ''}
-                          onChange={(e) => setEditDraft((d) => ({ ...d, llm_system_prompt: e.target.value }))}
-                        />
+                        <label className={labelCls}>System Prompt</label>
+                        <textarea rows={5} className={inputCls} value={editDraft.llm_system_prompt ?? ''} onChange={(e) => setEditDraft((d) => ({ ...d, llm_system_prompt: e.target.value }))} />
                       </div>
-
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">User Prompt</label>
-                        <textarea
-                          rows={5}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          value={editDraft.llm_user_prompt ?? ''}
-                          onChange={(e) => setEditDraft((d) => ({ ...d, llm_user_prompt: e.target.value }))}
-                        />
+                        <label className={labelCls}>User Prompt</label>
+                        <textarea rows={5} className={inputCls} value={editDraft.llm_user_prompt ?? ''} onChange={(e) => setEditDraft((d) => ({ ...d, llm_user_prompt: e.target.value }))} />
                       </div>
-
                       <div className="flex flex-wrap gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Temperature</label>
-                          <input
-                            type="number" min={0} max={2} step={0.1}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            value={editDraft.llm_temperature ?? ''}
-                            onChange={(e) => setEditDraft((d) => ({ ...d, llm_temperature: Number(e.target.value) }))}
-                          />
+                          <label className={labelCls}>Temperature</label>
+                          <input type="number" min={0} max={2} step={0.1} className={`${selectCls} w-24`} value={editDraft.llm_temperature ?? ''} onChange={(e) => setEditDraft((d) => ({ ...d, llm_temperature: Number(e.target.value) }))} />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Model</label>
-                          <select
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            value={editDraft.llm_model_id ?? ''}
-                            onChange={(e) => setEditDraft((d) => ({ ...d, llm_model_id: Number(e.target.value) }))}
-                          >
+                          <label className={labelCls}>Model</label>
+                          <select className={selectCls} value={editDraft.llm_model_id ?? ''} onChange={(e) => setEditDraft((d) => ({ ...d, llm_model_id: Number(e.target.value) }))}>
                             {LLM_MODELS.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Input type</label>
-                          <select
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            value={editDraft.llm_input_type_id ?? ''}
-                            onChange={(e) => setEditDraft((d) => ({ ...d, llm_input_type_id: Number(e.target.value) }))}
-                          >
+                          <label className={labelCls}>Input type</label>
+                          <select className={selectCls} value={editDraft.llm_input_type_id ?? ''} onChange={(e) => setEditDraft((d) => ({ ...d, llm_input_type_id: Number(e.target.value) }))}>
                             {INPUT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Output type</label>
-                          <select
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            value={editDraft.llm_output_type_id ?? ''}
-                            onChange={(e) => setEditDraft((d) => ({ ...d, llm_output_type_id: Number(e.target.value) }))}
-                          >
+                          <label className={labelCls}>Output type</label>
+                          <select className={selectCls} value={editDraft.llm_output_type_id ?? ''} onChange={(e) => setEditDraft((d) => ({ ...d, llm_output_type_id: Number(e.target.value) }))}>
                             {OUTPUT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Step type</label>
-                          <select
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            value={editDraft.humor_flavor_step_type_id ?? ''}
-                            onChange={(e) => setEditDraft((d) => ({ ...d, humor_flavor_step_type_id: Number(e.target.value) }))}
-                          >
+                          <label className={labelCls}>Step type</label>
+                          <select className={selectCls} value={editDraft.humor_flavor_step_type_id ?? ''} onChange={(e) => setEditDraft((d) => ({ ...d, humor_flavor_step_type_id: Number(e.target.value) }))}>
                             {STEP_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                           </select>
                         </div>
@@ -600,25 +506,25 @@ export default function FlavorDetailPage() {
                   ) : (
                     <>
                       {step.description && (
-                        <p className="text-sm text-gray-700"><span className="font-semibold">Description:</span> {step.description}</p>
+                        <p className="text-sm text-gray-700 dark:text-zinc-300"><span className="font-semibold">Description:</span> {step.description}</p>
                       )}
                       <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Temp: {step.llm_temperature ?? 'N/A'}</span>
-                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Model: {LLM_MODELS.find((m) => m.id === step.llm_model_id)?.name ?? step.llm_model_id ?? 'N/A'}</span>
-                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Input: {INPUT_TYPES.find((t) => t.id === step.llm_input_type_id)?.label ?? 'N/A'}</span>
-                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Output: {OUTPUT_TYPES.find((t) => t.id === step.llm_output_type_id)?.label ?? 'N/A'}</span>
-                        <span className="bg-gray-100 rounded px-2 py-1 text-gray-600">Type: {STEP_TYPES.find((t) => t.id === step.humor_flavor_step_type_id)?.label ?? 'N/A'}</span>
+                        <span className="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 text-gray-600 dark:text-zinc-400">Temp: {step.llm_temperature ?? 'N/A'}</span>
+                        <span className="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 text-gray-600 dark:text-zinc-400">Model: {LLM_MODELS.find((m) => m.id === step.llm_model_id)?.name ?? step.llm_model_id ?? 'N/A'}</span>
+                        <span className="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 text-gray-600 dark:text-zinc-400">Input: {INPUT_TYPES.find((t) => t.id === step.llm_input_type_id)?.label ?? 'N/A'}</span>
+                        <span className="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 text-gray-600 dark:text-zinc-400">Output: {OUTPUT_TYPES.find((t) => t.id === step.llm_output_type_id)?.label ?? 'N/A'}</span>
+                        <span className="bg-gray-100 dark:bg-zinc-800 rounded px-2 py-1 text-gray-600 dark:text-zinc-400">Type: {STEP_TYPES.find((t) => t.id === step.humor_flavor_step_type_id)?.label ?? 'N/A'}</span>
                       </div>
                       {step.llm_system_prompt && (
                         <div>
-                          <div className="text-xs font-semibold text-gray-500 mb-1">System Prompt</div>
-                          <pre className="whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 border border-gray-200 p-3 rounded-lg overflow-x-auto">{step.llm_system_prompt}</pre>
+                          <div className={labelCls}>System Prompt</div>
+                          <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-zinc-200 bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 p-3 rounded-lg overflow-x-auto">{step.llm_system_prompt}</pre>
                         </div>
                       )}
                       {step.llm_user_prompt && (
                         <div>
-                          <div className="text-xs font-semibold text-gray-500 mb-1">User Prompt</div>
-                          <pre className="whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 border border-gray-200 p-3 rounded-lg overflow-x-auto">{step.llm_user_prompt}</pre>
+                          <div className={labelCls}>User Prompt</div>
+                          <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-zinc-200 bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 p-3 rounded-lg overflow-x-auto">{step.llm_user_prompt}</pre>
                         </div>
                       )}
                     </>

@@ -16,6 +16,7 @@ type DashboardButton = {
 
 export default function MainPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   const supabase = useMemo(
     () =>
@@ -145,8 +146,12 @@ export default function MainPage() {
 
   ];
 
+  const q = search.toLowerCase();
+  const matchesSearch = (item: DashboardButton) =>
+    !q || item.label.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q);
+
   const analyticsButtons = dashboardButtons.filter(
-    (item) => item.label === 'Data Analytics'
+    (item) => item.label === 'Data Analytics' && matchesSearch(item)
   );
 
   const llmButtons = dashboardButtons.filter((item) =>
@@ -157,7 +162,7 @@ export default function MainPage() {
       'llm models',
       'llm prompt chains',
       'Caption request info',
-    ].includes(item.label)
+    ].includes(item.label) && matchesSearch(item)
   );
 
   const materialButtons = dashboardButtons.filter((item) =>
@@ -166,7 +171,7 @@ export default function MainPage() {
       'Meme Captions',
       'Caption Examples',
       'Terms',
-    ].includes(item.label)
+    ].includes(item.label) && matchesSearch(item)
   );
 
   const userButtons = dashboardButtons.filter((item) =>
@@ -174,8 +179,10 @@ export default function MainPage() {
       'Sign up domains',
       'User Profiles',
       'Whitelist email addresses',
-    ].includes(item.label)
+    ].includes(item.label) && matchesSearch(item)
   );
+
+  const totalResults = analyticsButtons.length + llmButtons.length + materialButtons.length + userButtons.length;
 
   return (
     <div className="min-h-screen bg-background px-6 py-10">
@@ -189,11 +196,33 @@ export default function MainPage() {
           </p>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search pages..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-5 py-3 pr-10 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          {search && (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              {totalResults === 0 ? 'No pages match your search.' : `${totalResults} page${totalResults !== 1 ? 's' : ''} found`}
+            </p>
+          )}
         </div>
 
         {/* ===== Data Analytics Section ===== */}
-        <div className="mb-10">
+        {analyticsButtons.length > 0 && <div className="mb-10">
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
             📊 Data Analytics
           </h3>
@@ -216,11 +245,10 @@ export default function MainPage() {
               </Link>
             ))}
           </div>
-        </div>
+        </div>}
 
-        {/* ===== Data Management Section ===== */}
         {/* ===== LLM Related ===== */}
-        <div className="mb-10">
+        {llmButtons.length > 0 && <div className="mb-10">
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
             LLM Related
           </h3>
@@ -242,10 +270,10 @@ export default function MainPage() {
               </Link>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* ===== Materials ===== */}
-        <div className="mb-10">
+        {materialButtons.length > 0 && <div className="mb-10">
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
             Materials
           </h3>
@@ -267,10 +295,10 @@ export default function MainPage() {
               </Link>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* ===== User Related ===== */}
-        <div>
+        {userButtons.length > 0 && <div>
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
             User Related
           </h3>
@@ -292,7 +320,7 @@ export default function MainPage() {
               </Link>
             ))}
           </div>
-        </div>
+        </div>}
 
       </div>
     </div>

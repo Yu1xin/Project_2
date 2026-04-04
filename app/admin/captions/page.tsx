@@ -9,6 +9,7 @@ type CaptionRow = {
   image_id: string | null;
   humor_flavor_id: number | null;
   created_by_user_id: string | null;
+  images?: { url: string | null } | null;
 };
 
 export default function AdminCaptionsInfoPage() {
@@ -30,7 +31,7 @@ export default function AdminCaptionsInfoPage() {
 
       const { data, error } = await supabase
         .from('captions')
-        .select('id, content, image_id, humor_flavor_id, created_by_user_id')
+        .select('id, content, image_id, humor_flavor_id, created_by_user_id, images(url)')
         .order('created_datetime_utc', { ascending: false });
 
       if (error) {
@@ -66,7 +67,7 @@ export default function AdminCaptionsInfoPage() {
             <thead className="bg-zinc-800 text-zinc-200">
               <tr>
                 <th className="px-4 py-3 text-left font-bold">Content</th>
-                <th className="px-4 py-3 text-left font-bold">Image ID</th>
+                <th className="px-4 py-3 text-left font-bold">Image</th>
                 <th className="px-4 py-3 text-left font-bold">Humor Flavor ID</th>
                 <th className="px-4 py-3 text-left font-bold">Created By User ID</th>
               </tr>
@@ -91,8 +92,16 @@ export default function AdminCaptionsInfoPage() {
                     <td className="max-w-md px-4 py-3 text-zinc-100">
                       {caption.content || '-'}
                     </td>
-                    <td className="px-4 py-3 font-mono text-zinc-300">
-                      {caption.image_id || '-'}
+                    <td className="px-4 py-3">
+                      {caption.images?.url ? (
+                        <img
+                          src={caption.images.url}
+                          alt="Meme"
+                          className="w-16 h-16 object-cover rounded-lg border border-zinc-700"
+                        />
+                      ) : (
+                        <span className="font-mono text-zinc-500 text-xs">{caption.image_id?.substring(0, 8) ?? '-'}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 font-mono text-zinc-300">
                       {caption.humor_flavor_id ?? '-'}

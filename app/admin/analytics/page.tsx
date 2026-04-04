@@ -185,7 +185,7 @@ export default function AdminAnalytics() {
         </div>
       </div>
 
-      {loading && <div className="text-center text-zinc-100 py-10">Loading may take some time... (we have over 100k captions)</div>}
+      {loading && <div className="text-center text-zinc-100 py-10">Loading may take some time... Don't leave🥺</div>}
       {error && <div className="text-center text-red-400 py-10">Error: {error}</div>}
 
       {!loading && !error && (

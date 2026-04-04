@@ -73,6 +73,7 @@ type ProfileRow = {
 
 type EnrichedCaptionRow = {
   id: string;
+  content: string;
   like_count: number;
   caption_char_len: number;
   caption_word_count: number;
@@ -126,9 +127,9 @@ function getTimeBucket(createdAt: string | null) {
 
   const hour = new Date(createdAt).getUTCHours();
 
-  if (hour >= 3 && hour <= 10) return 'Morning (4–11)';
-  if (hour >= 11 && hour <= 17) return 'Midday (12–19)';
-  return 'Evening (20–3)';
+  if (hour >= 3 && hour <= 10) return 'Morning (3–10 UTC)';
+  if (hour >= 11 && hour <= 17) return 'Midday (11–17 UTC)';
+  return 'Evening (18–2 UTC)';
 }
 
 function groupAverageImpact(
@@ -233,6 +234,7 @@ export async function GET() {
 
   const rows: EnrichedCaptionRow[] = captions.map((c) => ({
     id: c.id,
+    content: c.content ?? '',
     like_count: Number(c.like_count ?? 0),
     caption_char_len: (c.content ?? '').length,
     caption_word_count: (c.content ?? '').trim().split(/\s+/).filter(Boolean).length,
@@ -262,6 +264,17 @@ export async function GET() {
   const topProfilesByLikes = buildLeaderboard(rows, 'profile_name', 1).slice(0, 8);
   const topImagesByLikes = buildLeaderboard(rows, 'image_id', 1).slice(0, 8);
   const topFlavorsByLikes = buildLeaderboard(rows, 'humor_flavor_name', 1).slice(0, 8);
+
+  // Individual captions ranked by absolute like_count
+  const topCaptionsByLikes = [...rows]
+    .sort((a, b) => Math.abs(b.like_count) - Math.abs(a.like_count))
+    .slice(0, 8)
+    .map(r => ({
+      name: r.content.length > 70 ? r.content.slice(0, 70) + '…' : r.content,
+      totalLikes: r.like_count,
+      avgLikes: r.like_count,
+      captionCount: 1,
+    }));
 
   // ── Platform stats ──
   const allVotes = votesRes;
@@ -353,6 +366,7 @@ export async function GET() {
     topProfilesByLikes,
     topImagesByLikes,
     topFlavorsByLikes,
+    topCaptionsByLikes,
     platformStats,
     dailyActivity,
     flavorPerformance,

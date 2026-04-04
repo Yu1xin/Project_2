@@ -82,6 +82,7 @@ export default function AdminAnalytics() {
   const [topProfilesByLikes, setTopProfilesByLikes] = useState<LeaderboardCard[]>([]);
   const [topImagesByLikes, setTopImagesByLikes] = useState<LeaderboardCard[]>([]);
   const [topFlavorsByLikes, setTopFlavorsByLikes] = useState<LeaderboardCard[]>([]);
+  const [topCaptionsByLikes, setTopCaptionsByLikes] = useState<LeaderboardCard[]>([]);
   const [imageUrlMap, setImageUrlMap] = useState<Record<string, string>>({});
 
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
@@ -111,6 +112,7 @@ export default function AdminAnalytics() {
         setTopProfilesByLikes(data.topProfilesByLikes || []);
         setTopImagesByLikes(data.topImagesByLikes || []);
         setTopFlavorsByLikes(data.topFlavorsByLikes || []);
+        setTopCaptionsByLikes(data.topCaptionsByLikes || []);
         setPlatformStats(data.platformStats || null);
         setDailyActivity(data.dailyActivity || []);
         setFlavorPerformance(data.flavorPerformance || []);
@@ -240,7 +242,7 @@ export default function AdminAnalytics() {
                   <div className="min-w-0">
                     <div className="text-sm text-zinc-100 break-words">#{idx + 1} {item.name}</div>
                     <div className="text-[11px] text-zinc-100 mt-1">
-                      avg {item.avgLikes.toFixed(4)} · total {item.totalLikes.toFixed(0)} · {item.captionCount} captions
+                      avg {item.avgLikes.toFixed(4)} · total {item.totalLikes.toFixed(0)}{item.captionCount !== 1 ? ` · ${item.captionCount} captions` : ''}
                     </div>
                   </div>
                   <div className={`font-mono font-bold text-sm ${item.avgLikes >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -278,7 +280,8 @@ export default function AdminAnalytics() {
               { label: 'Users', rawValue: platformStats.totalUsers, display: platformStats.totalUsers.toLocaleString(), icon: '👤', bg: 'bg-amber-500/20', border: 'border-amber-500/40', color: 'text-amber-300' },
               { label: 'Flavors', rawValue: platformStats.totalFlavors, display: platformStats.totalFlavors.toLocaleString(), icon: '😂', bg: 'bg-pink-500/20', border: 'border-pink-500/40', color: 'text-pink-300' },
             ];
-            const maxVal = Math.max(...bubbles.map(b => b.rawValue));
+            const allValues = [...bubbles.map(b => b.rawValue), platformStats.totalVotes];
+            const maxVal = Math.max(...allValues);
             const MIN_PX = 80;
             const MAX_PX = 180;
             const sqrtMax = Math.sqrt(maxVal);
@@ -418,7 +421,7 @@ export default function AdminAnalytics() {
                       <th className="text-left py-2 pr-6 text-zinc-400 font-semibold">Flavor</th>
                       <th className="text-right py-2 pr-6 text-zinc-400 font-semibold">Captions</th>
                       <th className="text-right py-2 text-zinc-400 font-semibold">Avg Likes</th>
-                      <th className="py-2 pl-4 text-zinc-400 font-semibold w-40">Performance</th>
+                      <th className="py-2 pl-4 text-zinc-400 font-semibold w-40">Usage (bar)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -464,10 +467,11 @@ export default function AdminAnalytics() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
             {renderLeaderboard('Top Profiles', '🏆', 'text-emerald-400', topProfilesByLikes)}
             {renderLeaderboard('Top Images', '🖼️', 'text-cyan-400', topImagesByLikes, imageUrlMap)}
             {renderLeaderboard('Top Flavors', '🙂', 'text-pink-400', topFlavorsByLikes)}
+            {renderLeaderboard('Top Captions', '💬', 'text-yellow-400', topCaptionsByLikes)}
           </div>
         </>
       )}

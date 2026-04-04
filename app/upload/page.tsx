@@ -456,7 +456,7 @@ function UploadPageInner() {
 
           <div className="mb-4">
             <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-              Humor Flavor
+              Pick / Search your Humor Flavor
             </label>
             <FlavorPicker
               flavors={humorFlavors}

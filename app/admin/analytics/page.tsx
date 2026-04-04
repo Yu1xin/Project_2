@@ -362,7 +362,6 @@ export default function AdminAnalytics() {
                   />
                   <Legend wrapperStyle={{ color: '#a1a1aa', fontSize: 12 }} />
                   <Line yAxisId="left"  type="monotone" dataKey="votes"      stroke="#34d399" strokeWidth={2} dot={false} name="Votes" />
-                  <Line yAxisId="left"  type="monotone" dataKey="newUsers"   stroke="#fbbf24" strokeWidth={2} dot={false} name="New Users" />
                   <Line yAxisId="left"  type="monotone" dataKey="newImages"  stroke="#22d3ee" strokeWidth={2} dot={false} name="New Images" />
                   <Line yAxisId="left"  type="monotone" dataKey="newFlavors" stroke="#f472b6" strokeWidth={2} dot={false} name="New Flavors" />
                   <Line yAxisId="right" type="monotone" dataKey="captions"   stroke="#60a5fa" strokeWidth={2.5} dot={false} name="Captions Created" />

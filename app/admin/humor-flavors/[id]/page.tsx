@@ -88,6 +88,7 @@ export default function FlavorDetailPage() {
   const [editDraft, setEditDraft] = useState<Partial<Step>>({});
   const [saving, setSaving] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [orderDirty, setOrderDirty] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addDraft, setAddDraft] = useState({
     description: '',
@@ -125,7 +126,7 @@ export default function FlavorDetailPage() {
     else setFlavor(flavorRes.data as Flavor);
 
     if (stepsRes.error) { console.error(stepsRes.error); alert(stepsRes.error.message); }
-    else setSteps((stepsRes.data as Step[]) || []);
+    else { setSteps((stepsRes.data as Step[]) || []); setOrderDirty(false); }
 
     setLoading(false);
   }
@@ -188,26 +189,35 @@ export default function FlavorDetailPage() {
     setSaving(false);
   }
 
-  async function moveStep(stepId: string, dir: 'up' | 'down') {
+  function moveStep(stepId: string, dir: 'up' | 'down') {
     const idx = steps.findIndex((s) => s.id === stepId);
     const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= steps.length) return;
 
     const reordered = [...steps];
     [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+    setSteps(reordered.map((s, i) => ({ ...s, order_by: i + 1 })));
+    setOrderDirty(true);
+  }
 
-    // Optimistic update
-    const withNewOrder = reordered.map((s, i) => ({ ...s, order_by: i + 1 }));
-    setSteps(withNewOrder);
-
+  async function saveOrder() {
     setReordering(true);
-    const updates = [
-      supabase.from('humor_flavor_steps').update({ order_by: idx + 1 }).eq('id', reordered[swapIdx].id),
-      supabase.from('humor_flavor_steps').update({ order_by: swapIdx + 1 }).eq('id', reordered[idx].id),
-    ];
-    const results = await Promise.all(updates);
-    const err = results.find((r) => r.error)?.error;
-    if (err) { alert(err.message); await loadSteps(); }
+    try {
+      const userId = await getUserId();
+      const results = await Promise.all(
+        steps.map((s) =>
+          supabase
+            .from('humor_flavor_steps')
+            .update({ order_by: s.order_by, modified_by_user_id: userId })
+            .eq('id', s.id)
+        )
+      );
+      const err = results.find((r) => r.error)?.error;
+      if (err) { alert(err.message); await loadSteps(); }
+      else setOrderDirty(false);
+    } catch (err: any) {
+      alert(err.message);
+    }
     setReordering(false);
   }
 
@@ -324,6 +334,24 @@ export default function FlavorDetailPage() {
         <h2 className="text-xl font-bold text-gray-900">Steps</h2>
         <div className="flex items-center gap-3">
           <p className="text-sm text-gray-500">{steps.length} step{steps.length !== 1 ? 's' : ''}</p>
+          {orderDirty && (
+            <>
+              <button
+                onClick={saveOrder}
+                disabled={reordering}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50"
+              >
+                {reordering ? 'Saving...' : 'Save order'}
+              </button>
+              <button
+                onClick={() => { loadSteps(); }}
+                disabled={reordering}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-lg transition disabled:opacity-50"
+              >
+                Discard
+              </button>
+            </>
+          )}
           <button
             onClick={() => { setShowAddForm((v) => !v); setEditingId(null); }}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"

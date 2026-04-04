@@ -200,13 +200,13 @@ export async function GET() {
 
   const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [captions, flavors, profiles, votesRes, userCountRes, imageCountRes, dailyVotesRes] = await Promise.all([
+  const [captions, flavors, profiles, votesRes, , imageCountRes, dailyVotesRes] = await Promise.all([
     fetchAllRows<CaptionRow>(supabase, 'captions', 'id, like_count, content, image_id, humor_flavor_id, profile_id, created_datetime_utc'),
     fetchAllRows<FlavorRow>(supabase, 'humor_flavors', 'id, description, slug'),
     fetchAllRows<ProfileRow>(supabase, 'profiles', 'id, first_name, last_name'),
     fetchAllRows<{ vote_value: number; created_datetime_utc: string }>(supabase, 'caption_votes', 'vote_value, created_datetime_utc'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('images').select('*', { count: 'exact', head: true }),
+    Promise.resolve(null),
+    supabase.from('images').select('id', { count: 'exact', head: true }),
     supabase.from('caption_votes').select('created_datetime_utc, vote_value').gte('created_datetime_utc', since30d),
   ]);
 
@@ -270,7 +270,7 @@ export async function GET() {
     totalVotes: allVotes.length,
     totalUpvotes,
     totalDownvotes,
-    totalUsers: userCountRes.count ?? 0,
+    totalUsers: profiles.length,
     totalImages: imageCountRes.count ?? 0,
     totalFlavors: flavors.length,
     maxLikes: Math.max(...captions.map(c => Number(c.like_count ?? 0))),

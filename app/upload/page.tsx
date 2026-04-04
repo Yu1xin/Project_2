@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type GeneratePresignedUrlResponse = {
   presignedUrl: string;
@@ -39,6 +39,7 @@ function getFlavorLabel(flavor: HumorFlavorRow) {
 
 export default function UploadPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -53,6 +54,7 @@ export default function UploadPage() {
   const [humorFlavors, setHumorFlavors] = useState<HumorFlavorRow[]>([]);
   const [selectedFlavorId, setSelectedFlavorId] = useState<string>('');
   const [isRevising, setIsRevising] = useState(false);
+  const [prefillBanner, setPrefillBanner] = useState<string | null>(null);
 
   const supabase = useMemo(
     () =>
@@ -79,7 +81,11 @@ export default function UploadPage() {
         const rows = (data || []) as HumorFlavorRow[];
         setHumorFlavors(rows);
 
-        if (rows.length > 0) {
+        // Honor ?flavorId param if present, otherwise default to first
+        const paramFlavorId = searchParams.get('flavorId');
+        if (paramFlavorId && rows.find(r => String(r.id) === paramFlavorId)) {
+          setSelectedFlavorId(paramFlavorId);
+        } else if (rows.length > 0) {
           setSelectedFlavorId(String(rows[0].id));
         }
       }
@@ -88,7 +94,33 @@ export default function UploadPage() {
     }
 
     loadHumorFlavors();
-  }, [supabase]);
+  }, [supabase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pre-fill from "Duplicate the Humor" params
+  useEffect(() => {
+    const paramCaption  = searchParams.get('caption');
+    const paramImageId  = searchParams.get('imageId');
+    const paramImageUrl = searchParams.get('imageUrl');
+
+    const parts: string[] = [];
+
+    if (paramCaption) {
+      setGeneratedCaption(paramCaption);
+      setEditedCaption(paramCaption);
+      parts.push('caption');
+    }
+    if (paramImageId) {
+      setImageId(paramImageId);
+      parts.push('image');
+    }
+    if (paramImageUrl) {
+      setPreviewUrl(paramImageUrl);
+    }
+
+    if (parts.length > 0) {
+      setPrefillBanner(`Duplicated from Meme Board: ${parts.join(' + ')} pre-filled ✨`);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function extractCaption(payload: CaptionApiResponse, fallbackImageId?: string) {
     let finalCaption = '';
@@ -362,6 +394,12 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
+      {prefillBanner && (
+        <div className="w-full max-w-md mb-4 rounded-2xl border border-violet-300/40 bg-violet-50 dark:bg-violet-950/40 px-4 py-3 text-sm text-violet-700 dark:text-violet-300 flex items-center justify-between gap-3">
+          <span>🎭 {prefillBanner}</span>
+          <button onClick={() => setPrefillBanner(null)} className="text-violet-400 hover:text-violet-600 text-xs shrink-0">✕</button>
+        </div>
+      )}
       {!previewUrl ? (
         <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 text-zinc-900 dark:text-zinc-100 shadow-xl">
           <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-100">

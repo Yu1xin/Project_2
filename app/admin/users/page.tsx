@@ -16,19 +16,20 @@ export default function ManageUsersPage() {
 
   useEffect(() => {
     async function fetchProfiles() {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_datetime_utc', { ascending: false });
-
-      if (!error) {
-        setProfiles(data || []);
-        setFilteredProfiles(data || []);
+      try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+        if (res.ok) {
+          setProfiles(data || []);
+          setFilteredProfiles(data || []);
+        }
+      } catch (err: any) {
+        console.error('Fetch error:', err.message);
       }
       setLoading(false);
     }
     fetchProfiles();
-  }, [supabase]);
+  }, []);
 
   // 🔍 搜索过滤逻辑
   useEffect(() => {

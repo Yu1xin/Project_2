@@ -49,27 +49,17 @@ export default function AdminCaptionExamplesPage() {
   async function loadData() {
     setLoading(true);
 
-    const [captionExamplesRes, imagesRes] = await Promise.all([
-      supabase
-        .from('caption_examples')
-        .select('*')
-        .order('created_datetime_utc', { ascending: false }),
-      supabase
-        .from('images')
-        .select('id, url, image_description')
-        .order('created_datetime_utc', { ascending: false }),
-    ]);
-
-    if (captionExamplesRes.error) {
-      console.error('Fetch caption_examples error:', captionExamplesRes.error.message);
-    } else {
-      setCaptionExamples((captionExamplesRes.data || []) as CaptionExampleRow[]);
-    }
-
-    if (imagesRes.error) {
-      console.error('Fetch images error:', imagesRes.error.message);
-    } else {
-      setImages((imagesRes.data || []) as ImageRow[]);
+    try {
+      const res = await fetch('/api/admin/caption-examples');
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Fetch error:', data.error);
+      } else {
+        setCaptionExamples(data.captionExamples as CaptionExampleRow[]);
+        setImages(data.images as ImageRow[]);
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err.message);
     }
 
     setLoading(false);

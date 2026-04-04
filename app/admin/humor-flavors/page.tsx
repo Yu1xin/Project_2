@@ -107,36 +107,44 @@ export default function HumorFlavorsPage() {
   const [search, setSearch] = useState('');
 
   async function loadFlavors() {
-    const { data, error } = await supabase
-      .from('humor_flavors')
-      .select('id, slug, description, is_pinned, created_by_user_id')
-      .order('is_pinned', { ascending: false })
-      .order('created_datetime_utc', { ascending: false });
-    if (error) { console.error(error); alert(error.message); return; }
-    setFlavors((data as HumorFlavor[]) || []);
+    try {
+      const res = await fetch('/api/admin/humor-flavors');
+      const data = await res.json();
+      if (!res.ok) { console.error(data.error); alert(data.error); return; }
+      setFlavors((data.flavors as HumorFlavor[]) || []);
+
+      const flavorMap = new Map<number, string>();
+      (data.flavors || []).forEach((f: any) => flavorMap.set(f.id, f.slug));
+
+      setAllSteps(
+        (data.steps || []).map((s: any) => ({
+          ...s,
+          flavor_slug: flavorMap.get(s.humor_flavor_id) ?? `Flavor ${s.humor_flavor_id}`,
+        }))
+      );
+    } catch (err: any) {
+      console.error(err); alert(err.message);
+    }
   }
 
   async function loadAllSteps() {
-    const [stepsRes, flavorsRes] = await Promise.all([
-      supabase
-        .from('humor_flavor_steps')
-        .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature, llm_input_type_id, llm_output_type_id, llm_model_id, humor_flavor_step_type_id')
-        .order('humor_flavor_id', { ascending: true })
-        .order('order_by', { ascending: true }),
-      supabase.from('humor_flavors').select('id, slug'),
-    ]);
+    try {
+      const res = await fetch('/api/admin/humor-flavors');
+      const data = await res.json();
+      if (!res.ok) { console.error(data.error); return; }
 
-    if (stepsRes.error) { console.error(stepsRes.error); return; }
+      const flavorMap = new Map<number, string>();
+      (data.flavors || []).forEach((f: any) => flavorMap.set(f.id, f.slug));
 
-    const flavorMap = new Map<number, string>();
-    (flavorsRes.data || []).forEach((f: any) => flavorMap.set(f.id, f.slug));
-
-    setAllSteps(
-      (stepsRes.data || []).map((s: any) => ({
-        ...s,
-        flavor_slug: flavorMap.get(s.humor_flavor_id) ?? `Flavor ${s.humor_flavor_id}`,
-      }))
-    );
+      setAllSteps(
+        (data.steps || []).map((s: any) => ({
+          ...s,
+          flavor_slug: flavorMap.get(s.humor_flavor_id) ?? `Flavor ${s.humor_flavor_id}`,
+        }))
+      );
+    } catch (err: any) {
+      console.error(err);
+    }
   }
 
   useEffect(() => {

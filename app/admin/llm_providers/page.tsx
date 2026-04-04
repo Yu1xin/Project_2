@@ -38,15 +38,16 @@ export default function LlmProvidersPage() {
   async function loadProviders() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('*')
-      .order('created_datetime_utc', { ascending: false });
-
-    if (error) {
-      console.error('Fetch error:', error.message);
-    } else {
-      setProviders((data || []) as LlmProviderRow[]);
+    try {
+      const res = await fetch('/api/admin/llm-providers');
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Fetch error:', data.error);
+      } else {
+        setProviders(data as LlmProviderRow[]);
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err.message);
     }
 
     setLoading(false);

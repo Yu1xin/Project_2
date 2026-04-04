@@ -24,15 +24,16 @@ export default function CaptionRequestsPage() {
 
   useEffect(() => {
     async function fetchRequests() {
-      const { data, error } = await supabase
-        .from('caption_requests')
-        .select('*')
-        .order('created_datetime_utc', { ascending: false });
-
-      if (error) {
-        console.error('Fetch error:', error.message);
-      } else {
-        setRequests((data || []) as CaptionRequestRow[]);
+      try {
+        const res = await fetch('/api/admin/caption-requests');
+        const data = await res.json();
+        if (!res.ok) {
+          console.error('Fetch error:', data.error);
+        } else {
+          setRequests(data as CaptionRequestRow[]);
+        }
+      } catch (err: any) {
+        console.error('Fetch error:', err.message);
       }
 
       setLoading(false);

@@ -222,12 +222,9 @@ export default function ListPage() {
 
         setUserId(session.user.id);
 
-        const { data, error } = await supabase
-          .from('captions')
-          .select('id, content, like_count, images(url)')
-          .order('created_datetime_utc', { ascending: false });
-
-        if (error) throw error;
+        const res = await fetch('/api/main');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load captions');
 
         setCaptionsList((data || []) as CaptionItem[]);
       } catch (err: any) {

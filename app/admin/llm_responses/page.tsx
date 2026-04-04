@@ -38,26 +38,17 @@ export default function LlmLogsPage() {
   async function loadData() {
     setLoading(true);
 
-    const [logsRes, modelsRes] = await Promise.all([
-      supabase
-        .from(tableName)
-        .select(
-          'id, llm_model_response, llm_system_prompt, llm_user_prompt, llm_model_id, processing_time_seconds, created_datetime_utc'
-        )
-        .order('created_datetime_utc', { ascending: false }),
-      supabase.from('llm_models').select('id, name'),
-    ]);
-
-    if (logsRes.error) {
-      console.error('Fetch logs error:', logsRes.error.message);
-    } else {
-      setLogs((logsRes.data || []) as LlmLogRow[]);
-    }
-
-    if (modelsRes.error) {
-      console.error('Fetch llm_models error:', modelsRes.error.message);
-    } else {
-      setModels((modelsRes.data || []) as LlmModelRow[]);
+    try {
+      const res = await fetch('/api/admin/llm-responses');
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Fetch error:', data.error);
+      } else {
+        setLogs(data.logs as LlmLogRow[]);
+        setModels(data.models as LlmModelRow[]);
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err.message);
     }
 
     setLoading(false);

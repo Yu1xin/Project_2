@@ -203,16 +203,10 @@ export default function LeastFavoredPage() {
 
   async function loadLeastFavored() {
     try {
-      const { data, error } = await supabase
-        .from('captions')
-        .select('id, content, like_count, images(url)')
-        .order('like_count', { ascending: true })
-        .order('id', { ascending: true })
-        .limit(25);
-
-      if (error) throw error;
-
-      setLeastFavored((data || []) as CaptionItem[]);
+      const res = await fetch('/api/least-favored');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setLeastFavored(data as CaptionItem[]);
     } catch (err: any) {
       console.error(err);
       alert(`Failed to load bottom 25: ${err.message || 'Unknown error'}`);

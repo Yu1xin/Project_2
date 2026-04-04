@@ -34,15 +34,16 @@ export default function WhitelistEmailAddressesPage() {
   async function loadEmails() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from('whitelist_email_addresses')
-      .select('*')
-      .order('created_datetime_utc', { ascending: false });
-
-    if (error) {
-      console.error('Fetch error:', error.message);
-    } else {
-      setEmails((data || []) as WhitelistEmailRow[]);
+    try {
+      const res = await fetch('/api/admin/whitelist-emails');
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Fetch error:', data.error);
+      } else {
+        setEmails(data as WhitelistEmailRow[]);
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err.message);
     }
 
     setLoading(false);

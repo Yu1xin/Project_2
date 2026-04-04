@@ -115,20 +115,21 @@ export default function FlavorDetailPage() {
     if (Number.isNaN(flavorId)) { setLoading(false); return; }
     setLoading(true);
 
-    const [flavorRes, stepsRes] = await Promise.all([
-      supabase.from('humor_flavors').select('id, slug, description, created_by_user_id').eq('id', flavorId).single(),
-      supabase
-        .from('humor_flavor_steps')
-        .select('id, humor_flavor_id, order_by, description, llm_system_prompt, llm_user_prompt, llm_temperature, llm_model_id, llm_input_type_id, llm_output_type_id, humor_flavor_step_type_id')
-        .eq('humor_flavor_id', flavorId)
-        .order('order_by', { ascending: true }),
-    ]);
-
-    if (flavorRes.error) { console.error(flavorRes.error); }
-    else setFlavor(flavorRes.data as Flavor);
-
-    if (stepsRes.error) { console.error(stepsRes.error); alert(stepsRes.error.message); }
-    else { setSteps((stepsRes.data as Step[]) || []); setOrderDirty(false); }
+    try {
+      const res = await fetch(`/api/admin/humor-flavors/${flavorId}`);
+      const data = await res.json();
+      if (!res.ok) {
+        console.error(data.error);
+        alert(data.error);
+      } else {
+        setFlavor(data.flavor as Flavor);
+        setSteps((data.steps as Step[]) || []);
+        setOrderDirty(false);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message);
+    }
 
     setLoading(false);
   }

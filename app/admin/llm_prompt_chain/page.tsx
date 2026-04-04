@@ -23,15 +23,16 @@ export default function LlmPromptChainsPage() {
 
   useEffect(() => {
     async function fetchChains() {
-      const { data, error } = await supabase
-        .from('llm_prompt_chains')
-        .select('*')
-        .order('created_datetime_utc', { ascending: false });
-
-      if (error) {
-        console.error('Fetch error:', error.message);
-      } else {
-        setChains((data || []) as LlmPromptChainRow[]);
+      try {
+        const res = await fetch('/api/admin/llm-prompt-chains');
+        const data = await res.json();
+        if (!res.ok) {
+          console.error('Fetch error:', data.error);
+        } else {
+          setChains(data as LlmPromptChainRow[]);
+        }
+      } catch (err: any) {
+        console.error('Fetch error:', err.message);
       }
 
       setLoading(false);

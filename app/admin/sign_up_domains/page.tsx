@@ -34,15 +34,16 @@ export default function AllowedSignupDomainsPage() {
   async function loadDomains() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from('allowed_signup_domains')
-      .select('*')
-      .order('created_datetime_utc', { ascending: false });
-
-    if (error) {
-      console.error('Fetch error:', error.message);
-    } else {
-      setDomains((data || []) as AllowedSignupDomainRow[]);
+    try {
+      const res = await fetch('/api/admin/sign-up-domains');
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Fetch error:', data.error);
+      } else {
+        setDomains(data as AllowedSignupDomainRow[]);
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err.message);
     }
 
     setLoading(false);

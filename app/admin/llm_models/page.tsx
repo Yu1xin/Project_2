@@ -47,15 +47,16 @@ export default function LlmModelsPage() {
   async function loadModels() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('*')
-      .order('created_datetime_utc', { ascending: false });
-
-    if (error) {
-      console.error('Fetch error:', error.message);
-    } else {
-      setModels((data || []) as LlmModelRow[]);
+    try {
+      const res = await fetch('/api/admin/llm-models');
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Fetch error:', data.error);
+      } else {
+        setModels(data as LlmModelRow[]);
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err.message);
     }
 
     setLoading(false);

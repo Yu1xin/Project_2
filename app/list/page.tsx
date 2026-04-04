@@ -14,14 +14,14 @@ export default function ListPage() {
     async function fetchVotes() {
       setLoading(true)
 
-      const { data, error } = await supabase
-        .from('caption_votes')
-        .select('*')
-        .order('id', { ascending: false })
-        .limit(20)
-
-      if (error) setError(error.message)
-      else setData(data || [])
+      try {
+        const res = await fetch('/api/list')
+        const data = await res.json()
+        if (!res.ok) setError(data.error)
+        else setData(data || [])
+      } catch (err: any) {
+        setError(err.message)
+      }
 
       setLoading(false)
     }

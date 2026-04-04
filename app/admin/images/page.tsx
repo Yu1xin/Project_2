@@ -33,17 +33,20 @@ export default function AdminImagesPage() {
   async function loadImages() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from('images')
-      .select('*')
-      .order('created_datetime_utc', { ascending: false });
-
-    if (error) {
-      console.error(error);
-      alert(`Failed to load images: ${error.message}`);
+    try {
+      const res = await fetch('/api/admin/images');
+      const data = await res.json();
+      if (!res.ok) {
+        console.error(data.error);
+        alert(`Failed to load images: ${data.error}`);
+        setImages([]);
+      } else {
+        setImages(data as ImageRow[]);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to load images: ${err.message}`);
       setImages([]);
-    } else {
-      setImages((data || []) as ImageRow[]);
     }
 
     setLoading(false);

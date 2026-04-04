@@ -41,15 +41,16 @@ export default function TermsPage() {
   async function loadTerms() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from('terms')
-      .select('*')
-      .order('priority', { ascending: true, nullsFirst: false });
-
-    if (error) {
-      console.error('Fetch error:', error.message);
-    } else {
-      setTerms((data || []) as TermRow[]);
+    try {
+      const res = await fetch('/api/admin/terms');
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Fetch error:', data.error);
+      } else {
+        setTerms(data as TermRow[]);
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err.message);
     }
 
     setLoading(false);

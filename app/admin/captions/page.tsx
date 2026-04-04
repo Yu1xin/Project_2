@@ -29,22 +29,23 @@ export default function AdminCaptionsInfoPage() {
     async function loadCaptions() {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from('captions')
-        .select('id, content, image_id, humor_flavor_id, created_by_user_id, images(url)')
-        .order('created_datetime_utc', { ascending: false });
-
-      if (error) {
-        console.error('Fetch captions error:', error.message);
-      } else {
-        setCaptions((data || []) as unknown as CaptionRow[]);
+      try {
+        const res = await fetch('/api/admin/captions');
+        const data = await res.json();
+        if (!res.ok) {
+          console.error('Fetch captions error:', data.error);
+        } else {
+          setCaptions(data as unknown as CaptionRow[]);
+        }
+      } catch (err: any) {
+        console.error('Fetch captions error:', err.message);
       }
 
       setLoading(false);
     }
 
     loadCaptions();
-  }, [supabase]);
+  }, []);
 
   if (loading) {
     return (

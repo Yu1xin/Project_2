@@ -1,6 +1,43 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+
+function AnimatedCount({ value, className }: { value: number; className?: string }) {
+  const display = useAnimatedNumber(value);
+  return <span className={className}>{display.toLocaleString()}</span>;
+}
+
+// Animated number: counts from old value to new value over ~600ms
+function useAnimatedNumber(target: number) {
+  const [display, setDisplay] = useState(target);
+  const prev = useRef(target);
+  const raf = useRef<number | null>(null);
+
+  useEffect(() => {
+    const start = prev.current;
+    const diff = target - start;
+    if (diff === 0) return;
+    const duration = 600;
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      setDisplay(Math.round(start + diff * ease));
+      if (t < 1) {
+        raf.current = requestAnimationFrame(tick);
+      } else {
+        prev.current = target;
+      }
+    };
+
+    if (raf.current) cancelAnimationFrame(raf.current);
+    raf.current = requestAnimationFrame(tick);
+    return () => { if (raf.current) cancelAnimationFrame(raf.current); };
+  }, [target]);
+
+  return display;
+}
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -99,6 +136,47 @@ export default function AdminAnalytics() {
       }
     }
     runAnalysis();
+  }, []);
+
+  // Realtime subscriptions — update stat bubbles live
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const channel = supabase
+      .channel('analytics-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'captions' }, () => {
+        setPlatformStats((prev) => prev ? { ...prev, totalCaptions: prev.totalCaptions + 1 } : prev);
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'caption_votes' }, (payload) => {
+        const vote = payload.new?.vote_value;
+        setPlatformStats((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            totalVotes: prev.totalVotes + 1,
+            totalUpvotes: prev.totalUpvotes + (vote === 1 ? 1 : 0),
+            totalDownvotes: prev.totalDownvotes + (vote === -1 ? 1 : 0),
+          };
+        });
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'caption_votes' }, (payload) => {
+        const vote = payload.old?.vote_value;
+        setPlatformStats((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            totalVotes: Math.max(0, prev.totalVotes - 1),
+            totalUpvotes: Math.max(0, prev.totalUpvotes - (vote === 1 ? 1 : 0)),
+            totalDownvotes: Math.max(0, prev.totalDownvotes - (vote === -1 ? 1 : 0)),
+          };
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   function sortLeaderboard(items: LeaderboardCard[]) {
@@ -233,15 +311,13 @@ export default function AdminAnalytics() {
                       </PieChart>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                         <span className="text-base leading-none">🗳️</span>
-                        <span className={`font-black leading-tight text-center ${voteSize < 100 ? 'text-[10px]' : 'text-xs'} text-zinc-200`}>
-                          {platformStats.totalVotes.toLocaleString()}
-                        </span>
+                        <AnimatedCount value={platformStats.totalVotes} className={`font-black leading-tight text-center ${voteSize < 100 ? 'text-[10px]' : 'text-xs'} text-zinc-200`} />
                       </div>
                     </div>
                     <span className="text-[11px] text-zinc-400 text-center whitespace-nowrap">Votes</span>
                     <div className="flex gap-3 text-[10px]">
-                      <span className="text-emerald-400">⬆ {platformStats.totalUpvotes.toLocaleString()}</span>
-                      <span className="text-red-400">⬇ {platformStats.totalDownvotes.toLocaleString()}</span>
+                      <span className="text-emerald-400">⬆ <AnimatedCount value={platformStats.totalUpvotes} /></span>
+                      <span className="text-red-400">⬇ <AnimatedCount value={platformStats.totalDownvotes} /></span>
                     </div>
                   </div>
 
@@ -255,9 +331,7 @@ export default function AdminAnalytics() {
                           style={{ width: size, height: size }}
                         >
                           <span className="text-lg leading-none">{icon}</span>
-                          <span className={`font-black leading-tight text-center px-1 ${size < 100 ? 'text-xs' : size < 140 ? 'text-sm' : 'text-base'} ${color}`}>
-                            {display}
-                          </span>
+                          <AnimatedCount value={rawValue} className={`font-black leading-tight text-center px-1 ${size < 100 ? 'text-xs' : size < 140 ? 'text-sm' : 'text-base'} ${color}`} />
                         </div>
                         <span className="text-[11px] text-zinc-400 text-center whitespace-nowrap">{label}</span>
                       </div>

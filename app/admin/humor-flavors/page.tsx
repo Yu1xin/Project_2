@@ -571,20 +571,18 @@ export default function HumorFlavorsPage() {
               <div className="text-sm text-gray-500 dark:text-zinc-400">{flavor.description}</div>
             </div>
             <div className="flex gap-2 items-center">
+              <button
+                onClick={() => togglePin(flavor.id, flavor.is_pinned)}
+                className={`px-3 py-2 rounded transition text-sm font-medium ${
+                  flavor.is_pinned
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                {flavor.is_pinned ? 'Unpin' : 'Pin'}
+              </button>
               {currentUserId && flavor.created_by_user_id !== currentUserId && (
                 <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">not yours</span>
-              )}
-              {flavor.created_by_user_id === currentUserId && (
-                <button
-                  onClick={() => togglePin(flavor.id, flavor.is_pinned)}
-                  className={`px-3 py-2 rounded transition text-sm font-medium ${
-                    flavor.is_pinned
-                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                  }`}
-                >
-                  {flavor.is_pinned ? 'Unpin' : 'Pin'}
-                </button>
               )}
               <Link
                 href={`/admin/humor-flavors/${flavor.id}`}

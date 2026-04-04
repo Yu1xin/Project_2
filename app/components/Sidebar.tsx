@@ -213,7 +213,7 @@ export default function Sidebar() {
             }`}
           >
             <span className="flex w-6 shrink-0 items-center justify-center text-lg">
-              {viewMode === 'admin' ? '👤' : '🔧'}
+              {viewMode === 'admin' ? '👤' : '💻'}
             </span>
             {isOpen && (
               <span className="whitespace-nowrap animate-in slide-in-from-left-2">

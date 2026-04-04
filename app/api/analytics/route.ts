@@ -61,6 +61,7 @@ type CaptionRow = {
 
 type FlavorRow = {
   id: number;
+  slug: string | null;
   description: string | null;
 };
 
@@ -188,7 +189,7 @@ function buildLeaderboard(
     });
   }
 
-  return results.sort((a, b) => b.avgLikes - a.avgLikes);
+  return results.sort((a, b) => Math.abs(b.avgLikes) - Math.abs(a.avgLikes));
 }
 
 export async function GET() {
@@ -197,28 +198,24 @@ export async function GET() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const [captions, flavors, profiles] = await Promise.all([
-    fetchAllRows<CaptionRow>(
-      supabase,
-      'captions',
-      'id, like_count, content, image_id, humor_flavor_id, profile_id, created_datetime_utc'
-    ),
-    fetchAllRows<FlavorRow>(
-      supabase,
-      'humor_flavors',
-      'id, description'
-    ),
-    fetchAllRows<ProfileRow>(
-      supabase,
-      'profiles',
-      'id, first_name, last_name'
-    ),
+  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [captions, flavors, profiles, votesRes, userCountRes, imageCountRes, dailyVotesRes] = await Promise.all([
+    fetchAllRows<CaptionRow>(supabase, 'captions', 'id, like_count, content, image_id, humor_flavor_id, profile_id, created_datetime_utc'),
+    fetchAllRows<FlavorRow>(supabase, 'humor_flavors', 'id, description, slug'),
+    fetchAllRows<ProfileRow>(supabase, 'profiles', 'id, first_name, last_name'),
+    fetchAllRows<{ vote_value: number; created_datetime_utc: string }>(supabase, 'caption_votes', 'vote_value, created_datetime_utc'),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('images').select('*', { count: 'exact', head: true }),
+    supabase.from('caption_votes').select('created_datetime_utc, vote_value').gte('created_datetime_utc', since30d),
   ]);
 
 
   const flavorNameById = new Map<number, string>();
+  const flavorSlugById = new Map<number, string>();
   for (const f of flavors) {
-    flavorNameById.set(f.id, f.description ?? `Flavor ${f.id}`);
+    flavorNameById.set(f.id, f.description ?? f.slug ?? `Flavor ${f.id}`);
+    flavorSlugById.set(f.id, f.slug ?? `flavor-${f.id}`);
   }
 
   const profileNameById = new Map<string, string>();
@@ -257,25 +254,79 @@ export async function GET() {
     rows.map(r => ({ x: r.caption_word_count, y: r.like_count }))
   );
 
-  const imageFactors = groupAverageImpact(rows, 'image_id', 2).slice(0, 8);
   const timeBucketFactors = groupAverageImpact(rows, 'created_bucket', 2);
-  const flavorFactors = groupAverageImpact(rows, 'humor_flavor_name', 2).slice(0, 8);
-  const profileFactors = groupAverageImpact(rows, 'profile_name', 2).slice(0, 8);
 
   const topProfilesByLikes = buildLeaderboard(rows, 'profile_name', 1).slice(0, 8);
   const topImagesByLikes = buildLeaderboard(rows, 'image_id', 1).slice(0, 8);
   const topFlavorsByLikes = buildLeaderboard(rows, 'humor_flavor_name', 1).slice(0, 8);
 
+  // ── Platform stats ──
+  const allVotes = votesRes;
+  const totalUpvotes = allVotes.filter(v => v.vote_value === 1).length;
+  const totalDownvotes = allVotes.filter(v => v.vote_value === -1).length;
+  const platformStats = {
+    totalCaptions: captions.length,
+    publicCaptions: captions.filter(c => (c as any).is_public === true).length,
+    totalVotes: allVotes.length,
+    totalUpvotes,
+    totalDownvotes,
+    totalUsers: userCountRes.count ?? 0,
+    totalImages: imageCountRes.count ?? 0,
+    totalFlavors: flavors.length,
+    maxLikes: Math.max(...captions.map(c => Number(c.like_count ?? 0))),
+    minLikes: Math.min(...captions.map(c => Number(c.like_count ?? 0))),
+  };
+
+  // ── Daily activity (last 30 days) ──
+  function toDay(iso: string) { return iso.slice(0, 10); }
+  const captionsByDay = new Map<string, number>();
+  for (const c of captions) {
+    if (!c.created_datetime_utc) continue;
+    const day = toDay(c.created_datetime_utc);
+    if (day < since30d.slice(0, 10)) continue;
+    captionsByDay.set(day, (captionsByDay.get(day) ?? 0) + 1);
+  }
+  const votesByDay = new Map<string, number>();
+  for (const v of (dailyVotesRes.data ?? [])) {
+    if (!v.created_datetime_utc) continue;
+    const day = toDay(v.created_datetime_utc);
+    votesByDay.set(day, (votesByDay.get(day) ?? 0) + 1);
+  }
+  const allDays = Array.from(new Set([...captionsByDay.keys(), ...votesByDay.keys()])).sort();
+  const dailyActivity = allDays.map(day => ({
+    day,
+    captions: captionsByDay.get(day) ?? 0,
+    votes: votesByDay.get(day) ?? 0,
+  }));
+
+  // ── Flavor usage vs performance ──
+  const flavorStats = new Map<number, { count: number; totalLikes: number }>();
+  for (const c of captions) {
+    if (c.humor_flavor_id == null) continue;
+    const cur = flavorStats.get(c.humor_flavor_id) ?? { count: 0, totalLikes: 0 };
+    cur.count += 1;
+    cur.totalLikes += Number(c.like_count ?? 0);
+    flavorStats.set(c.humor_flavor_id, cur);
+  }
+  const flavorPerformance = Array.from(flavorStats.entries())
+    .map(([id, { count, totalLikes }]) => ({
+      slug: flavorSlugById.get(id) ?? `flavor-${id}`,
+      captionCount: count,
+      avgLikes: count > 0 ? totalLikes / count : 0,
+    }))
+    .sort((a, b) => b.captionCount - a.captionCount)
+    .slice(0, 20);
+
   return Response.json({
     sampleSize: rows.length,
     charLenRegression,
     wordCountRegression,
-    imageFactors,
     timeBucketFactors,
-    flavorFactors,
-    profileFactors,
     topProfilesByLikes,
     topImagesByLikes,
     topFlavorsByLikes,
+    platformStats,
+    dailyActivity,
+    flavorPerformance,
   });
 }

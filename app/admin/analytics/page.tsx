@@ -281,7 +281,8 @@ export default function AdminAnalytics() {
             const maxVal = Math.max(...bubbles.map(b => b.rawValue));
             const MIN_PX = 80;
             const MAX_PX = 180;
-            const voteSize = Math.round(MIN_PX + (platformStats.totalVotes / maxVal) * (MAX_PX - MIN_PX));
+            const sqrtMax = Math.sqrt(maxVal);
+            const voteSize = Math.round(MIN_PX + (Math.sqrt(platformStats.totalVotes) / sqrtMax) * (MAX_PX - MIN_PX));
             const voteData = [
               { name: 'Upvotes', value: platformStats.totalUpvotes },
               { name: 'Downvotes', value: platformStats.totalDownvotes },
@@ -324,7 +325,7 @@ export default function AdminAnalytics() {
 
                   {/* Regular bubbles */}
                   {bubbles.map(({ label, rawValue, display, icon, bg, border, color }) => {
-                    const size = Math.round(MIN_PX + (rawValue / maxVal) * (MAX_PX - MIN_PX));
+                    const size = Math.round(MIN_PX + (Math.sqrt(rawValue) / sqrtMax) * (MAX_PX - MIN_PX));
                     return (
                       <div key={label} className="flex flex-col items-center gap-2">
                         <div

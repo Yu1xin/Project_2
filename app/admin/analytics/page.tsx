@@ -190,27 +190,46 @@ export default function AdminAnalytics() {
 
       {!loading && !error && (
         <>
-          {/* ── (1) STAT CARDS ── */}
-          {platformStats && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-              {[
-                { label: 'Total Captions', value: platformStats.totalCaptions.toLocaleString(), icon: '💬', color: 'text-blue-400' },
-                { label: 'Total Votes', value: platformStats.totalVotes.toLocaleString(), icon: '🗳️', color: 'text-emerald-400' },
-                { label: 'Total Users', value: platformStats.totalUsers.toLocaleString(), icon: '👤', color: 'text-amber-400' },
-                { label: 'Total Images', value: platformStats.totalImages.toLocaleString(), icon: '🖼️', color: 'text-cyan-400' },
-                { label: 'Upvotes', value: platformStats.totalUpvotes.toLocaleString(), icon: '⬆️', color: 'text-emerald-400' },
-                { label: 'Downvotes', value: platformStats.totalDownvotes.toLocaleString(), icon: '⬇️', color: 'text-red-400' },
-                { label: 'Upvote Rate', value: `${platformStats.totalVotes ? ((platformStats.totalUpvotes / platformStats.totalVotes) * 100).toFixed(1) : 0}%`, icon: '📊', color: 'text-violet-400' },
-                { label: 'Flavors', value: platformStats.totalFlavors.toLocaleString(), icon: '😂', color: 'text-pink-400' },
-              ].map(({ label, value, icon, color }) => (
-                <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                  <div className="text-lg mb-1">{icon}</div>
-                  <div className={`text-2xl font-black ${color}`}>{value}</div>
-                  <div className="text-xs text-zinc-400 mt-1">{label}</div>
+          {/* ── (1) BUBBLE STATS ── */}
+          {platformStats && (() => {
+            const bubbles = [
+              { label: 'Captions', rawValue: platformStats.totalCaptions, display: platformStats.totalCaptions.toLocaleString(), icon: '💬', bg: 'bg-blue-500/20', border: 'border-blue-500/40', color: 'text-blue-300' },
+              { label: 'Votes', rawValue: platformStats.totalVotes, display: platformStats.totalVotes.toLocaleString(), icon: '🗳️', bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', color: 'text-emerald-300' },
+              { label: 'Upvotes', rawValue: platformStats.totalUpvotes, display: platformStats.totalUpvotes.toLocaleString(), icon: '⬆️', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', color: 'text-emerald-400' },
+              { label: 'Downvotes', rawValue: platformStats.totalDownvotes, display: platformStats.totalDownvotes.toLocaleString(), icon: '⬇️', bg: 'bg-red-500/10', border: 'border-red-500/30', color: 'text-red-400' },
+              { label: 'Images', rawValue: platformStats.totalImages, display: platformStats.totalImages.toLocaleString(), icon: '🖼️', bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', color: 'text-cyan-300' },
+              { label: 'Users', rawValue: platformStats.totalUsers, display: platformStats.totalUsers.toLocaleString(), icon: '👤', bg: 'bg-amber-500/20', border: 'border-amber-500/40', color: 'text-amber-300' },
+              { label: 'Flavors', rawValue: platformStats.totalFlavors, display: platformStats.totalFlavors.toLocaleString(), icon: '😂', bg: 'bg-pink-500/20', border: 'border-pink-500/40', color: 'text-pink-300' },
+              { label: 'Upvote Rate', rawValue: platformStats.totalVotes ? (platformStats.totalUpvotes / platformStats.totalVotes) * 10000 : 0, display: `${platformStats.totalVotes ? ((platformStats.totalUpvotes / platformStats.totalVotes) * 100).toFixed(1) : 0}%`, icon: '📊', bg: 'bg-violet-500/20', border: 'border-violet-500/40', color: 'text-violet-300' },
+            ];
+            const maxVal = Math.max(...bubbles.map(b => b.rawValue));
+            const MIN_PX = 80;
+            const MAX_PX = 180;
+            return (
+              <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 mb-8">
+                <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-400 mb-6">Platform at a Glance</h3>
+                <div className="flex flex-wrap items-end justify-center gap-6">
+                  {bubbles.map(({ label, rawValue, display, icon, bg, border, color }) => {
+                    const size = Math.round(MIN_PX + (rawValue / maxVal) * (MAX_PX - MIN_PX));
+                    return (
+                      <div key={label} className="flex flex-col items-center gap-2">
+                        <div
+                          className={`rounded-full border-2 ${bg} ${border} flex flex-col items-center justify-center transition-transform hover:scale-105`}
+                          style={{ width: size, height: size }}
+                        >
+                          <span className="text-lg leading-none">{icon}</span>
+                          <span className={`font-black leading-tight text-center px-1 ${size < 100 ? 'text-xs' : size < 140 ? 'text-sm' : 'text-base'} ${color}`}>
+                            {display}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-zinc-400 text-center whitespace-nowrap">{label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            );
+          })()}
 
           {/* ── (2) ACTIVITY CHART ── */}
           {dailyActivity.length > 0 && (

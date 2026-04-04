@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import { RegressionResult, FactorCard } from '@/types/analytics';
 
@@ -194,21 +195,57 @@ export default function AdminAnalytics() {
           {platformStats && (() => {
             const bubbles = [
               { label: 'Captions', rawValue: platformStats.totalCaptions, display: platformStats.totalCaptions.toLocaleString(), icon: '💬', bg: 'bg-blue-500/20', border: 'border-blue-500/40', color: 'text-blue-300' },
-              { label: 'Votes', rawValue: platformStats.totalVotes, display: platformStats.totalVotes.toLocaleString(), icon: '🗳️', bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', color: 'text-emerald-300' },
-              { label: 'Upvotes', rawValue: platformStats.totalUpvotes, display: platformStats.totalUpvotes.toLocaleString(), icon: '⬆️', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', color: 'text-emerald-400' },
-              { label: 'Downvotes', rawValue: platformStats.totalDownvotes, display: platformStats.totalDownvotes.toLocaleString(), icon: '⬇️', bg: 'bg-red-500/10', border: 'border-red-500/30', color: 'text-red-400' },
               { label: 'Images', rawValue: platformStats.totalImages, display: platformStats.totalImages.toLocaleString(), icon: '🖼️', bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', color: 'text-cyan-300' },
               { label: 'Users', rawValue: platformStats.totalUsers, display: platformStats.totalUsers.toLocaleString(), icon: '👤', bg: 'bg-amber-500/20', border: 'border-amber-500/40', color: 'text-amber-300' },
               { label: 'Flavors', rawValue: platformStats.totalFlavors, display: platformStats.totalFlavors.toLocaleString(), icon: '😂', bg: 'bg-pink-500/20', border: 'border-pink-500/40', color: 'text-pink-300' },
-              { label: 'Upvote Rate', rawValue: platformStats.totalVotes ? (platformStats.totalUpvotes / platformStats.totalVotes) * 10000 : 0, display: `${platformStats.totalVotes ? ((platformStats.totalUpvotes / platformStats.totalVotes) * 100).toFixed(1) : 0}%`, icon: '📊', bg: 'bg-violet-500/20', border: 'border-violet-500/40', color: 'text-violet-300' },
             ];
             const maxVal = Math.max(...bubbles.map(b => b.rawValue));
             const MIN_PX = 80;
             const MAX_PX = 180;
+            const voteSize = Math.round(MIN_PX + (platformStats.totalVotes / maxVal) * (MAX_PX - MIN_PX));
+            const voteData = [
+              { name: 'Upvotes', value: platformStats.totalUpvotes },
+              { name: 'Downvotes', value: platformStats.totalDownvotes },
+            ];
             return (
               <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 mb-8">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-400 mb-6">Platform at a Glance</h3>
                 <div className="flex flex-wrap items-end justify-center gap-6">
+                  {/* Vote pie chart bubble */}
+                  <div className="flex flex-col items-center gap-2">
+                    <div
+                      className="rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 flex items-center justify-center relative transition-transform hover:scale-105 overflow-hidden"
+                      style={{ width: voteSize, height: voteSize }}
+                    >
+                      <PieChart width={voteSize} height={voteSize}>
+                        <Pie
+                          data={voteData}
+                          cx={voteSize / 2}
+                          cy={voteSize / 2}
+                          innerRadius={voteSize * 0.25}
+                          outerRadius={voteSize * 0.46}
+                          dataKey="value"
+                          strokeWidth={0}
+                        >
+                          <Cell fill="#34d399" />
+                          <Cell fill="#f87171" />
+                        </Pie>
+                      </PieChart>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-base leading-none">🗳️</span>
+                        <span className={`font-black leading-tight text-center ${voteSize < 100 ? 'text-[10px]' : 'text-xs'} text-zinc-200`}>
+                          {platformStats.totalVotes.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-zinc-400 text-center whitespace-nowrap">Votes</span>
+                    <div className="flex gap-3 text-[10px]">
+                      <span className="text-emerald-400">⬆ {platformStats.totalUpvotes.toLocaleString()}</span>
+                      <span className="text-red-400">⬇ {platformStats.totalDownvotes.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Regular bubbles */}
                   {bubbles.map(({ label, rawValue, display, icon, bg, border, color }) => {
                     const size = Math.round(MIN_PX + (rawValue / maxVal) * (MAX_PX - MIN_PX));
                     return (

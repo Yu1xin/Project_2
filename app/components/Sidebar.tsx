@@ -217,7 +217,7 @@ export default function Sidebar() {
             </span>
             {isOpen && (
               <span className="whitespace-nowrap animate-in slide-in-from-left-2">
-                {viewMode === 'admin' ? 'User View' : 'Admin View'}
+                {viewMode === 'admin' ? 'switch to User View' : 'switch to Admin View'}
               </span>
             )}
           </button>

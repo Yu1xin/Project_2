@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
@@ -230,6 +230,9 @@ export default function ListPage() {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchField, setSearchField] = useState<SearchField>('all');
+  const [searchResults, setSearchResults] = useState<CaptionItem[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const router = useRouter();
@@ -237,6 +240,7 @@ export default function ListPage() {
   const loadPile = useCallback(async (selectedPile: Pile, uid: string | undefined) => {
     setPileLoading(true);
     setSearchQuery('');
+    setSearchResults(null);
     try {
       const params = new URLSearchParams({ pile: selectedPile });
       if (uid) params.set('userId', uid);
@@ -265,21 +269,25 @@ export default function ListPage() {
     fetchData();
   }, [router, loadPile]);
 
-  // Filtered list
-  const displayList = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return captionsList;
-    return captionsList.filter(item => {
-      const fields: Record<SearchField, string> = {
-        all: [item.content, item.image_id, item.profile_id, item.images?.image_description].filter(Boolean).join(' '),
-        content: item.content ?? '',
-        image_id: item.image_id ?? '',
-        image_description: item.images?.image_description ?? '',
-        profile_id: item.profile_id ?? '',
-      };
-      return fields[searchField].toLowerCase().includes(q);
-    });
-  }, [captionsList, searchQuery, searchField]);
+  // When searchQuery changes, debounce → call API
+  useEffect(() => {
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    const q = searchQuery.trim();
+    if (!q) { setSearchResults(null); setSearchLoading(false); return; }
+
+    setSearchLoading(true);
+    searchDebounce.current = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ search: q, searchField });
+        const res = await fetch(`/api/main?${params}`);
+        const data = await res.json();
+        setSearchResults(res.ok ? (data as CaptionItem[]) : []);
+      } catch { setSearchResults([]); }
+      finally { setSearchLoading(false); }
+    }, 350);
+  }, [searchQuery, searchField]);
+
+  const displayList = searchResults ?? captionsList;
 
   useEffect(() => {
     const updateActive = () => {
@@ -328,7 +336,7 @@ export default function ListPage() {
 
         <div className="flex items-center justify-center gap-3 mb-5">
           <span className="text-xs text-zinc-400 font-mono">
-            {pileLoading ? 'loading...' : `${displayList.length}${searchQuery ? ` of ${captionsList.length}` : ''} memes · ${PILES.find(p => p.key === pile)!.desc}`}
+            {pileLoading ? 'loading...' : searchLoading ? 'searching…' : searchQuery ? `${displayList.length} results across all memes` : `${displayList.length} memes · ${PILES.find(p => p.key === pile)!.desc}`}
           </span>
           {pile !== 'all' && (
             <button onClick={() => loadPile(pile, userId)} disabled={pileLoading}

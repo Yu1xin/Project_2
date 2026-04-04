@@ -4,25 +4,75 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const pile = searchParams.get('pile') || 'all';
   const userId = searchParams.get('userId');
+  const search = searchParams.get('search')?.trim() || '';
+  const searchField = searchParams.get('searchField') || 'all';
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // For named piles, exclude captions the user already voted on
+  const SELECT = 'id, content, like_count, image_id, humor_flavor_id, profile_id, images(url, image_description)';
+
+  // ── Search mode: full-table search, no pile limit ──
+  if (search) {
+    let query = supabase.from('captions').select(SELECT);
+
+    if (searchField === 'content') {
+      query = query.ilike('content', `%${search}%`);
+    } else if (searchField === 'image_id') {
+      query = query.ilike('image_id::text', `%${search}%`);
+    } else if (searchField === 'profile_id') {
+      query = query.ilike('profile_id::text', `%${search}%`);
+    } else if (searchField === 'image_description') {
+      // image_description lives on the images table — filter captions that join to matching images
+      const { data: matchingImages } = await supabase
+        .from('images')
+        .select('id')
+        .ilike('image_description', `%${search}%`);
+      const imageIds = (matchingImages || []).map((i: any) => i.id).filter(Boolean);
+      if (imageIds.length === 0) return Response.json([]);
+      query = query.in('image_id', imageIds);
+    } else {
+      // 'all' — search across content and profile_id (image_description needs separate join)
+      const { data: matchingImages } = await supabase
+        .from('images')
+        .select('id')
+        .ilike('image_description', `%${search}%`);
+      const imageIds = (matchingImages || []).map((i: any) => i.id).filter(Boolean);
+
+      const orParts = [`content.ilike.%${search}%`, `profile_id.ilike.%${search}%`];
+      if (imageIds.length > 0) {
+        // We can't OR across tables in one query; fetch both and merge
+        const { data: byImage } = await supabase.from('captions').select(SELECT).in('image_id', imageIds).limit(200);
+        const { data: byText } = await supabase.from('captions').select(SELECT).or(orParts.join(',')).limit(200);
+        const seen = new Set<string>();
+        const merged = [...(byImage || []), ...(byText || [])].filter(r => {
+          if (seen.has(r.id)) return false;
+          seen.add(r.id);
+          return true;
+        });
+        return Response.json(merged.slice(0, 200));
+      } else {
+        query = query.or(orParts.join(',')).limit(200);
+      }
+    }
+
+    query = query.order('created_datetime_utc', { ascending: false }).limit(200);
+    const { data, error } = await query;
+    if (error) return Response.json({ error: error.message }, { status: 500 });
+    return Response.json(data ?? []);
+  }
+
+  // ── Pile mode ──
   let excludedIds: string[] = [];
   if (userId && pile !== 'all') {
     const { data: votes } = await supabase
-      .from('caption_votes')
-      .select('caption_id')
-      .eq('profile_id', userId);
+      .from('caption_votes').select('caption_id').eq('profile_id', userId);
     excludedIds = (votes || []).map((v: any) => v.caption_id).filter(Boolean);
   }
 
-  let query = supabase
-    .from('captions')
-    .select('id, content, like_count, image_id, humor_flavor_id, profile_id, images(url, image_description)');
+  let query = supabase.from('captions').select(SELECT);
 
   if (excludedIds.length > 0) {
     query = query.not('id', 'in', `(${excludedIds.join(',')})`);
@@ -35,7 +85,6 @@ export async function GET(request: Request) {
   } else if (pile === 'bottom') {
     query = query.order('like_count', { ascending: true, nullsFirst: false }).limit(30);
   } else {
-    // all — latest 100
     query = query.order('created_datetime_utc', { ascending: false }).limit(100);
   }
 

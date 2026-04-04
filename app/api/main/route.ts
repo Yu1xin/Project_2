@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('captions')
-    .select('id, content, like_count, image_id, humor_flavor_id, images(url)');
+    .select('id, content, like_count, image_id, humor_flavor_id, profile_id, images(url, image_description)');
 
   if (excludedIds.length > 0) {
     query = query.not('id', 'in', `(${excludedIds.join(',')})`);

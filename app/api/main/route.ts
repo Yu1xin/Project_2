@@ -21,9 +21,11 @@ export async function GET(request: Request) {
     if (searchField === 'content') {
       query = query.ilike('content', `%${search}%`);
     } else if (searchField === 'image_id') {
-      query = query.ilike('image_id::text', `%${search}%`);
+      // UUID column — cast to text for partial match
+      query = query.filter('image_id::text', 'ilike', `%${search}%`);
     } else if (searchField === 'profile_id') {
-      query = query.ilike('profile_id::text', `%${search}%`);
+      // UUID column — cast to text for partial match
+      query = query.filter('profile_id::text', 'ilike', `%${search}%`);
     } else if (searchField === 'image_description') {
       // image_description lives on the images table — filter captions that join to matching images
       const { data: matchingImages } = await supabase
@@ -41,21 +43,22 @@ export async function GET(request: Request) {
         .ilike('image_description', `%${search}%`);
       const imageIds = (matchingImages || []).map((i: any) => i.id).filter(Boolean);
 
-      const orParts = [`content.ilike.%${search}%`, `profile_id.ilike.%${search}%`];
-      if (imageIds.length > 0) {
-        // We can't OR across tables in one query; fetch both and merge
-        const { data: byImage } = await supabase.from('captions').select(SELECT).in('image_id', imageIds).limit(200);
-        const { data: byText } = await supabase.from('captions').select(SELECT).or(orParts.join(',')).limit(200);
-        const seen = new Set<string>();
-        const merged = [...(byImage || []), ...(byText || [])].filter(r => {
-          if (seen.has(r.id)) return false;
-          seen.add(r.id);
-          return true;
-        });
-        return Response.json(merged.slice(0, 200));
-      } else {
-        query = query.or(orParts.join(',')).limit(200);
-      }
+      // Fetch by content, profile_id (UUID cast), and image_description separately then merge
+      const fetches = [
+        supabase.from('captions').select(SELECT).ilike('content', `%${search}%`).limit(200),
+        supabase.from('captions').select(SELECT).filter('profile_id::text', 'ilike', `%${search}%`).limit(200),
+        ...(imageIds.length > 0
+          ? [supabase.from('captions').select(SELECT).in('image_id', imageIds).limit(200)]
+          : []),
+      ];
+      const results = await Promise.all(fetches);
+      const seen = new Set<string>();
+      const merged = results.flatMap(r => r.data || []).filter((row: any) => {
+        if (seen.has(row.id)) return false;
+        seen.add(row.id);
+        return true;
+      });
+      return Response.json(merged.slice(0, 200));
     }
 
     query = query.order('created_datetime_utc', { ascending: false }).limit(200);

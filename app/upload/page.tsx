@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -38,6 +38,14 @@ function getFlavorLabel(flavor: HumorFlavorRow) {
 }
 
 export default function UploadPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-zinc-400 font-mono">Loading...</div>}>
+      <UploadPageInner />
+    </Suspense>
+  );
+}
+
+function UploadPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

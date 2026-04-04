@@ -145,16 +145,30 @@ export default function Sidebar() {
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2 pt-4">
         {viewMode === 'user' ? (
           // ── USER NAV ──
-          USER_NAV.map((link) => (
-            <SidebarLink
-              key={link.href}
-              href={link.href}
-              icon={link.icon}
-              label={link.label}
-              isOpen={isOpen}
-              active={pathname === link.href}
-            />
-          ))
+          <>
+            {USER_NAV.map((link) => (
+              <SidebarLink
+                key={link.href}
+                href={link.href}
+                icon={link.icon}
+                label={link.label}
+                isOpen={isOpen}
+                active={pathname === link.href}
+              />
+            ))}
+            {isSuperAdmin && (
+              <>
+                <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
+                <SidebarLink
+                  href="/admin"
+                  icon="🔓"
+                  label="Admin Panel"
+                  isOpen={isOpen}
+                  active={pathname === '/admin'}
+                />
+              </>
+            )}
+          </>
         ) : (
           // ── ADMIN NAV ──
           ADMIN_SECTIONS.map((section) => (

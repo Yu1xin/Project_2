@@ -309,12 +309,6 @@ export default function AdminImagesPage() {
                     {img.id}
                   </p>
 
-                  {img.image_description && (
-                    <p className="mb-2 text-xs text-zinc-300 italic">
-                      {img.image_description}
-                    </p>
-                  )}
-
                   <p className="mb-3 text-[11px] text-zinc-100">
                     Public: {img.is_public ? 'Yes' : 'No'} · Common Use:{' '}
                     {img.is_common_use ? 'Yes' : 'No'}

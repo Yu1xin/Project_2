@@ -25,6 +25,7 @@ type ImageRow = {
 export default function AdminCaptionExamplesPage() {
   const [captionExamples, setCaptionExamples] = useState<CaptionExampleRow[]>([]);
   const [images, setImages] = useState<ImageRow[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [creating, setCreating] = useState(false);
@@ -76,6 +77,9 @@ export default function AdminCaptionExamplesPage() {
 
   useEffect(() => {
     loadData();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
   }, []);
 
   async function getCurrentUserId() {
@@ -472,20 +476,24 @@ export default function AdminCaptionExamplesPage() {
                     </div>
 
                     {!isEditing && (
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={() => startEdit(item)}
-                          className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-black hover:bg-blue-600 hover:text-white transition-all"
-                        >
-                          EDIT
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white transition-all"
-                        >
-                          DELETE
-                        </button>
-                      </div>
+                      currentUserId && item.created_by_user_id !== currentUserId ? (
+                        <span className="text-xs text-zinc-500 italic">not yours</span>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => startEdit(item)}
+                            className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-black hover:bg-blue-600 hover:text-white transition-all"
+                          >
+                            EDIT
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-black hover:bg-red-600 hover:text-white transition-all"
+                          >
+                            DELETE
+                          </button>
+                        </div>
+                      )
                     )}
                   </div>
                 </div>

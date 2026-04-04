@@ -69,7 +69,7 @@ export default function CaptionRequestsPage() {
                 className="text-zinc-900 p-6 rounded-2xl shadow-sm border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 hover:shadow-md transition-shadow"
               >
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-[10px] bg-slate-100 text-zinc-100 px-2 py-1 rounded uppercase font-mono">
+                  <span className="text-[10px] bg-slate-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-1 rounded uppercase font-mono">
                     ID: {req.id}
                   </span>
                   <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded uppercase font-mono">

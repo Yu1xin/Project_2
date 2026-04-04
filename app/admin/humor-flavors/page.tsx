@@ -253,22 +253,22 @@ export default function HumorFlavorsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800">Humor Flavors</h1>
+    <div className="space-y-6 p-6 bg-gray-50 dark:bg-zinc-900 min-h-screen">
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-zinc-100">Humor Flavors</h1>
 
       {/* ── CREATE FORM ── */}
-      <div className="border rounded-xl p-6 space-y-4 bg-white shadow-sm text-zinc-900">
-        <h2 className="font-semibold text-lg text-gray-700">Create Flavor</h2>
+      <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl p-6 space-y-4 bg-white dark:bg-zinc-950 shadow-sm">
+        <h2 className="font-semibold text-lg text-gray-700 dark:text-zinc-300">Create Flavor</h2>
 
         <input
-          className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           placeholder="slug (e.g. dark-humor)"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
         />
 
         <textarea
-          className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           placeholder="description"
           rows={2}
           value={description}
@@ -278,21 +278,21 @@ export default function HumorFlavorsPage() {
         {/* ── STEPS BUILDER ── */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-700">
+            <h3 className="font-semibold text-gray-700 dark:text-zinc-300">
               Steps{pendingSteps.length > 0 ? ` (${pendingSteps.length})` : ''}
             </h3>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => { setShowMixPanel((v) => !v); setShowNewStepForm(false); }}
-                className="px-3 py-1.5 text-sm rounded-lg bg-violet-100 text-violet-700 hover:bg-violet-200 transition font-medium"
+                className="px-3 py-1.5 text-sm rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-200 dark:hover:bg-violet-900/50 transition font-medium"
               >
                 + Copy from existing
               </button>
               <button
                 type="button"
                 onClick={() => { setShowNewStepForm((v) => !v); setShowMixPanel(false); }}
-                className="px-3 py-1.5 text-sm rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition font-medium"
+                className="px-3 py-1.5 text-sm rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition font-medium"
               >
                 + New step
               </button>
@@ -301,65 +301,65 @@ export default function HumorFlavorsPage() {
 
           {/* Pending steps list */}
           {pendingSteps.length === 0 && !showNewStepForm && !showMixPanel && (
-            <p className="text-sm text-gray-400 italic">
+            <p className="text-sm text-gray-400 dark:text-zinc-500 italic">
               No steps yet — add a new step or copy from existing flavors.
             </p>
           )}
 
           {pendingSteps.map((s, i) => (
-            <div key={s.key} className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-1">
+            <div key={s.key} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 bg-gray-50 dark:bg-zinc-900 space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-gray-700">
+                <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                   Step {i + 1}{s.description ? ` — ${s.description}` : ''}
                 </span>
                 <div className="flex gap-1">
                   <button
                     onClick={() => moveStep(s.key, 'up')}
                     disabled={i === 0}
-                    className="px-2 py-0.5 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-30"
+                    className="px-2 py-0.5 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 disabled:opacity-30"
                   >↑</button>
                   <button
                     onClick={() => moveStep(s.key, 'down')}
                     disabled={i === pendingSteps.length - 1}
-                    className="px-2 py-0.5 text-xs rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-30"
+                    className="px-2 py-0.5 text-xs rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 disabled:opacity-30"
                   >↓</button>
                   <button
                     onClick={() => removeStep(s.key)}
-                    className="px-2 py-0.5 text-xs rounded bg-red-100 text-red-600 hover:bg-red-200"
+                    className="px-2 py-0.5 text-xs rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
                   >✕</button>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 dark:text-zinc-500">
                 Temp: {s.llm_temperature} · Input: {INPUT_TYPES.find((t) => t.id === s.llm_input_type_id)?.label ?? s.llm_input_type_id}
               </p>
               {s.llm_system_prompt && (
-                <p className="text-xs text-gray-500 truncate">System: {s.llm_system_prompt}</p>
+                <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">System: {s.llm_system_prompt}</p>
               )}
               {s.llm_user_prompt && (
-                <p className="text-xs text-gray-500 truncate">User: {s.llm_user_prompt}</p>
+                <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">User: {s.llm_user_prompt}</p>
               )}
             </div>
           ))}
 
           {/* New step form */}
           {showNewStepForm && (
-            <div className="border border-blue-200 rounded-xl p-4 bg-blue-50 space-y-3">
-              <h4 className="font-semibold text-blue-800">New Step</h4>
+            <div className="border border-blue-200 dark:border-blue-800 rounded-xl p-4 bg-blue-50 dark:bg-blue-950/30 space-y-3">
+              <h4 className="font-semibold text-blue-800 dark:text-blue-300">New Step</h4>
               <input
-                className="border border-gray-300 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Step description"
                 value={newStep.description}
                 onChange={(e) => setNewStep((p) => ({ ...p, description: e.target.value }))}
               />
               <textarea
-                className="border border-gray-300 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="System prompt"
                 rows={3}
                 value={newStep.llm_system_prompt}
                 onChange={(e) => setNewStep((p) => ({ ...p, llm_system_prompt: e.target.value }))}
               />
               <textarea
-                className="border border-gray-300 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 p-2 w-full rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="User prompt"
                 rows={3}
                 value={newStep.llm_user_prompt}
@@ -367,21 +367,21 @@ export default function HumorFlavorsPage() {
               />
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 font-medium">Temperature</label>
+                  <label className="text-sm text-gray-700 dark:text-zinc-300 font-medium">Temperature</label>
                   <input
                     type="number"
                     min={0} max={2} step={0.1}
                     value={newStep.llm_temperature}
                     onChange={(e) => setNewStep((p) => ({ ...p, llm_temperature: Number(e.target.value) }))}
-                    className="border border-gray-300 p-1.5 w-24 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 p-1.5 w-24 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
                 </div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 font-medium">Input type</label>
+                  <label className="text-sm text-gray-700 dark:text-zinc-300 font-medium">Input type</label>
                   <select
                     value={newStep.llm_input_type_id}
                     onChange={(e) => setNewStep((p) => ({ ...p, llm_input_type_id: Number(e.target.value) }))}
-                    className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     {INPUT_TYPES.map((t) => (
                       <option key={t.id} value={t.id}>{t.label}</option>
@@ -389,11 +389,11 @@ export default function HumorFlavorsPage() {
                   </select>
                 </div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 font-medium">Output type</label>
+                  <label className="text-sm text-gray-700 dark:text-zinc-300 font-medium">Output type</label>
                   <select
                     value={newStep.llm_output_type_id}
                     onChange={(e) => setNewStep((p) => ({ ...p, llm_output_type_id: Number(e.target.value) }))}
-                    className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     {OUTPUT_TYPES.map((t) => (
                       <option key={t.id} value={t.id}>{t.label}</option>
@@ -401,11 +401,11 @@ export default function HumorFlavorsPage() {
                   </select>
                 </div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 font-medium">Model</label>
+                  <label className="text-sm text-gray-700 dark:text-zinc-300 font-medium">Model</label>
                   <select
                     value={newStep.llm_model_id}
                     onChange={(e) => setNewStep((p) => ({ ...p, llm_model_id: Number(e.target.value) }))}
-                    className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     {LLM_MODELS.map((m) => (
                       <option key={m.id} value={m.id}>{m.name}</option>
@@ -413,11 +413,11 @@ export default function HumorFlavorsPage() {
                   </select>
                 </div>
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700 font-medium">Step type</label>
+                  <label className="text-sm text-gray-700 dark:text-zinc-300 font-medium">Step type</label>
                   <select
                     value={newStep.humor_flavor_step_type_id}
                     onChange={(e) => setNewStep((p) => ({ ...p, humor_flavor_step_type_id: Number(e.target.value) }))}
-                    className="border border-gray-300 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 p-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     {STEP_TYPES.map((t) => (
                       <option key={t.id} value={t.id}>{t.label}</option>
@@ -434,7 +434,7 @@ export default function HumorFlavorsPage() {
                 </button>
                 <button
                   onClick={() => { setShowNewStepForm(false); setNewStep(EMPTY_STEP); }}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-sm transition"
+                  className="px-4 py-2 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 text-gray-700 dark:text-zinc-300 rounded text-sm transition"
                 >
                   Cancel
                 </button>
@@ -444,31 +444,31 @@ export default function HumorFlavorsPage() {
 
           {/* Mix panel — copy from existing steps */}
           {showMixPanel && (
-            <div className="border border-violet-200 rounded-xl p-4 bg-violet-50 space-y-3">
-              <h4 className="font-semibold text-violet-800">Copy from existing steps</h4>
+            <div className="border border-violet-200 dark:border-violet-800 rounded-xl p-4 bg-violet-50 dark:bg-violet-950/30 space-y-3">
+              <h4 className="font-semibold text-violet-800 dark:text-violet-300">Copy from existing steps</h4>
               {allSteps.length === 0 ? (
-                <p className="text-sm text-gray-500">No existing steps found.</p>
+                <p className="text-sm text-gray-500 dark:text-zinc-400">No existing steps found.</p>
               ) : (
                 <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                   {allSteps.map((s) => (
                     <div
                       key={s.id}
-                      className="flex items-start justify-between gap-3 border border-violet-100 bg-white rounded-lg p-3"
+                      className="flex items-start justify-between gap-3 border border-violet-100 dark:border-violet-800 bg-white dark:bg-zinc-900 rounded-lg p-3"
                     >
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-violet-700">
+                        <p className="text-xs font-bold text-violet-700 dark:text-violet-400">
                           {s.flavor_slug} · Step {s.order_by}
                         </p>
                         {s.description && (
-                          <p className="text-xs text-gray-600">{s.description}</p>
+                          <p className="text-xs text-gray-600 dark:text-zinc-400">{s.description}</p>
                         )}
                         {s.llm_system_prompt && (
-                          <p className="text-xs text-gray-400 truncate">System: {s.llm_system_prompt}</p>
+                          <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">System: {s.llm_system_prompt}</p>
                         )}
                         {s.llm_user_prompt && (
-                          <p className="text-xs text-gray-400 truncate">User: {s.llm_user_prompt}</p>
+                          <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">User: {s.llm_user_prompt}</p>
                         )}
-                        <p className="text-xs text-gray-400">Temp: {s.llm_temperature ?? 'N/A'}</p>
+                        <p className="text-xs text-gray-400 dark:text-zinc-500">Temp: {s.llm_temperature ?? 'N/A'}</p>
                       </div>
                       <button
                         onClick={() => copyExistingStep(s)}
@@ -482,7 +482,7 @@ export default function HumorFlavorsPage() {
               )}
               <button
                 onClick={() => setShowMixPanel(false)}
-                className="text-sm text-violet-600 hover:underline"
+                className="text-sm text-violet-600 dark:text-violet-400 hover:underline"
               >
                 Close
               </button>
@@ -503,7 +503,7 @@ export default function HumorFlavorsPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <input
-            className="flex-1 border border-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="flex-1 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Search by slug or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -511,7 +511,7 @@ export default function HumorFlavorsPage() {
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="text-xs text-gray-400 hover:text-gray-600 transition"
+              className="text-xs text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition"
             >
               Clear
             </button>
@@ -530,11 +530,11 @@ export default function HumorFlavorsPage() {
           .map((flavor) => (
           <div
             key={flavor.id}
-            className="border p-4 rounded-lg text-zinc-900 flex justify-between items-center shadow-sm bg-white"
+            className="border border-zinc-200 dark:border-zinc-700 p-4 rounded-lg flex justify-between items-center shadow-sm bg-white dark:bg-zinc-950"
           >
             <div>
-              <div className="font-semibold text-gray-800">{flavor.slug}</div>
-              <div className="text-sm text-gray-500">{flavor.description}</div>
+              <div className="font-semibold text-gray-800 dark:text-zinc-100">{flavor.slug}</div>
+              <div className="text-sm text-gray-500 dark:text-zinc-400">{flavor.description}</div>
             </div>
             <div className="flex gap-2">
               <Link

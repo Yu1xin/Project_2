@@ -254,6 +254,7 @@ export default function HumorFlavorsPage() {
   }
 
   async function deleteFlavor(id: number) {
+    if (!confirm('Are you sure you want to delete this flavor?')) return;
     const { error } = await supabase.from('humor_flavors').delete().eq('id', id);
     if (error) { alert(error.message); return; }
     loadFlavors();

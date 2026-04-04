@@ -8,6 +8,7 @@ type HumorFlavor = {
   id: number;
   slug: string;
   description: string | null;
+  is_pinned: boolean;
 };
 
 type ExistingStep = {
@@ -106,7 +107,8 @@ export default function HumorFlavorsPage() {
   async function loadFlavors() {
     const { data, error } = await supabase
       .from('humor_flavors')
-      .select('id, slug, description')
+      .select('id, slug, description, is_pinned')
+      .order('is_pinned', { ascending: false })
       .order('created_datetime_utc', { ascending: false });
     if (error) { console.error(error); alert(error.message); return; }
     setFlavors((data as HumorFlavor[]) || []);
@@ -250,6 +252,25 @@ export default function HumorFlavorsPage() {
     const { error } = await supabase.from('humor_flavors').delete().eq('id', id);
     if (error) { alert(error.message); return; }
     loadFlavors();
+  }
+
+  async function togglePin(id: number, currentlyPinned: boolean) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { alert('Not logged in.'); return; }
+
+    const { error } = await supabase
+      .from('humor_flavors')
+      .update({ is_pinned: !currentlyPinned, modified_by_user_id: session.user.id })
+      .eq('id', id);
+    if (error) { alert(error.message); return; }
+
+    setFlavors((prev) => {
+      const updated = prev.map((f) => f.id === id ? { ...f, is_pinned: !currentlyPinned } : f);
+      return [...updated].sort((a, b) => {
+        if (a.is_pinned === b.is_pinned) return 0;
+        return a.is_pinned ? -1 : 1;
+      });
+    });
   }
 
   return (
@@ -530,13 +551,30 @@ export default function HumorFlavorsPage() {
           .map((flavor) => (
           <div
             key={flavor.id}
-            className="border border-zinc-200 dark:border-zinc-700 p-4 rounded-lg flex justify-between items-center shadow-sm bg-white dark:bg-zinc-950"
+            className={`border p-4 rounded-lg flex justify-between items-center shadow-sm transition ${
+              flavor.is_pinned
+                ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-950/20'
+                : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950'
+            }`}
           >
             <div>
-              <div className="font-semibold text-gray-800 dark:text-zinc-100">{flavor.slug}</div>
+              <div className="flex items-center gap-2 font-semibold text-gray-800 dark:text-zinc-100">
+                {flavor.is_pinned && <span title="Pinned">📌</span>}
+                {flavor.slug}
+              </div>
               <div className="text-sm text-gray-500 dark:text-zinc-400">{flavor.description}</div>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => togglePin(flavor.id, flavor.is_pinned)}
+                className={`px-3 py-2 rounded transition text-sm font-medium ${
+                  flavor.is_pinned
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                {flavor.is_pinned ? 'Unpin' : 'Pin'}
+              </button>
               <Link
                 href={`/admin/humor-flavors/${flavor.id}`}
                 className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition"

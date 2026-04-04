@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { RegressionResult, FactorCard } from '@/types/analytics';
 
 type LeaderboardCard = {
@@ -37,6 +38,7 @@ export default function AdminAnalytics() {
   const [topProfilesByLikes, setTopProfilesByLikes] = useState<LeaderboardCard[]>([]);
   const [topImagesByLikes, setTopImagesByLikes] = useState<LeaderboardCard[]>([]);
   const [topFlavorsByLikes, setTopFlavorsByLikes] = useState<LeaderboardCard[]>([]);
+  const [imageUrlMap, setImageUrlMap] = useState<Record<string, string>>({});
 
   const [selectedX, setSelectedX] = useState<'char_len' | 'word_count'>('char_len');
 
@@ -74,6 +76,26 @@ export default function AdminAnalytics() {
         setTopProfilesByLikes(data.topProfilesByLikes || []);
         setTopImagesByLikes(data.topImagesByLikes || []);
         setTopFlavorsByLikes(data.topFlavorsByLikes || []);
+
+        // Fetch image URLs for the top images leaderboard
+        const imageIds: string[] = (data.topImagesByLikes || []).map((item: LeaderboardCard) => item.name);
+        if (imageIds.length > 0) {
+          const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          );
+          const { data: imgRows } = await supabase
+            .from('images')
+            .select('id, url')
+            .in('id', imageIds);
+          if (imgRows) {
+            const map: Record<string, string> = {};
+            for (const row of imgRows) {
+              if (row.url) map[row.id] = row.url;
+            }
+            setImageUrlMap(map);
+          }
+        }
 
         setLoading(false);
       } catch (err) {
@@ -133,7 +155,8 @@ export default function AdminAnalytics() {
     titleBase: string,
     icon: string,
     colorClass: string,
-    items: LeaderboardCard[]
+    items: LeaderboardCard[],
+    urlMap?: Record<string, string>
   ) => {
     const sortedItems = sortLeaderboard(items).slice(0, 8);
 
@@ -155,6 +178,13 @@ export default function AdminAnalytics() {
                 key={`${item.name}-${idx}`}
                 className="bg-slate-950 p-4 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100"
               >
+                {urlMap?.[item.name] && (
+                  <img
+                    src={urlMap[item.name]}
+                    alt={`Image ${item.name.substring(0, 8)}`}
+                    className="w-full h-28 object-cover rounded-lg mb-3 border border-zinc-700"
+                  />
+                )}
                 <div className="flex justify-between items-start gap-4">
                   <div className="min-w-0">
                     <div className="text-sm text-zinc-100 break-words">
@@ -274,7 +304,7 @@ export default function AdminAnalytics() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {renderLeaderboard('Top Profiles', '🏆', 'text-emerald-400', topProfilesByLikes)}
-            {renderLeaderboard('Top Images', '🖼️', 'text-cyan-400', topImagesByLikes)}
+            {renderLeaderboard('Top Images', '🖼️', 'text-cyan-400', topImagesByLikes, imageUrlMap)}
             {renderLeaderboard('Top Flavors', '🙂', 'text-pink-400', topFlavorsByLikes)}
           </div>
         </>

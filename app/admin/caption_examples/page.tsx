@@ -436,6 +436,17 @@ export default function AdminCaptionExamplesPage() {
                             </p>
                           )}
 
+                          {(() => {
+                            const img = images.find((i) => i.id === item.image_id);
+                            return img?.url ? (
+                              <img
+                                src={img.url}
+                                alt={img.image_description || 'Caption image'}
+                                className="w-full h-40 object-cover rounded-xl mb-3 border border-zinc-700"
+                              />
+                            ) : null;
+                          })()}
+
                           <div className="flex flex-wrap gap-2 mb-4">
                             <span className="text-[10px] bg-slate-100 text-zinc-400 px-2 py-1 rounded uppercase font-mono">
                               ID: {String(item.id)}

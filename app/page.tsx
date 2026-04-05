@@ -5,119 +5,242 @@ import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
-type DashboardButton = {
-  href: string;
-  icon: string;
-  label: string;
-  desc: string;
-  color: string;
+type MemeItem = {
+  id: string;
+  content: string | null;
+  like_count: number | null;
+  image_url?: string | null;
 };
+
+type FlavorItem = {
+  id: number;
+  slug: string | null;
+  description: string | null;
+};
+
+type PileKey = 'liked' | 'disliked' | 'myMemes' | 'myFlavors';
+
+const PILE_CONFIG: Record<PileKey, {
+  label: string; icon: string;
+  cardBg: string; backBg: string; border: string; accent: string; countColor: string;
+}> = {
+  liked:     { label: 'Liked Memes',    icon: '👍', cardBg: 'bg-white dark:bg-zinc-950', backBg: 'bg-blue-100 dark:bg-blue-900/40',    border: 'border-blue-200 dark:border-blue-800',    accent: 'text-blue-600 dark:text-blue-400',   countColor: 'bg-blue-600' },
+  disliked:  { label: 'Disliked Memes', icon: '👎', cardBg: 'bg-white dark:bg-zinc-950', backBg: 'bg-red-100 dark:bg-red-900/40',      border: 'border-red-200 dark:border-red-800',      accent: 'text-red-600 dark:text-red-400',     countColor: 'bg-red-500' },
+  myMemes:   { label: 'My Memes',       icon: '🖼️', cardBg: 'bg-white dark:bg-zinc-950', backBg: 'bg-emerald-100 dark:bg-emerald-900/40', border: 'border-emerald-200 dark:border-emerald-800', accent: 'text-emerald-600 dark:text-emerald-400', countColor: 'bg-emerald-600' },
+  myFlavors: { label: 'My Flavors',     icon: '🎭', cardBg: 'bg-white dark:bg-zinc-950', backBg: 'bg-violet-100 dark:bg-violet-900/40', border: 'border-violet-200 dark:border-violet-800', accent: 'text-violet-600 dark:text-violet-400', countColor: 'bg-violet-600' },
+};
+
+function MemeCard({ item }: { item: MemeItem }) {
+  return (
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
+      {item.image_url && (
+        <img src={item.image_url} alt="" className="w-full h-24 object-cover" />
+      )}
+      <div className="p-2">
+        <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">
+          "{item.content || '—'}"
+        </p>
+        {item.like_count != null && (
+          <p className="mt-1 text-[10px] text-zinc-400 font-mono">{item.like_count > 0 ? '+' : ''}{item.like_count} likes</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FlavorCard({ item }: { item: FlavorItem }) {
+  return (
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-sm">
+      <p className="text-xs font-bold text-violet-600 dark:text-violet-400 mb-1">{item.slug || `Flavor #${item.id}`}</p>
+      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-3">{item.description || '—'}</p>
+    </div>
+  );
+}
+
+function PileCard({
+  pileKey, items, flavorItems, loading,
+}: {
+  pileKey: PileKey;
+  items: MemeItem[];
+  flavorItems?: FlavorItem[];
+  loading: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const cfg = PILE_CONFIG[pileKey];
+  const count = pileKey === 'myFlavors' ? (flavorItems?.length ?? 0) : items.length;
+  const topImage = items[0]?.image_url;
+
+  return (
+    <div>
+      {/* Stack */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full text-left group focus:outline-none"
+      >
+        <div className="relative h-44">
+          {/* Back card 2 */}
+          <div className={`absolute inset-0 rounded-2xl border ${cfg.border} ${cfg.backBg} -rotate-[4deg] scale-[0.93] origin-bottom shadow-sm`} />
+          {/* Back card 1 */}
+          <div className={`absolute inset-0 rounded-2xl border ${cfg.border} ${cfg.backBg} -rotate-[2deg] scale-[0.97] origin-bottom shadow-sm`} />
+          {/* Top card */}
+          <div className={`absolute inset-0 rounded-2xl border ${cfg.border} ${cfg.cardBg} shadow-lg overflow-hidden group-hover:-translate-y-1 transition-transform duration-200`}>
+            {topImage && (
+              <img src={topImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 dark:opacity-10" />
+            )}
+            <div className="relative h-full flex flex-col justify-between p-5">
+              <div className="flex items-start justify-between">
+                <span className="text-3xl">{cfg.icon}</span>
+                {loading ? (
+                  <span className="text-[10px] font-mono text-zinc-400 animate-pulse">loading…</span>
+                ) : (
+                  <span className={`${cfg.countColor} text-white text-xs font-black px-2.5 py-1 rounded-full`}>
+                    {count}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className={`text-base font-black ${cfg.accent}`}>{cfg.label}</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  {loading ? '—' : count === 0 ? 'Nothing yet' : `${count} item${count !== 1 ? 's' : ''} · tap to ${open ? 'close' : 'view'}`}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </button>
+
+      {/* Expanded items */}
+      {open && !loading && count > 0 && (
+        <div className="mt-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4">
+          {pileKey === 'myFlavors' ? (
+            <div className="grid grid-cols-1 gap-2 max-h-72 overflow-y-auto pr-1">
+              {(flavorItems ?? []).map(f => <FlavorCard key={f.id} item={f} />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+              {items.map(m => <MemeCard key={m.id} item={m} />)}
+            </div>
+          )}
+        </div>
+      )}
+      {open && !loading && count === 0 && (
+        <div className="mt-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 text-center text-sm text-zinc-400">
+          Nothing here yet
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function MainPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  const [liked, setLiked] = useState<MemeItem[]>([]);
+  const [disliked, setDisliked] = useState<MemeItem[]>([]);
+  const [myMemes, setMyMemes] = useState<MemeItem[]>([]);
+  const [myFlavors, setMyFlavors] = useState<FlavorItem[]>([]);
+
   const router = useRouter();
 
   const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      ),
+    () => createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    ),
     []
   );
 
   useEffect(() => {
     async function loadSession() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.push('/login');
-        return;
-      }
-
-      setUserEmail(session.user.email || 'Student');
-      setLoading(false);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.push('/login'); return; }
+      setUserEmail(session.user.email || 'User');
+      setUserId(session.user.id);
+      setPageLoading(false);
     }
-
     loadSession();
   }, [supabase, router]);
 
-  const dashboardButtons: DashboardButton[] = [
-    {
-      href: '/main',
-      icon: '🖼️',
-      label: 'Vote Memes',
-      desc: 'Browse memes and vote 👍👎',
-      color: 'bg-blue-600 hover:bg-blue-700',
-    },
-    {
-      href: '/upload',
-      icon: '📸',
-      label: 'Upload Meme',
-      desc: 'Upload a picture and generate a new meme',
-      color: 'bg-emerald-500 hover:bg-emerald-600',
-    },
-    {
-      href: '/least-favored',
-      icon: '📉',
-      label: 'Bottom 25 Agree or Disagree?',
-      desc: 'See the memes with lowest performance and vote them',
-      color: 'bg-rose-500 hover:bg-rose-600',
-    },
-    {
-      href: '/list',
-      icon: '👀',
-      label: 'Who is online',
-      desc: 'Latest 20 voting actions👁️👁️',
-      color: 'bg-violet-500 hover:bg-violet-600',
-    },
-  ];
+  useEffect(() => {
+    if (!userId) return;
+    setDataLoading(true);
+    fetch(`/api/user-center?userId=${userId}`)
+      .then(r => r.json())
+      .then(d => {
+        setLiked(d.liked ?? []);
+        setDisliked(d.disliked ?? []);
+        setMyMemes(d.myMemes ?? []);
+        setMyFlavors(d.myFlavors ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setDataLoading(false));
+  }, [userId]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background p-10 text-center font-mono text-zinc-300">
-        LOADING...
-      </div>
-    );
+  if (pageLoading) {
+    return <div className="min-h-screen p-10 text-center font-mono text-zinc-300">LOADING...</div>;
   }
+
+  const PILES: { key: PileKey; items: MemeItem[]; flavorItems?: FlavorItem[] }[] = [
+    { key: 'liked',     items: liked },
+    { key: 'disliked',  items: disliked },
+    { key: 'myMemes',   items: myMemes },
+    { key: 'myFlavors', items: [], flavorItems: myFlavors },
+  ];
 
   return (
     <div className="min-h-screen bg-background px-6 py-10">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-10 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 shadow-xl text-zinc-900 dark:text-zinc-100">
-          <h1 className="mb-2 text-4xl font-black text-zinc-900 dark:text-zinc-100">
-            Welcome back,
-          </h1>
-          <p className="break-words italic text-zinc-500 dark:text-zinc-400">{userEmail}</p>
+      <div className="mx-auto max-w-2xl space-y-12">
+
+        {/* Greeting */}
+        <div>
+          <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100">Welcome back</h1>
+          <p className="mt-1 text-sm italic text-zinc-500 dark:text-zinc-400 break-words">{userEmail}</p>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Dashboard</h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Choose where you want to go next.
-          </p>
-        </div>
+        {/* User Center */}
+        <section>
+          <h2 className="mb-5 text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
+            Your Collection
+          </h2>
+          <div className="grid grid-cols-2 gap-5">
+            {PILES.map(p => (
+              <PileCard
+                key={p.key}
+                pileKey={p.key}
+                items={p.items}
+                flavorItems={p.flavorItems}
+                loading={dataLoading}
+              />
+            ))}
+          </div>
+        </section>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {dashboardButtons.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`${item.color} rounded-[2rem] text-white shadow-lg transition-all active:scale-95 hover:-translate-y-0.5`}
-            >
-              <div className="p-7 text-left">
-                <div className="mb-4 text-3xl">{item.icon}</div>
-                <div className="mb-2 text-xl font-bold">{item.label}</div>
-                <div className="text-sm leading-relaxed text-white/85">
-                  {item.desc}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {/* Big nav buttons */}
+        <section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <Link href="/main"
+            className="group relative overflow-hidden rounded-[2rem] bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all shadow-2xl">
+            <div className="p-10">
+              <div className="mb-4 text-5xl">🖼️</div>
+              <div className="text-2xl font-black text-white mb-2">Meme Board</div>
+              <div className="text-sm text-white/80 leading-relaxed">Browse, vote, and discover memes</div>
+            </div>
+            <div className="absolute -bottom-8 -right-8 text-[120px] opacity-10 select-none">🖼️</div>
+          </Link>
+
+          <Link href="/upload"
+            className="group relative overflow-hidden rounded-[2rem] bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all shadow-2xl">
+            <div className="p-10">
+              <div className="mb-4 text-5xl">🧪</div>
+              <div className="text-2xl font-black text-white mb-2">Meme Lab</div>
+              <div className="text-sm text-white/80 leading-relaxed">Upload an image and generate AI captions</div>
+            </div>
+            <div className="absolute -bottom-8 -right-8 text-[120px] opacity-10 select-none">🧪</div>
+          </Link>
+        </section>
+
       </div>
     </div>
   );

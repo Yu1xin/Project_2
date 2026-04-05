@@ -64,10 +64,10 @@ export default function Sidebar() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<'user' | 'admin'>('user');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    analytics: true,
-    llm: true,
-    materials: true,
-    users: true,
+    analytics: false,
+    llm: false,
+    materials: false,
+    users: false,
   });
 
   const pathname = usePathname();

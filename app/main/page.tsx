@@ -137,7 +137,7 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
   const [copyCaption, setCopyCaption] = useState(false);
   const [copyImage, setCopyImage] = useState(false);
   const [copyFlavor, setCopyFlavor] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const nothingSelected = !copyCaption && !copyImage && !copyFlavor;
 

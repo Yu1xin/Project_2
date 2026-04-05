@@ -100,16 +100,17 @@ function FlavorCard({ item }: { item: FlavorItem }) {
 
 // ── PileCard (trigger only, no expanded content) ──────────────
 function PileCard({
-  pileKey, items, loading, isOpen, onToggle,
+  pileKey, items, loading, isOpen, onToggle, countOverride,
 }: {
   pileKey: PileKey;
   items: MemeItem[];
   loading: boolean;
   isOpen: boolean;
   onToggle: () => void;
+  countOverride?: number;
 }) {
   const cfg = PILE_CONFIG[pileKey];
-  const count = items.length;
+  const count = countOverride ?? items.length;
   const topImage = items[0]?.image_url;
 
   return (
@@ -238,15 +239,17 @@ export default function MainPage() {
                 loading={dataLoading}
                 isOpen={openPile === key}
                 onToggle={() => togglePile(key)}
+                countOverride={key === 'myFlavors' ? myFlavors.length : undefined}
               />
             ))}
           </div>
         </section>
       </div>
 
-      {/* Full-width expanded pile content */}
+      {/* Expanded pile content — sidebar-aware width */}
       {openPile && !dataLoading && (
-        <div className="px-6 py-4 mt-2 border-y border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/80 dark:bg-zinc-900/40">
+        <div className="pl-20 pr-6 py-4 mt-2 border-y border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/80 dark:bg-zinc-900/40">
+          <div className="max-w-4xl">
           {expandedMemes && expandedMemes.length === 0 && (
             <p className="text-center text-sm text-zinc-400 py-4">Nothing here yet</p>
           )}
@@ -265,6 +268,7 @@ export default function MainPage() {
               {expandedFlavors.map(f => <FlavorCard key={f.id} item={f} />)}
             </div>
           )}
+          </div>
         </div>
       )}
 

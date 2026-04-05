@@ -8,8 +8,6 @@ import { createBrowserClient } from '@supabase/ssr';
 const USER_NAV = [
   { href: '/',              icon: '🏠', label: 'Dashboard' },
   { href: '/main',          icon: '🖼️', label: 'Vote Memes' },
-  { href: '/upload',        icon: '📸', label: 'Upload' },
-  { href: '/least-favored', icon: '📉', label: 'Bottom 25' },
   { href: '/list',          icon: '👀', label: 'Who is Online' },
 ];
 

@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           如果是登录页，我们需要移除这个间距（通过一个简单的容器包装，或者在具体页面处理）。
           这里给一个最通用的处理方式：
         */}
-        <main className="transition-all duration-300 ease-in-out">
+        <main className="transition-all duration-300 ease-in-out md:pl-16">
           {children}
         </main>
       </body>

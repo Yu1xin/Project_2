@@ -107,6 +107,12 @@ export default function Sidebar() {
 
   if (pathname === '/login') return null;
 
+  // Close sidebar when navigating on mobile
+  // (pathname change = user tapped a link)
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
@@ -117,11 +123,34 @@ export default function Sidebar() {
   };
 
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen z-50 flex flex-col bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-xl transition-all duration-300 ease-in-out ${
-        isOpen ? 'w-56' : 'w-16'
-      }`}
-    >
+    <>
+      {/* Mobile backdrop — tap outside to close */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Mobile floating open button — only shown when sidebar is closed */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed top-4 left-4 z-40 md:hidden p-2 rounded-xl bg-white dark:bg-zinc-900 shadow-lg border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400"
+          aria-label="Open menu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      )}
+
+      <aside
+        className={`fixed left-0 top-0 h-screen z-50 flex flex-col bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-xl transition-all duration-300 ease-in-out
+          w-64 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:w-auto md:translate-x-0 ${isOpen ? 'md:w-56' : 'md:w-16'}
+        `}
+      >
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-3">
         {isOpen && (
@@ -251,6 +280,7 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }
 

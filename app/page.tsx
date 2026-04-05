@@ -62,21 +62,25 @@ function MemeModal({
               {item.like_count > 0 ? '+' : ''}{item.like_count} likes
             </p>
           )}
-          {pile === 'liked' && (
+          {(pile === 'liked' || pile === 'disliked') && (
             <div className="flex gap-2 mt-4">
               <button
                 onClick={onUnlike}
                 disabled={actionLoading}
                 className="flex-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 py-2.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 disabled:opacity-50 transition-all"
               >
-                💔 Take back the like
+                {pile === 'liked' ? '💔 Take back the like' : '🫶 Take back the dislike'}
               </button>
               <button
                 onClick={onSwitchToDownvote}
                 disabled={actionLoading}
-                className="flex-1 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 py-2.5 text-xs font-bold text-red-600 dark:text-red-400 disabled:opacity-50 transition-all"
+                className={`flex-1 rounded-xl py-2.5 text-xs font-bold disabled:opacity-50 transition-all ${
+                  pile === 'liked'
+                    ? 'bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 text-red-600 dark:text-red-400'
+                    : 'bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-950/70 text-blue-600 dark:text-blue-400'
+                }`}
               >
-                👎 Switch to downvote
+                {pile === 'liked' ? '👎 Switch to downvote' : '👍 Switch to upvote'}
               </button>
             </div>
           )}
@@ -260,7 +264,8 @@ export default function MainPage() {
     try {
       await supabase.from('caption_votes').delete()
         .eq('profile_id', userId).eq('caption_id', modalMeme.id);
-      setLiked(prev => prev.filter(m => m.id !== modalMeme.id));
+      if (modalPile === 'liked') setLiked(prev => prev.filter(m => m.id !== modalMeme.id));
+      else setDisliked(prev => prev.filter(m => m.id !== modalMeme.id));
       setModalMeme(null);
     } catch (err: any) { alert(`Failed: ${err.message}`); }
     finally { setModalActionLoading(false); }
@@ -269,12 +274,18 @@ export default function MainPage() {
   async function handleSwitchToDownvote() {
     if (!modalMeme || !userId) return;
     setModalActionLoading(true);
+    const newValue = modalPile === 'liked' ? -1 : 1;
     try {
       await supabase.from('caption_votes')
-        .update({ vote_value: -1, modified_by_user_id: userId })
+        .update({ vote_value: newValue, modified_by_user_id: userId })
         .eq('profile_id', userId).eq('caption_id', modalMeme.id);
-      setLiked(prev => prev.filter(m => m.id !== modalMeme.id));
-      setDisliked(prev => [modalMeme, ...prev]);
+      if (modalPile === 'liked') {
+        setLiked(prev => prev.filter(m => m.id !== modalMeme.id));
+        setDisliked(prev => [modalMeme, ...prev]);
+      } else {
+        setDisliked(prev => prev.filter(m => m.id !== modalMeme.id));
+        setLiked(prev => [modalMeme, ...prev]);
+      }
       setModalMeme(null);
     } catch (err: any) { alert(`Failed: ${err.message}`); }
     finally { setModalActionLoading(false); }

@@ -21,7 +21,9 @@ const ADMIN_SECTIONS: AdminSection[] = [
     icon: '📊',
     label: 'Analytics',
     links: [
-      { href: '/admin/analytics', icon: '📈', label: 'Data Analytics' },
+      { href: '/admin/analytics',         icon: '🏠', label: 'Overview' },
+      { href: '/admin/analytics/factors', icon: '📊', label: 'Factors Impacting Scores' },
+      { href: '/admin/analytics/flavor',  icon: '🧠', label: 'Flavor Intelligence' },
     ],
   },
   {

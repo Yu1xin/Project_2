@@ -1,9 +1,7 @@
 ### Web access:https://project2-tau-eight.vercel.app
 ### TODOs: 
--prompt chaining feature not done
--something went wrong when fetching user names on profile page
--profile searching not fully functioning
--caption pages should show image instead of image id
+-analytics sub page building
+-letting regular users download memes
 
 # Humor Analytics Dashboard
 

@@ -72,60 +72,48 @@ function PileCard({
 
   return (
     <div>
-      {/* Stack */}
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full text-left group focus:outline-none"
       >
-        <div className="relative h-44">
-          {/* Back card 2 */}
-          <div className={`absolute inset-0 rounded-2xl border ${cfg.border} ${cfg.backBg} -rotate-[4deg] scale-[0.93] origin-bottom shadow-sm`} />
-          {/* Back card 1 */}
-          <div className={`absolute inset-0 rounded-2xl border ${cfg.border} ${cfg.backBg} -rotate-[2deg] scale-[0.97] origin-bottom shadow-sm`} />
-          {/* Top card */}
-          <div className={`absolute inset-0 rounded-2xl border ${cfg.border} ${cfg.cardBg} shadow-lg overflow-hidden group-hover:-translate-y-1 transition-transform duration-200`}>
-            {topImage && (
-              <img src={topImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 dark:opacity-10" />
-            )}
-            <div className="relative h-full flex flex-col justify-between p-5">
-              <div className="flex items-start justify-between">
-                <span className="text-3xl">{cfg.icon}</span>
-                {loading ? (
-                  <span className="text-[10px] font-mono text-zinc-400 animate-pulse">loading…</span>
-                ) : (
-                  <span className={`${cfg.countColor} text-white text-xs font-black px-2.5 py-1 rounded-full`}>
-                    {count}
-                  </span>
-                )}
-              </div>
-              <div>
-                <p className={`text-base font-black ${cfg.accent}`}>{cfg.label}</p>
-                <p className="text-[11px] text-zinc-400 mt-0.5">
-                  {loading ? '—' : count === 0 ? 'Nothing yet' : `${count} item${count !== 1 ? 's' : ''} · tap to ${open ? 'close' : 'view'}`}
-                </p>
-              </div>
+        <div className={`relative rounded-2xl border ${cfg.border} ${cfg.cardBg} overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200`}>
+          {topImage && (
+            <img src={topImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-15 dark:opacity-10" />
+          )}
+          <div className="relative p-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xl">{cfg.icon}</span>
+              {loading ? (
+                <span className="text-[9px] font-mono text-zinc-400 animate-pulse">…</span>
+              ) : (
+                <span className={`${cfg.countColor} text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none`}>
+                  {count}
+                </span>
+              )}
+            </div>
+            <div>
+              <p className={`text-xs font-black ${cfg.accent} leading-tight`}>{cfg.label}</p>
+              <p className="text-[9px] text-zinc-400 mt-0.5 leading-tight">
+                {loading ? '—' : count === 0 ? 'Nothing yet' : `tap to ${open ? 'close' : 'view'}`}
+              </p>
             </div>
           </div>
         </div>
       </button>
 
-      {/* Expanded items */}
-      {open && !loading && count > 0 && (
-        <div className="mt-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4">
-          {pileKey === 'myFlavors' ? (
-            <div className="grid grid-cols-1 gap-2 max-h-72 overflow-y-auto pr-1">
+      {open && !loading && (
+        <div className="mt-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-3">
+          {count === 0 ? (
+            <p className="text-center text-xs text-zinc-400 py-2">Nothing here yet</p>
+          ) : pileKey === 'myFlavors' ? (
+            <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1">
               {(flavorItems ?? []).map(f => <FlavorCard key={f.id} item={f} />)}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
               {items.map(m => <MemeCard key={m.id} item={m} />)}
             </div>
           )}
-        </div>
-      )}
-      {open && !loading && count === 0 && (
-        <div className="mt-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 text-center text-sm text-zinc-400">
-          Nothing here yet
         </div>
       )}
     </div>
@@ -192,7 +180,7 @@ export default function MainPage() {
 
   return (
     <div className="min-h-screen bg-background px-6 py-10">
-      <div className="mx-auto max-w-2xl space-y-12">
+      <div className="mx-auto max-w-3xl space-y-8">
 
         {/* Greeting */}
         <div>
@@ -200,12 +188,10 @@ export default function MainPage() {
           <p className="mt-1 text-sm italic text-zinc-500 dark:text-zinc-400 break-words">{userEmail}</p>
         </div>
 
-        {/* User Center */}
+        {/* User Center — compact 4-in-a-row */}
         <section>
-          <h2 className="mb-5 text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
-            Your Collection
-          </h2>
-          <div className="grid grid-cols-2 gap-5">
+          <h2 className="mb-3 text-xs font-black text-zinc-400 uppercase tracking-widest">Your Collection</h2>
+          <div className="grid grid-cols-4 gap-3">
             {PILES.map(p => (
               <PileCard
                 key={p.key}
@@ -221,23 +207,23 @@ export default function MainPage() {
         {/* Big nav buttons */}
         <section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Link href="/main"
-            className="group relative overflow-hidden rounded-[2rem] bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all shadow-2xl">
-            <div className="p-10">
-              <div className="mb-4 text-5xl">🖼️</div>
-              <div className="text-2xl font-black text-white mb-2">Meme Board</div>
-              <div className="text-sm text-white/80 leading-relaxed">Browse, vote, and discover memes</div>
+            className="group relative overflow-hidden rounded-[2.5rem] bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-2xl">
+            <div className="p-12">
+              <div className="mb-5 text-7xl group-hover:scale-110 transition-transform duration-200">🖼️</div>
+              <div className="text-4xl font-black text-white mb-2 tracking-tight">Meme Board</div>
+              <div className="text-base text-white/75 leading-relaxed">Browse, vote, and discover memes</div>
             </div>
-            <div className="absolute -bottom-8 -right-8 text-[120px] opacity-10 select-none">🖼️</div>
+            <div className="absolute -bottom-10 -right-10 text-[160px] opacity-10 select-none pointer-events-none">🖼️</div>
           </Link>
 
           <Link href="/upload"
-            className="group relative overflow-hidden rounded-[2rem] bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all shadow-2xl">
-            <div className="p-10">
-              <div className="mb-4 text-5xl">🧪</div>
-              <div className="text-2xl font-black text-white mb-2">Meme Lab</div>
-              <div className="text-sm text-white/80 leading-relaxed">Upload an image and generate AI captions</div>
+            className="group relative overflow-hidden rounded-[2.5rem] bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-2xl">
+            <div className="p-12">
+              <div className="mb-5 text-7xl group-hover:scale-110 transition-transform duration-200">🧪</div>
+              <div className="text-4xl font-black text-white mb-2 tracking-tight">Meme Lab</div>
+              <div className="text-base text-white/75 leading-relaxed">Upload an image and generate AI captions</div>
             </div>
-            <div className="absolute -bottom-8 -right-8 text-[120px] opacity-10 select-none">🧪</div>
+            <div className="absolute -bottom-10 -right-10 text-[160px] opacity-10 select-none pointer-events-none">🧪</div>
           </Link>
         </section>
 

@@ -271,19 +271,9 @@ export default function MainPage() {
       {/* Nav buttons */}
       <div className="px-6 mx-auto max-w-3xl mt-8">
         <section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {/* Meme Board — live top-meme photo background */}
           <Link href="/main"
             className="group relative overflow-hidden rounded-[2.5rem] bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-2xl">
-            <div className="p-12">
-              <div className="mb-5 text-7xl group-hover:scale-110 transition-transform duration-200">🖼️</div>
-              <div className="text-4xl font-black text-white mb-2 tracking-tight">Meme Board</div>
-              <div className="text-base text-white/75 leading-relaxed">Browse, vote, and discover memes</div>
-            </div>
-            <div className="absolute -bottom-10 -right-10 text-[160px] opacity-10 select-none pointer-events-none">🖼️</div>
-          </Link>
-
-          <Link href="/upload"
-            className="group relative overflow-hidden rounded-[2.5rem] bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all shadow-2xl">
-            {/* Live top-meme background */}
             {topMemeUrl && (
               <img
                 src={topMemeUrl}
@@ -291,8 +281,32 @@ export default function MainPage() {
                 className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity duration-300 select-none pointer-events-none"
               />
             )}
-            {/* Gradient overlay to keep text readable */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-700/80 via-emerald-600/70 to-emerald-500/60 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-700/80 via-blue-600/70 to-blue-500/60 pointer-events-none" />
+            <div className="relative p-12">
+              <div className="mb-5 text-7xl group-hover:scale-110 transition-transform duration-200">🖼️</div>
+              <div className="text-4xl font-black text-white mb-2 tracking-tight">Meme Board</div>
+              <div className="text-base text-white/85 leading-relaxed">Browse, vote, and discover memes</div>
+            </div>
+          </Link>
+
+          {/* Meme Lab — 3-step process as background decoration */}
+          <Link href="/upload"
+            className="group relative overflow-hidden rounded-[2.5rem] bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-2xl">
+            {/* Decorative 3-step watermark */}
+            <div className="absolute inset-0 flex flex-col justify-center gap-5 px-8 py-6 pointer-events-none select-none">
+              {([['🖼️', 'Pick or upload', 'Browse gallery or upload your own'],
+                 ['🎭', 'Choose a flavor', "Sets the AI's personality"],
+                 ['✨', 'AI writes caption', 'Generates your meme text'],
+              ] as const).map(([icon, title, desc]) => (
+                <div key={title} className="flex items-start gap-3 opacity-20">
+                  <span className="text-3xl leading-none mt-0.5">{icon}</span>
+                  <div>
+                    <p className="text-sm font-black text-white leading-tight">{title}</p>
+                    <p className="text-xs text-white/80 leading-tight mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
             <div className="relative p-12">
               <div className="mb-5 text-7xl group-hover:scale-110 transition-transform duration-200">🧪</div>
               <div className="text-4xl font-black text-white mb-2 tracking-tight">Meme Lab</div>

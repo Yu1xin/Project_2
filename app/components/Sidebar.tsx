@@ -122,9 +122,12 @@ export default function Sidebar() {
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-3">
         {isOpen && (
-          <span className="animate-in fade-in text-lg font-black text-blue-500">
+          <Link
+            href={viewMode === 'admin' ? '/admin' : '/'}
+            className="animate-in fade-in text-lg font-black text-blue-500 hover:text-blue-400 transition-colors"
+          >
             {viewMode === 'admin' ? 'Admin' : 'MemeLab'}
-          </span>
+          </Link>
         )}
         <button
           onClick={() => setIsOpen(!isOpen)}

@@ -112,6 +112,7 @@ export default function AdminAnalytics() {
     word_count: { icon: '📝', name: 'Word Count', unit: 'word' },
   };
   const label = xLabels[selectedX];
+  const [activeTab, setActiveTab] = useState<'overview' | 'factors' | 'flavor'>('overview');
 
   useEffect(() => {
     async function runAnalysis() {
@@ -295,6 +296,24 @@ export default function AdminAnalytics() {
 
       {!loading && !error && (
         <>
+          {/* Tab bar */}
+          <div className="flex flex-wrap gap-2 mb-8 border-b border-zinc-800 pb-4">
+            {[
+              { id: 'overview' as const, icon: '🏠', tabName: 'Overview' },
+              { id: 'factors' as const, icon: '📊', tabName: 'Factors Impacting Scores' },
+              { id: 'flavor' as const, icon: '🧠', tabName: 'Flavor Intelligence' },
+            ].map(({ id, icon, tabName }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === id ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'}`}
+              >
+                {icon} {tabName}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'overview' && (<>
           {/* ── (1) BUBBLE STATS ── */}
           {platformStats && (() => {
             const bubbles = [
@@ -396,7 +415,9 @@ export default function AdminAnalytics() {
               </ResponsiveContainer>
             </div>
           )}
+          </>}
 
+          {activeTab === 'factors' && (<>
           <div className="mb-6 text-sm text-zinc-400">
             Total analyzed captions: <strong className="text-zinc-100">{sampleSize.toLocaleString()}</strong>
           </div>
@@ -496,7 +517,9 @@ export default function AdminAnalytics() {
             {renderLeaderboard('Top Flavors', '🙂', 'text-pink-400', topFlavorsByLikes)}
             {renderLeaderboard('Top Captions', '💬', 'text-yellow-400', topCaptionsByLikes)}
           </div>
+          </>}
 
+          {activeTab === 'flavor' && (<>
           {/* ── FLAVOR INTELLIGENCE ── */}
           <div className="mt-10 rounded-3xl border border-violet-800/50 bg-zinc-950 p-6">
             <div className="flex items-center gap-3 mb-2">
@@ -714,6 +737,7 @@ export default function AdminAnalytics() {
               );
             })()}
           </div>
+          </>}
         </>
       )}
     </div>

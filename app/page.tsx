@@ -334,10 +334,10 @@ export default function MainPage() {
         </section>
       </div>
 
-      {/* Expanded pile content — sidebar-aware width */}
+      {/* Expanded pile content */}
       {openPile && !dataLoading && (
-        <div className="pl-20 pr-6 py-4 mt-2 border-y border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/80 dark:bg-zinc-900/40">
-          <div className="max-w-4xl">
+        <div className="px-6 py-4 mt-2 border-y border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/80 dark:bg-zinc-900/40">
+          <div className="mx-auto max-w-4xl">
           {expandedMemes && expandedMemes.length === 0 && (
             <p className="text-center text-sm text-zinc-400 py-4">Nothing here yet</p>
           )}

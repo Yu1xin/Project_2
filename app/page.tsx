@@ -31,7 +31,16 @@ const PILE_CONFIG: Record<PileKey, {
 };
 
 // ── Meme modal ────────────────────────────────────────────────
-function MemeModal({ item, onClose }: { item: MemeItem; onClose: () => void }) {
+function MemeModal({
+  item, pile, onClose, onUnlike, onSwitchToDownvote, actionLoading,
+}: {
+  item: MemeItem;
+  pile: PileKey | null;
+  onClose: () => void;
+  onUnlike?: () => void;
+  onSwitchToDownvote?: () => void;
+  actionLoading?: boolean;
+}) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
@@ -49,9 +58,27 @@ function MemeModal({ item, onClose }: { item: MemeItem; onClose: () => void }) {
             "{item.content || '—'}"
           </p>
           {item.like_count != null && (
-            <p className="mt-3 text-sm text-zinc-400 font-mono">
+            <p className="mt-2 text-sm text-zinc-400 font-mono">
               {item.like_count > 0 ? '+' : ''}{item.like_count} likes
             </p>
+          )}
+          {pile === 'liked' && (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={onUnlike}
+                disabled={actionLoading}
+                className="flex-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 py-2.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 disabled:opacity-50 transition-all"
+              >
+                💔 Take back the like
+              </button>
+              <button
+                onClick={onSwitchToDownvote}
+                disabled={actionLoading}
+                className="flex-1 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 py-2.5 text-xs font-bold text-red-600 dark:text-red-400 disabled:opacity-50 transition-all"
+              >
+                👎 Switch to downvote
+              </button>
+            </div>
           )}
         </div>
         <button
@@ -66,25 +93,33 @@ function MemeModal({ item, onClose }: { item: MemeItem; onClose: () => void }) {
 }
 
 // ── Cards ─────────────────────────────────────────────────────
-function MemeCard({ item, onClick }: { item: MemeItem; onClick: () => void }) {
+function MemeCard({ item, onClick, onDelete }: { item: MemeItem; onClick: () => void; onDelete?: () => void }) {
   return (
-    <div
-      onClick={onClick}
-      className="cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
-    >
-      {item.image_url ? (
-        <img src={item.image_url} alt="" className="w-full h-24 object-cover" />
-      ) : (
-        <div className="w-full h-24 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl">🖼️</div>
-      )}
-      <div className="p-2">
-        <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">
-          "{item.content || '—'}"
-        </p>
-        {item.like_count != null && (
-          <p className="mt-1 text-[10px] text-zinc-400 font-mono">{item.like_count > 0 ? '+' : ''}{item.like_count}</p>
+    <div className="group relative cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150">
+      <div onClick={onClick}>
+        {item.image_url ? (
+          <img src={item.image_url} alt="" className="w-full h-24 object-cover" />
+        ) : (
+          <div className="w-full h-24 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl">🖼️</div>
         )}
+        <div className="p-2">
+          <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">
+            "{item.content || '—'}"
+          </p>
+          {item.like_count != null && (
+            <p className="mt-1 text-[10px] text-zinc-400 font-mono">{item.like_count > 0 ? '+' : ''}{item.like_count}</p>
+          )}
+        </div>
       </div>
+      {onDelete && (
+        <button
+          onClick={e => { e.stopPropagation(); onDelete(); }}
+          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
+          title="Delete"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 }
@@ -156,6 +191,8 @@ export default function MainPage() {
 
   const [openPile, setOpenPile] = useState<PileKey | null>(null);
   const [modalMeme, setModalMeme] = useState<MemeItem | null>(null);
+  const [modalPile, setModalPile] = useState<PileKey | null>(null);
+  const [modalActionLoading, setModalActionLoading] = useState(false);
   const [topMemeUrl, setTopMemeUrl] = useState<string | null>(null);
 
   const router = useRouter();
@@ -212,6 +249,46 @@ export default function MainPage() {
     setOpenPile(prev => prev === key ? null : key);
   }
 
+  function openModal(item: MemeItem, pile: PileKey) {
+    setModalMeme(item);
+    setModalPile(pile);
+  }
+
+  async function handleUnlike() {
+    if (!modalMeme || !userId) return;
+    setModalActionLoading(true);
+    try {
+      await supabase.from('caption_votes').delete()
+        .eq('profile_id', userId).eq('caption_id', modalMeme.id);
+      setLiked(prev => prev.filter(m => m.id !== modalMeme.id));
+      setModalMeme(null);
+    } catch (err: any) { alert(`Failed: ${err.message}`); }
+    finally { setModalActionLoading(false); }
+  }
+
+  async function handleSwitchToDownvote() {
+    if (!modalMeme || !userId) return;
+    setModalActionLoading(true);
+    try {
+      await supabase.from('caption_votes')
+        .update({ vote_value: -1, modified_by_user_id: userId })
+        .eq('profile_id', userId).eq('caption_id', modalMeme.id);
+      setLiked(prev => prev.filter(m => m.id !== modalMeme.id));
+      setDisliked(prev => [modalMeme, ...prev]);
+      setModalMeme(null);
+    } catch (err: any) { alert(`Failed: ${err.message}`); }
+    finally { setModalActionLoading(false); }
+  }
+
+  async function handleDeleteMeme(item: MemeItem) {
+    if (!userId || !window.confirm('Delete this meme permanently?')) return;
+    try {
+      await supabase.from('captions').delete()
+        .eq('id', item.id).eq('profile_id', userId);
+      setMyMemes(prev => prev.filter(m => m.id !== item.id));
+    } catch (err: any) { alert(`Failed: ${err.message}`); }
+  }
+
   const expandedMemes = openPile && openPile !== 'myFlavors' ? pileItems[openPile] : null;
   const expandedFlavors = openPile === 'myFlavors' ? myFlavors : null;
 
@@ -256,7 +333,12 @@ export default function MainPage() {
           {expandedMemes && expandedMemes.length > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
               {expandedMemes.map(m => (
-                <MemeCard key={m.id} item={m} onClick={() => setModalMeme(m)} />
+                <MemeCard
+                  key={m.id}
+                  item={m}
+                  onClick={() => openModal(m, openPile!)}
+                  onDelete={openPile === 'myMemes' ? () => handleDeleteMeme(m) : undefined}
+                />
               ))}
             </div>
           )}
@@ -321,7 +403,16 @@ export default function MainPage() {
       </div>
 
       {/* Meme modal */}
-      {modalMeme && <MemeModal item={modalMeme} onClose={() => setModalMeme(null)} />}
+      {modalMeme && (
+        <MemeModal
+          item={modalMeme}
+          pile={modalPile}
+          onClose={() => setModalMeme(null)}
+          onUnlike={handleUnlike}
+          onSwitchToDownvote={handleSwitchToDownvote}
+          actionLoading={modalActionLoading}
+        />
+      )}
     </div>
   );
 }

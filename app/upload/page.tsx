@@ -40,24 +40,29 @@ export default function UploadPage() {
 
 function HowItWorks() {
   const steps = [
-    { icon: '🖼️', title: 'Pick or upload an image', desc: 'Browse top-rated gallery images or upload your own' },
+    { icon: '🖼️', title: 'Pick or upload', desc: 'Browse top-rated gallery images or upload your own' },
     { icon: '🎭', title: 'Choose a humor flavor', desc: 'Sets the AI\'s personality and comedic style' },
     { icon: '✨', title: 'AI writes your caption', desc: 'The AI generates a caption to complete your meme' },
   ];
   return (
-    <div className="mb-8 rounded-2xl bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-950/20 dark:to-blue-950/20 border border-emerald-200/50 dark:border-emerald-800/30 p-5">
-      <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400 mb-4">How it works</p>
-      <div className="grid grid-cols-3 gap-4">
-        {steps.map((s, i) => (
-          <div key={i} className="text-center">
-            <div className="w-9 h-9 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mx-auto mb-2 shadow-sm">
-              <span className="text-base">{s.icon}</span>
+    <div className="flex flex-col gap-0">
+      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-5">How it works</p>
+      {steps.map((s, i) => (
+        <div key={i} className="flex gap-3">
+          <div className="flex flex-col items-center">
+            <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0 text-sm shadow-sm">
+              {s.icon}
             </div>
-            <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 leading-tight mb-1">{s.title}</p>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-snug">{s.desc}</p>
+            {i < steps.length - 1 && (
+              <div className="w-px flex-1 bg-zinc-200 dark:bg-zinc-700 my-1" />
+            )}
           </div>
-        ))}
-      </div>
+          <div className="pb-6">
+            <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 leading-tight">{s.title}</p>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5">{s.desc}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -403,89 +408,105 @@ function UploadPageInner() {
   const handleGenerate = imageMode === 'gallery' ? handleGenerateFromGallery : handleProcessUpload;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-background px-4 py-10">
-      <div className="w-full max-w-2xl">
+    <div className="min-h-screen bg-background px-6 py-10">
+      <div className="mx-auto w-full max-w-4xl">
 
         {prefillBanner && (
-          <div className="mb-4 rounded-2xl border border-violet-300/40 bg-violet-50 dark:bg-violet-950/40 px-4 py-3 text-sm text-violet-700 dark:text-violet-300 flex items-center justify-between gap-3">
+          <div className="mb-6 rounded-2xl border border-violet-300/40 bg-violet-50 dark:bg-violet-950/40 px-4 py-3 text-sm text-violet-700 dark:text-violet-300 flex items-center justify-between gap-3">
             <span>🎭 {prefillBanner}</span>
             <button onClick={() => setPrefillBanner(null)} className="text-violet-400 hover:text-violet-600 text-xs shrink-0">✕</button>
           </div>
         )}
 
         {!previewUrl ? (
-          <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 shadow-xl text-zinc-900 dark:text-zinc-100">
-            <h1 className="mb-2 text-3xl font-black text-zinc-900 dark:text-zinc-100">Meme Lab 🧪</h1>
-            <p className="mb-7 text-sm text-zinc-500 dark:text-zinc-400">Create a meme with AI caption generation</p>
+          <div className="flex gap-12 items-start">
 
-            <HowItWorks />
+            {/* Left sidebar: instructions */}
+            <aside className="hidden md:block w-48 shrink-0 sticky top-10">
+              <h1 className="mb-1 text-2xl font-black text-zinc-900 dark:text-zinc-100">Meme Lab 🧪</h1>
+              <p className="mb-6 text-xs text-zinc-500 dark:text-zinc-400">AI caption generation</p>
+              <HowItWorks />
+            </aside>
 
-            {/* Step 1: Image */}
-            <div className="mb-7">
-              <StepLabel num="1" label="Choose an image" />
-              {/* Mode tabs */}
-              <div className="flex gap-1 mb-4 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900">
-                {([['gallery', '🖼️  Gallery (top 50)'], ['upload', '📤  Upload new']] as const).map(([mode, label]) => (
-                  <button
-                    key={mode}
-                    onClick={() => setImageMode(mode)}
-                    className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
-                      imageMode === mode
-                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+            {/* Right: form, no outer box */}
+            <div className="flex-1 text-zinc-900 dark:text-zinc-100">
+
+              {/* Mobile title (hidden on md+) */}
+              <div className="md:hidden mb-6">
+                <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">Meme Lab 🧪</h1>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">AI caption generation</p>
               </div>
 
-              {imageMode === 'gallery' ? (
-                <GalleryGrid
-                  images={galleryImages}
-                  selected={selectedGalleryImage}
-                  onSelect={img => setSelectedGalleryImage(prev => prev?.id === img.id ? null : img)}
-                  loading={galleryLoading}
+              {/* Step 1: Image */}
+              <div className="mb-7">
+                <StepLabel num="1" label="Choose an image" />
+                <div className="flex gap-1 mb-4 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900">
+                  {([['gallery', '🖼️  Gallery (top 50)'], ['upload', '📤  Upload new']] as const).map(([mode, label]) => (
+                    <button
+                      key={mode}
+                      onClick={() => setImageMode(mode)}
+                      className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
+                        imageMode === mode
+                          ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {imageMode === 'gallery' ? (
+                  <GalleryGrid
+                    images={galleryImages}
+                    selected={selectedGalleryImage}
+                    onSelect={img => setSelectedGalleryImage(prev => prev?.id === img.id ? null : img)}
+                    loading={galleryLoading}
+                  />
+                ) : (
+                  <UploadDropzone file={file} onFileChange={setFile} />
+                )}
+              </div>
+
+              {/* Step 2: Humor Flavor */}
+              <div className="mb-7">
+                <StepLabel num="2" label="Choose a humor flavor" hint="the AI's personality" />
+                <FlavorPicker
+                  flavors={humorFlavors}
+                  value={selectedFlavorId}
+                  onChange={setSelectedFlavorId}
+                  disabled={loadingFlavors || loading}
+                  loading={loadingFlavors}
                 />
-              ) : (
-                <UploadDropzone file={file} onFileChange={setFile} />
-              )}
-            </div>
+              </div>
 
-            {/* Step 2: Humor Flavor */}
-            <div className="mb-7">
-              <StepLabel num="2" label="Choose a humor flavor" hint="the AI's personality" />
-              <FlavorPicker
-                flavors={humorFlavors}
-                value={selectedFlavorId}
-                onChange={setSelectedFlavorId}
-                disabled={loadingFlavors || loading}
-                loading={loadingFlavors}
-              />
-            </div>
-
-            {/* Step 3: Generate */}
-            <div>
-              <StepLabel num="3" label="Generate your meme" />
-              <button
-                onClick={handleGenerate}
-                disabled={loading || !canGenerate}
-                className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 py-4 font-bold text-white text-base disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none"
-              >
-                {loading ? `${status || 'Processing…'}` : 'Generate Meme 🚀'}
-              </button>
-              {loading && (
-                <p className="mt-3 text-center text-xs font-mono text-blue-500 animate-pulse">{status}</p>
-              )}
-              {!loading && status && (
-                <p className="mt-3 text-center text-xs font-mono text-red-500">{status}</p>
-              )}
+              {/* Step 3: Generate */}
+              <div>
+                <StepLabel num="3" label="Generate your meme" />
+                <button
+                  onClick={handleGenerate}
+                  disabled={loading || !canGenerate}
+                  className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 py-4 font-bold text-white text-base disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none"
+                >
+                  {loading ? `${status || 'Processing…'}` : 'Generate Meme 🚀'}
+                </button>
+                {loading && (
+                  <p className="mt-3 text-center text-xs font-mono text-blue-500 animate-pulse">{status}</p>
+                )}
+                {!loading && status && (
+                  <p className="mt-3 text-center text-xs font-mono text-red-500">{status}</p>
+                )}
+              </div>
             </div>
           </div>
         ) : (
           /* ── Result view ── */
-          <div className="rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-8 text-zinc-900 dark:text-zinc-100 shadow-2xl">
-            <h2 className="mb-6 text-center text-xl font-bold">Final Result ✨</h2>
+          <div className="flex gap-12 items-start">
+            <aside className="hidden md:block w-48 shrink-0 sticky top-10">
+              <h1 className="mb-1 text-2xl font-black text-zinc-900 dark:text-zinc-100">Meme Lab 🧪</h1>
+              <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">Your meme is ready</p>
+            </aside>
+            <div className="flex-1 text-zinc-900 dark:text-zinc-100">
+              <h2 className="mb-6 text-xl font-bold">Final Result ✨</h2>
 
             <div className="mb-5">
               <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-200">
@@ -553,6 +574,7 @@ function UploadPageInner() {
               <p className="mt-4 break-words text-center text-xs font-mono text-blue-500">{status}</p>
             )}
           </div>
+        </div>
         )}
       </div>
     </div>

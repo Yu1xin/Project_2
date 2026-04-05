@@ -6,8 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
 const USER_NAV = [
-  { href: '/',              icon: '🏠', label: 'Dashboard' },
-  { href: '/main',          icon: '🖼️', label: 'Vote Memes' },
+  { href: '/',              icon: '🏠', label: 'Home Page' },
+  { href: '/main',          icon: '🖼️', label: 'Meme board' },
   { href: '/list',          icon: '👀', label: 'Who is Online' },
 ];
 

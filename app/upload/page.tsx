@@ -400,9 +400,29 @@ function UploadPageInner() {
 
   const handleGenerate = imageMode === 'gallery' ? handleGenerateFromGallery : handleProcessUpload;
 
+  const bgImages = galleryImages.slice(0, 3);
+
   return (
-    <div className="min-h-screen bg-background px-6 py-10">
-      <div className="mx-auto w-full max-w-4xl">
+    <div className="relative min-h-screen bg-background px-6 py-10 overflow-hidden">
+
+      {/* Blurred background: top 3 gallery images as ambient decoration */}
+      {bgImages.map((img, i) => {
+        const positions = [
+          'top-[-80px] right-[-80px] w-80 h-80',
+          'top-[40%] left-[-100px] w-72 h-72',
+          'bottom-[-60px] right-[15%] w-64 h-64',
+        ];
+        return (
+          <div
+            key={img.id}
+            className={`absolute ${positions[i]} rounded-full overflow-hidden blur-3xl opacity-20 dark:opacity-10 pointer-events-none select-none`}
+          >
+            <img src={img.url} alt="" className="w-full h-full object-cover" />
+          </div>
+        );
+      })}
+
+      <div className="relative mx-auto w-full max-w-4xl">
 
         {prefillBanner && (
           <div className="mb-6 rounded-2xl border border-violet-300/40 bg-violet-50 dark:bg-violet-950/40 px-4 py-3 text-sm text-violet-700 dark:text-violet-300 flex items-center justify-between gap-3">

@@ -155,6 +155,7 @@ export default function MainPage() {
 
   const [openPile, setOpenPile] = useState<PileKey | null>(null);
   const [modalMeme, setModalMeme] = useState<MemeItem | null>(null);
+  const [topMemeUrl, setTopMemeUrl] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = useMemo(
@@ -175,6 +176,13 @@ export default function MainPage() {
     }
     loadSession();
   }, [supabase, router]);
+
+  useEffect(() => {
+    fetch('/api/top-images')
+      .then(r => r.json())
+      .then(d => { if (d[0]?.url) setTopMemeUrl(d[0].url); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -274,13 +282,22 @@ export default function MainPage() {
           </Link>
 
           <Link href="/upload"
-            className="group relative overflow-hidden rounded-[2.5rem] bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-2xl">
-            <div className="p-12">
+            className="group relative overflow-hidden rounded-[2.5rem] bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all shadow-2xl">
+            {/* Live top-meme background */}
+            {topMemeUrl && (
+              <img
+                src={topMemeUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity duration-300 select-none pointer-events-none"
+              />
+            )}
+            {/* Gradient overlay to keep text readable */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-700/80 via-emerald-600/70 to-emerald-500/60 pointer-events-none" />
+            <div className="relative p-12">
               <div className="mb-5 text-7xl group-hover:scale-110 transition-transform duration-200">🧪</div>
               <div className="text-4xl font-black text-white mb-2 tracking-tight">Meme Lab</div>
-              <div className="text-base text-white/75 leading-relaxed">Upload an image and generate AI captions</div>
+              <div className="text-base text-white/85 leading-relaxed">Upload an image and generate AI captions</div>
             </div>
-            <div className="absolute -bottom-10 -right-10 text-[160px] opacity-10 select-none pointer-events-none">🧪</div>
           </Link>
         </section>
       </div>

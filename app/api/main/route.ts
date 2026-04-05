@@ -14,6 +14,11 @@ export async function GET(request: Request) {
 
   const SELECT = 'id, content, like_count, image_id, humor_flavor_id, profile_id, images(url, image_description)';
 
+  // Escape a string for use in a PostgreSQL regex pattern
+  function escapeRegex(s: string) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   // ── Search mode: full-table search, no pile limit ──
   if (search) {
     let query = supabase.from('captions').select(SELECT);
@@ -21,32 +26,35 @@ export async function GET(request: Request) {
     if (searchField === 'content') {
       query = query.ilike('content', `%${search}%`);
     } else if (searchField === 'image_id') {
-      // UUID column — cast to text for partial match
-      query = query.filter('image_id::text', 'ilike', `%${search}%`);
+      // UUID — exact match only
+      query = query.eq('image_id', search);
     } else if (searchField === 'profile_id') {
-      // UUID column — cast to text for partial match
-      query = query.filter('profile_id::text', 'ilike', `%${search}%`);
+      // UUID — exact match only
+      query = query.eq('profile_id', search);
     } else if (searchField === 'image_description') {
-      // image_description lives on the images table — filter captions that join to matching images
+      // Word-boundary regex so "me" doesn't match "messy"
+      const pattern = `\\m${escapeRegex(search)}\\M`;
       const { data: matchingImages } = await supabase
         .from('images')
         .select('id')
-        .ilike('image_description', `%${search}%`);
+        .filter('image_description', 'imatch', pattern);
       const imageIds = (matchingImages || []).map((i: any) => i.id).filter(Boolean);
       if (imageIds.length === 0) return Response.json([]);
       query = query.in('image_id', imageIds);
     } else {
-      // 'all' — search across content and profile_id (image_description needs separate join)
+      // 'all' — content (ilike), profile_id (eq if UUID), image_description (word-boundary)
+      const pattern = `\\m${escapeRegex(search)}\\M`;
       const { data: matchingImages } = await supabase
         .from('images')
         .select('id')
-        .ilike('image_description', `%${search}%`);
+        .filter('image_description', 'imatch', pattern);
       const imageIds = (matchingImages || []).map((i: any) => i.id).filter(Boolean);
 
-      // Fetch by content, profile_id (UUID cast), and image_description separately then merge
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
+
       const fetches = [
         supabase.from('captions').select(SELECT).ilike('content', `%${search}%`).limit(200),
-        supabase.from('captions').select(SELECT).filter('profile_id::text', 'ilike', `%${search}%`).limit(200),
+        ...(isUuid ? [supabase.from('captions').select(SELECT).eq('profile_id', search).limit(200)] : []),
         ...(imageIds.length > 0
           ? [supabase.from('captions').select(SELECT).in('image_id', imageIds).limit(200)]
           : []),

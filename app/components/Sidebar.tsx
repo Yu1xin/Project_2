@@ -7,7 +7,8 @@ import { createBrowserClient } from '@supabase/ssr';
 
 const USER_NAV = [
   { href: '/',              icon: '🏠', label: 'Home Page' },
-  { href: '/main',          icon: '🖼️', label: 'Meme board' },
+  { href: '/main',          icon: '🖼️', label: 'Meme Board' },
+  { href: '/upload',        icon: '🧪', label: 'Meme Lab' },
   { href: '/list',          icon: '👀', label: 'Who is Online' },
 ];
 

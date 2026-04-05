@@ -6,10 +6,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
 const USER_NAV = [
-  { href: '/',              icon: '🏠', label: 'Home Page' },
-  { href: '/main',          icon: '🖼️', label: 'Meme Board' },
-  { href: '/upload',        icon: '🧪', label: 'Meme Lab' },
-  { href: '/list',          icon: '👀', label: 'Who is Online' },
+  { href: '/',       icon: '🏠', label: 'Home Page',    adminOnly: false },
+  { href: '/main',   icon: '🖼️', label: 'Meme Board',   adminOnly: false },
+  { href: '/upload', icon: '🧪', label: 'Meme Lab',     adminOnly: false },
+  { href: '/list',   icon: '👀', label: 'Who is Online', adminOnly: true },
 ];
 
 type AdminLink = { href: string; icon: string; label: string };
@@ -150,7 +150,7 @@ export default function Sidebar() {
         {viewMode === 'user' ? (
           // ── USER NAV ──
           <>
-            {USER_NAV.map((link) => (
+            {USER_NAV.filter(link => !link.adminOnly || isSuperAdmin).map((link) => (
               <SidebarLink
                 key={link.href}
                 href={link.href}

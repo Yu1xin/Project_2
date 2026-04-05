@@ -185,6 +185,7 @@ function PileCard({
 export default function MainPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -214,6 +215,12 @@ export default function MainPage() {
       if (!session) { router.push('/login'); return; }
       setUserEmail(session.user.email || 'User');
       setUserId(session.user.id);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_superadmin, is_matrix_admin')
+        .eq('id', session.user.id)
+        .single();
+      if (profile?.is_superadmin || profile?.is_matrix_admin) setIsSuperAdmin(true);
       setPageLoading(false);
     }
     loadSession();
@@ -318,8 +325,8 @@ export default function MainPage() {
         {/* Pile row */}
         <section className="mb-1">
           <h2 className="mb-3 text-xs font-black text-zinc-400 uppercase tracking-widest">Your Collection</h2>
-          <div className="grid grid-cols-4 gap-3">
-            {(['liked', 'disliked', 'myMemes', 'myFlavors'] as PileKey[]).map(key => (
+          <div className={`grid gap-3 ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+            {(['liked', 'disliked', 'myMemes', ...(isSuperAdmin ? ['myFlavors'] : [])] as PileKey[]).map(key => (
               <PileCard
                 key={key}
                 pileKey={key}

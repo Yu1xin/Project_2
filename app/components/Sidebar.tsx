@@ -237,11 +237,11 @@ export default function Sidebar() {
 
         {/* Logout */}
         <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-zinc-500 dark:text-zinc-400 transition-all hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-400 active:scale-95"
+          onClick={() => { if (window.confirm('Are you sure you want to logout?')) handleLogout(); }}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-zinc-400 dark:text-zinc-500 transition-all hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 dark:hover:text-red-400 active:scale-95"
         >
-          <span className="flex w-6 shrink-0 items-center justify-center text-lg">🚪</span>
-          {isOpen && <span className="whitespace-nowrap text-sm font-medium">Logout</span>}
+          <span className="flex w-6 shrink-0 items-center justify-center text-sm">🚪</span>
+          {isOpen && <span className="whitespace-nowrap text-xs font-medium">Logout</span>}
         </button>
       </div>
     </aside>

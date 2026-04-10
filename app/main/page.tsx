@@ -651,48 +651,56 @@ export default function ListPage() {
       };
 
   return (
-    <div className="min-h-screen bg-transparent p-6 text-zinc-900 dark:text-zinc-100">
-      <header className="mb-8 text-center max-w-3xl mx-auto">
-        <h1 className="mb-6 text-5xl font-black tracking-tight text-blue-400">Meme Board</h1>
+    <div className="min-h-screen bg-transparent text-zinc-900 dark:text-zinc-100 flex">
 
-        <div className="flex flex-wrap justify-center gap-2 mb-4">
+      {/* ── Left sidebar ── */}
+      <aside className="hidden md:flex flex-col gap-5 w-52 shrink-0 sticky top-0 h-screen overflow-y-auto px-4 py-8 border-r border-zinc-100 dark:border-zinc-800">
+        <h1 className="text-2xl font-black tracking-tight text-blue-400 leading-tight">Meme<br/>Board</h1>
+
+        {/* Pile selector */}
+        <div className="flex flex-col gap-1.5">
           {PILES.map(p => (
             <button key={p.key} onClick={() => { setPile(p.key); loadPile(p.key, userId); }} disabled={pileLoading}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition-all disabled:opacity-60 ${pile === p.key ? 'bg-blue-600 text-white shadow-lg scale-105' : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500'}`}>
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-all disabled:opacity-60 text-left ${pile === p.key ? 'bg-blue-600 text-white shadow-md' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}>
               <span>{p.icon}</span><span>{p.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="flex items-center justify-center gap-3 mb-5">
-          <span className="text-xs text-zinc-400 font-mono">
-            {pileLoading ? 'loading...' : searchLoading ? 'searching…' : searchQuery ? `${displayList.length} results across all memes` : `${displayList.length} memes · ${PILES.find(p => p.key === pile)!.desc}`}
+        {/* Count + Renew */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[10px] text-zinc-400 font-mono leading-snug">
+            {pileLoading ? 'loading...' : searchLoading ? 'searching…' : searchQuery ? `${displayList.length} results` : `${displayList.length} memes · ${PILES.find(p => p.key === pile)!.desc}`}
           </span>
           {pile !== 'all' && (
             <button onClick={() => loadPile(pile, userId)} disabled={pileLoading}
-              className="flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 active:scale-95">
+              className="flex items-center gap-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 active:scale-95">
               <span className={pileLoading ? 'animate-spin' : ''}>🔄</span> Renew
             </button>
           )}
         </div>
 
-        <div className="flex gap-2 max-w-lg mx-auto">
+        {/* Search */}
+        <div className="flex flex-col gap-2">
           <select value={searchField} onChange={e => setSearchField(e.target.value as SearchField)}
-            className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0">
+            className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
             {SEARCH_FIELDS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
           </select>
-          <div className="relative flex-1">
+          <div className="relative">
             <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search memes..."
-              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm">✕</button>
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs">✕</button>
             )}
           </div>
         </div>
-      </header>
+      </aside>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 p-6">
 
       {pileLoading ? (
         <div className="flex justify-center py-20">
@@ -809,6 +817,8 @@ export default function ListPage() {
         </div>
       )}
 
+      </div>{/* end main content */}
+
       {/* Meme modal */}
       {modalMeme && (
         <MemeModal
@@ -822,6 +832,6 @@ export default function ListPage() {
       )}
 
       <DuplicatePanel activeMeme={activeMeme} router={router} />
-    </div>
+    </div>{/* end flex wrapper */}
   );
 }

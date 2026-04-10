@@ -49,7 +49,7 @@ async function refreshCaptionLikeCount(captionId: string, userId: string) {
 }
 
 function VotingGroup({
-  captionId, userId, initialLikeCount, onLikeCountChange, onVoteCast, imageUrl, posLabel,
+  captionId, userId, initialLikeCount, onLikeCountChange, onVoteCast, imageUrl, posLabel, caption,
 }: {
   captionId: string;
   userId: string | undefined;
@@ -58,6 +58,7 @@ function VotingGroup({
   onVoteCast: () => void;
   imageUrl?: string | null;
   posLabel?: string;
+  caption?: string | null;
 }) {
   const [votedType, setVotedType] = useState<'up' | 'down' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,8 +112,8 @@ function VotingGroup({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Image with left/right vote overlays */}
+    <div className="flex flex-col">
+      {/* Image full-bleed with left/right vote overlays */}
       {imageUrl && (
         <div className="w-full aspect-video relative group overflow-hidden">
           <img src={imageUrl} alt="Meme" className="h-full w-full object-cover" />
@@ -165,29 +166,37 @@ function VotingGroup({
         </div>
       )}
 
-      {/* Like count + fallback buttons (for image-less cards) + reset */}
-      <div className="flex items-center gap-4">
-        <div className="text-sm font-mono text-zinc-500 dark:text-zinc-400">
-          likes: <span className="text-blue-500 dark:text-blue-400">{initialLikeCount}</span>
+      {/* Content area */}
+      <div className="p-6 flex flex-col gap-3">
+        {caption && (
+          <blockquote className="text-xl font-semibold italic text-zinc-900 dark:text-zinc-100 leading-snug">
+            "{caption}"
+          </blockquote>
+        )}
+        <div className="flex items-center gap-4">
+          <div className="text-sm font-mono text-zinc-500 dark:text-zinc-400">
+            likes: <span className="text-blue-500 dark:text-blue-400">{initialLikeCount}</span>
+          </div>
+          {/* Fallback buttons for image-less cards */}
+          {!imageUrl && (
+            <>
+              <button onClick={() => handleVote('up')} disabled={isSubmitting || isLoadingVote || votedType !== null}
+                className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${votedType === 'up' ? 'border-blue-600 bg-blue-600 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'} ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}>
+                <span>👍</span><span className="text-xs font-bold uppercase">{votedType === 'up' ? 'Upvoted' : 'Up'}</span>
+              </button>
+              <button onClick={() => handleVote('down')} disabled={isSubmitting || isLoadingVote || votedType !== null}
+                className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${votedType === 'down' ? 'border-red-600 bg-red-600 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'} ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}>
+                <span>👎</span><span className="text-xs font-bold uppercase">{votedType === 'down' ? 'Downvoted' : 'Down'}</span>
+              </button>
+            </>
+          )}
+          {votedType && (
+            <button onClick={handleUndo} disabled={isSubmitting}
+              className="text-xs text-zinc-500 dark:text-zinc-400 underline hover:text-blue-500 dark:hover:text-blue-400 disabled:opacity-50">
+              Reset Vote
+            </button>
+          )}
         </div>
-        {!imageUrl && (
-          <>
-            <button onClick={() => handleVote('up')} disabled={isSubmitting || isLoadingVote || votedType !== null}
-              className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${votedType === 'up' ? 'border-blue-600 bg-blue-600 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'} ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}>
-              <span>👍</span><span className="text-xs font-bold uppercase">{votedType === 'up' ? 'Upvoted' : 'Up'}</span>
-            </button>
-            <button onClick={() => handleVote('down')} disabled={isSubmitting || isLoadingVote || votedType !== null}
-              className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${votedType === 'down' ? 'border-red-600 bg-red-600 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'} ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}>
-              <span>👎</span><span className="text-xs font-bold uppercase">{votedType === 'down' ? 'Downvoted' : 'Down'}</span>
-            </button>
-          </>
-        )}
-        {votedType && (
-          <button onClick={handleUndo} disabled={isSubmitting}
-            className="text-xs text-zinc-500 dark:text-zinc-400 underline hover:text-blue-500 dark:hover:text-blue-400 disabled:opacity-50">
-            Reset Vote
-          </button>
-        )}
       </div>
     </div>
   );
@@ -244,7 +253,7 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
               <p className="text-[10px] text-zinc-500 dark:text-zinc-400 italic line-clamp-2">"{activeMeme.content || '—'}"</p>
             </div>
           ) : (
-            <div className="mb-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 p-3 text-center text-[11px] text-zinc-400">Scroll to a meme</div>
+            <div className="mb-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 p-3 text-center text-[11px] text-zinc-400">No meme selected</div>
           )}
 
           <div className="space-y-2 mb-4">
@@ -284,7 +293,9 @@ export default function ListPage() {
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [pileLoading, setPileLoading] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [flipPhase, setFlipPhase] = useState<'idle' | 'exit' | 'enter'>('idle');
+  const [flipDir, setFlipDir] = useState<'next' | 'prev'>('next');
   const [pile, setPile] = useState<Pile>('all');
 
   // Search
@@ -294,7 +305,13 @@ export default function ListPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // Refs for stable keyboard handler
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
+  const flipPhaseRef = useRef(flipPhase);
+  flipPhaseRef.current = flipPhase;
+  const displayListLenRef = useRef(0);
+
   const router = useRouter();
 
   const loadPile = useCallback(async (selectedPile: Pile, uid: string | undefined) => {
@@ -308,7 +325,6 @@ export default function ListPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load');
       setCaptionsList((data || []) as CaptionItem[]);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       alert(`Failed to load: ${err.message}`);
     } finally {
@@ -348,40 +364,69 @@ export default function ListPage() {
   }, [searchQuery, searchField]);
 
   const displayList = searchResults ?? captionsList;
+  displayListLenRef.current = displayList.length;
 
+  // Reset to first card when list changes
   useEffect(() => {
-    const updateActive = () => {
-      const centerY = window.innerHeight / 2;
-      let bestIndex = 0; let bestDist = Number.POSITIVE_INFINITY;
-      cardRefs.current.forEach((el, idx) => {
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const dist = Math.abs(rect.top + rect.height / 2 - centerY);
-        if (dist < bestDist) { bestIndex = idx; bestDist = dist; }
-      });
-      setActiveIndex(bestIndex);
+    setCurrentIndex(0);
+    setFlipPhase('idle');
+  }, [displayList.length, searchQuery]);
+
+  // Navigation with flip animation
+  function navigateTo(newIndex: number, dir: 'next' | 'prev') {
+    if (flipPhaseRef.current !== 'idle') return;
+    if (newIndex < 0 || newIndex >= displayListLenRef.current) return;
+    setFlipDir(dir);
+    setFlipPhase('exit');
+    setTimeout(() => {
+      setCurrentIndex(newIndex);
+      setFlipPhase('enter');
+      requestAnimationFrame(() => requestAnimationFrame(() => setFlipPhase('idle')));
+    }, 220);
+  }
+
+  const goNext = useCallback(() => {
+    navigateTo(currentIndexRef.current + 1, 'next');
+  }, []);
+
+  const goPrev = useCallback(() => {
+    navigateTo(currentIndexRef.current - 1, 'prev');
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT') return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goNext();
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goPrev();
     };
-    updateActive();
-    window.addEventListener('scroll', updateActive);
-    return () => window.removeEventListener('scroll', updateActive);
-  }, [displayList]);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [goNext, goPrev]);
 
   function handleLikeCountChange(captionId: string, newLikeCount: number) {
     setCaptionsList(prev => prev.map(item => item.id === captionId ? { ...item, like_count: newLikeCount } : item));
   }
 
-  function scrollToNext(currentIndex: number) {
-    const nextEl = cardRefs.current[currentIndex + 1];
-    if (nextEl) nextEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
   if (loading) return <div className="p-10 text-center font-mono text-zinc-300">LOADING...</div>;
 
-  const activeMeme = displayList[activeIndex] ?? null;
+  const activeMeme = displayList[currentIndex] ?? null;
+  const remaining = displayList.length - currentIndex - 1;
+
+  // Card flip style
+  const cardStyle: React.CSSProperties = {
+    transition: flipPhase === 'enter' ? 'none' : 'transform 0.22s ease-in-out, opacity 0.22s ease-in-out',
+    transform: flipPhase === 'exit'
+      ? `perspective(1000px) rotateY(${flipDir === 'next' ? '80deg' : '-80deg'}) scale(0.95)`
+      : flipPhase === 'enter'
+        ? `perspective(1000px) rotateY(${flipDir === 'next' ? '-80deg' : '80deg'}) scale(0.95)`
+        : 'perspective(1000px) rotateY(0deg) scale(1)',
+    opacity: flipPhase === 'exit' ? 0 : 1,
+  };
 
   return (
-    <div className="min-h-screen max-w-3xl mx-auto bg-transparent p-6 text-zinc-900 dark:text-zinc-100">
-      <header className="mb-10 text-center">
+    <div className="min-h-screen bg-transparent p-6 text-zinc-900 dark:text-zinc-100">
+      <header className="mb-10 text-center max-w-3xl mx-auto">
         <h1 className="mb-6 text-5xl font-black tracking-tight text-blue-400">Meme Board</h1>
 
         {/* Pile selector */}
@@ -449,38 +494,94 @@ export default function ListPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-16">
-          {displayList.map((item, index) => {
-            const isActive = index === activeIndex;
-            const posLabel = `${index + 1} / ${displayList.length}`;
-            return (
-              <div key={item.id} ref={el => { cardRefs.current[index] = el; }}
-                className={`overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-all duration-500 ${isActive ? 'scale-105 opacity-100 shadow-2xl' : 'scale-90 opacity-50 shadow-sm'}`}>
-                <div className="p-8">
-                  {/* Position indicator for image-less cards */}
-                  {!item.images?.url && (
-                    <div className="flex justify-end mb-2">
-                      <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 text-xs font-mono font-bold text-zinc-500 dark:text-zinc-400">
-                        {posLabel}
-                      </span>
-                    </div>
-                  )}
-                  <blockquote className="mb-8 text-2xl font-semibold italic text-zinc-900 dark:text-zinc-100">
-                    "{item.content}"
-                  </blockquote>
-                  <VotingGroup
-                    captionId={item.id}
-                    userId={userId}
-                    initialLikeCount={Number(item.like_count ?? 0)}
-                    onLikeCountChange={handleLikeCountChange}
-                    onVoteCast={() => scrollToNext(index)}
-                    imageUrl={item.images?.url}
-                    posLabel={posLabel}
-                  />
+        <div className="flex flex-col items-center gap-8">
+
+          {/* Card deck */}
+          <div className="relative" style={{ width: '100%', maxWidth: 520 }}>
+
+            {/* Ghost card 2 — furthest back */}
+            {remaining >= 2 && (
+              <div
+                className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
+                style={{ transform: 'rotate(2.8deg) translate(14px, -5px)', zIndex: 1, pointerEvents: 'none' }}
+              />
+            )}
+            {/* Ghost card 1 */}
+            {remaining >= 1 && (
+              <div
+                className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800"
+                style={{ transform: 'rotate(1.4deg) translate(7px, -2px)', zIndex: 2, pointerEvents: 'none' }}
+              />
+            )}
+
+            {/* Side pile-thickness indicator */}
+            <div
+              className="absolute top-8 bottom-8 flex flex-col justify-center gap-[3px]"
+              style={{ left: 'calc(100% + 10px)', pointerEvents: 'none' }}
+            >
+              {Array.from({ length: Math.min(remaining + 1, 16) }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: 3,
+                    width: Math.max(5, 18 - i),
+                    backgroundColor: i === 0 ? '#60a5fa' : '#d4d4d8',
+                    borderRadius: '0 3px 3px 0',
+                    opacity: Math.max(0.2, 1 - i * 0.055),
+                  }}
+                />
+              ))}
+              {remaining + 1 > 16 && (
+                <div style={{ fontSize: 8, color: '#a1a1aa', fontFamily: 'monospace', lineHeight: 1 }}>
+                  +{remaining + 1 - 16}
                 </div>
+              )}
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#71717a', fontFamily: 'monospace', marginTop: 3 }}>
+                {remaining + 1}
               </div>
-            );
-          })}
+            </div>
+
+            {/* Main card */}
+            <div
+              className="relative overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl"
+              style={{ zIndex: 10, ...cardStyle }}
+            >
+              <VotingGroup
+                key={activeMeme?.id}
+                captionId={activeMeme?.id ?? ''}
+                userId={userId}
+                initialLikeCount={Number(activeMeme?.like_count ?? 0)}
+                onLikeCountChange={handleLikeCountChange}
+                onVoteCast={goNext}
+                imageUrl={activeMeme?.images?.url}
+                posLabel={`${currentIndex + 1} / ${displayList.length}`}
+                caption={activeMeme?.content}
+              />
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center gap-5">
+            <button
+              onClick={goPrev}
+              disabled={currentIndex === 0 || flipPhase !== 'idle'}
+              className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+            >
+              ←
+            </button>
+            <span className="text-sm font-mono font-bold text-zinc-400 tabular-nums">
+              {currentIndex + 1} / {displayList.length}
+            </span>
+            <button
+              onClick={goNext}
+              disabled={currentIndex >= displayList.length - 1 || flipPhase !== 'idle'}
+              className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+            >
+              →
+            </button>
+          </div>
+
+          <p className="text-xs text-zinc-400 font-mono">← → arrow keys also work</p>
         </div>
       )}
 

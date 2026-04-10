@@ -272,6 +272,9 @@ function UploadPageInner() {
   const [galleryLoading, setGalleryLoading] = useState(true);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<GalleryImage | null>(null);
 
+  // Auto-saved caption draft ID (API saves automatically; we hide it until user confirms)
+  const [autoSavedCaptionId, setAutoSavedCaptionId] = useState<string | null>(null);
+
   // My Memes pile
   const [userId, setUserId] = useState<string | null>(null);
   const [myMemes, setMyMemes] = useState<{ id: string; content: string | null; like_count: number | null; image_url?: string | null }[]>([]);
@@ -386,13 +389,33 @@ function UploadPageInner() {
     return extractCaption((await res.json()) as CaptionApiResponse, uploadedImageId);
   }
 
+  // After the API auto-saves a caption, immediately mark it as draft (is_public: false)
+  async function draftAutoSavedCaption(imgId: string, uid: string, flavorId: string) {
+    // Small delay to let the API's DB write land
+    await new Promise(r => setTimeout(r, 600));
+    const { data } = await supabase
+      .from('captions')
+      .select('id')
+      .eq('image_id', imgId)
+      .eq('profile_id', uid)
+      .eq('humor_flavor_id', Number(flavorId))
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data?.id) {
+      await supabase.from('captions').update({ is_public: false }).eq('id', data.id);
+      setAutoSavedCaptionId(data.id);
+    }
+  }
+
   // Upload mode: upload file → register → generate caption
   const handleProcessUpload = async () => {
     if (!file) { setStatus('Please choose an image first.'); return; }
     if (!selectedFlavorId) { setStatus('Please choose a humor flavor first.'); return; }
     setLoading(true); setStatus('Starting...');
     try {
-      const { token } = await requireSession();
+      const { token, userId: uid } = await requireSession();
       const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
       setStatus('Getting permission...');
       const s1Res = await fetch('https://api.almostcrackd.ai/pipeline/generate-presigned-url', {
@@ -420,6 +443,7 @@ function UploadPageInner() {
       setEditedCaption(finalCaption);
       setPreviewUrl(presignData.cdnUrl);
       setStatus('Success! Edit the caption, revise it, or save it.');
+      draftAutoSavedCaption(uploadImageData.imageId, uid, selectedFlavorId);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Something went wrong.'}`);
     } finally { setLoading(false); }
@@ -430,13 +454,14 @@ function UploadPageInner() {
     if (!selectedGalleryImage || !selectedFlavorId) return;
     setLoading(true); setStatus('AI is thinking...');
     try {
-      const { token } = await requireSession();
+      const { token, userId: uid } = await requireSession();
       const caption = await generateCaptionForImage(token, selectedGalleryImage.id, selectedFlavorId);
       setImageId(selectedGalleryImage.id);
       setPreviewUrl(selectedGalleryImage.url);
       setGeneratedCaption(caption);
       setEditedCaption(caption);
       setStatus('Success! Edit the caption, revise it, or save it.');
+      draftAutoSavedCaption(selectedGalleryImage.id, uid, selectedFlavorId);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Something went wrong.'}`);
     } finally { setLoading(false); }
@@ -446,11 +471,12 @@ function UploadPageInner() {
     if (!imageId || !selectedFlavorId) return;
     try {
       setIsRevising(true); setStatus('Revising caption with selected flavor...');
-      const { token } = await requireSession();
+      const { token, userId: uid } = await requireSession();
       const revisedCaption = await generateCaptionForImage(token, imageId, selectedFlavorId);
       setGeneratedCaption(revisedCaption);
       setEditedCaption(revisedCaption);
       setStatus('Revised! You can revise again or save it.');
+      draftAutoSavedCaption(imageId, uid, selectedFlavorId);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Failed to revise caption.'}`);
     } finally { setIsRevising(false); }
@@ -461,12 +487,21 @@ function UploadPageInner() {
     try {
       setLoading(true); setStatus('Saving meme...');
       const { userId } = await requireSession();
-      const { error } = await supabase.from('captions').insert({
-        image_id: imageId, content: editedCaption.trim(), profile_id: userId,
-        humor_flavor_id: Number(selectedFlavorId), is_public: true, like_count: 0,
-        created_by_user_id: userId, modified_by_user_id: userId,
-      });
-      if (error) throw error;
+      if (autoSavedCaptionId) {
+        // The API already saved a draft — just publish it with the user's final caption
+        const { error } = await supabase.from('captions')
+          .update({ content: editedCaption.trim(), is_public: true, modified_by_user_id: userId })
+          .eq('id', autoSavedCaptionId);
+        if (error) throw error;
+      } else {
+        // No draft found — insert fresh
+        const { error } = await supabase.from('captions').insert({
+          image_id: imageId, content: editedCaption.trim(), profile_id: userId,
+          humor_flavor_id: Number(selectedFlavorId), is_public: true, like_count: 0,
+          created_by_user_id: userId, modified_by_user_id: userId,
+        });
+        if (error) throw error;
+      }
       setStatus('Saved! Redirecting...');
       setTimeout(() => router.push('/main'), 800);
     } catch (err: any) {
@@ -477,7 +512,7 @@ function UploadPageInner() {
   const resetPage = () => {
     setFile(null); setPreviewUrl(null); setImageId(null);
     setGeneratedCaption(''); setEditedCaption(''); setStatus('');
-    setSelectedGalleryImage(null);
+    setSelectedGalleryImage(null); setAutoSavedCaptionId(null);
   };
 
   const canGenerate = imageMode === 'gallery'

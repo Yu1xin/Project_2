@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
@@ -76,10 +76,10 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const supabase = createBrowserClient(
+  const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ), []);
 
   // Load superadmin status once
   useEffect(() => {
@@ -96,7 +96,17 @@ export default function Sidebar() {
       }
     }
     loadProfile();
-  }, []);
+  }, [supabase]);
+
+  // Redirect to login on session expiry / sign-out
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        router.push('/login');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [supabase, router]);
 
   // Auto-switch to admin sidebar when on /admin/* pages
   useEffect(() => {

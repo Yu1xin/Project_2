@@ -144,7 +144,7 @@ export default function MainPage() {
 
         {/* Greeting */}
         <div className="mb-8">
-          <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100">Welcome back</h1>
+          <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100">Welcome, Rate & Create Memes</h1>
           <p className="mt-1 text-sm italic text-zinc-500 dark:text-zinc-400 break-words">{userEmail}</p>
         </div>
 

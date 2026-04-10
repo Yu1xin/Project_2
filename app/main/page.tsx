@@ -49,13 +49,15 @@ async function refreshCaptionLikeCount(captionId: string, userId: string) {
 }
 
 function VotingGroup({
-  captionId, userId, initialLikeCount, onLikeCountChange, onVoteCast,
+  captionId, userId, initialLikeCount, onLikeCountChange, onVoteCast, imageUrl, posLabel,
 }: {
   captionId: string;
   userId: string | undefined;
   initialLikeCount: number;
   onLikeCountChange: (id: string, n: number) => void;
   onVoteCast: () => void;
+  imageUrl?: string | null;
+  posLabel?: string;
 }) {
   const [votedType, setVotedType] = useState<'up' | 'down' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,21 +112,79 @@ function VotingGroup({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-sm font-mono text-zinc-500 dark:text-zinc-400">
-        likes: <span className="text-blue-500 dark:text-blue-400">{initialLikeCount}</span>
-      </div>
+      {/* Image with left/right vote overlays */}
+      {imageUrl && (
+        <div className="w-full aspect-video relative group overflow-hidden">
+          <img src={imageUrl} alt="Meme" className="h-full w-full object-cover" />
+
+          {posLabel && (
+            <span className="absolute top-3 right-3 z-10 rounded-full bg-black/40 backdrop-blur-sm px-2.5 py-1 text-xs font-mono font-bold text-white">
+              {posLabel}
+            </span>
+          )}
+
+          {/* Left half — Upvote */}
+          <button
+            onClick={() => handleVote('up')}
+            disabled={isSubmitting || isLoadingVote || votedType !== null}
+            className={`absolute inset-y-0 left-0 w-1/2 flex items-center justify-center transition-all duration-200
+              ${votedType === 'up'
+                ? 'bg-blue-500/50 opacity-100 cursor-default'
+                : votedType === null
+                  ? 'opacity-0 group-hover:opacity-100 bg-blue-500/30 hover:bg-blue-500/50 cursor-pointer'
+                  : 'opacity-0 pointer-events-none'
+              }`}
+          >
+            <div className="flex flex-col items-center gap-1 text-white drop-shadow-lg select-none">
+              <span className="text-5xl">👍</span>
+              <span className="text-sm font-black uppercase tracking-wide">
+                {votedType === 'up' ? 'Upvoted!' : 'Upvote'}
+              </span>
+            </div>
+          </button>
+
+          {/* Right half — Downvote */}
+          <button
+            onClick={() => handleVote('down')}
+            disabled={isSubmitting || isLoadingVote || votedType !== null}
+            className={`absolute inset-y-0 right-0 w-1/2 flex items-center justify-center transition-all duration-200
+              ${votedType === 'down'
+                ? 'bg-red-500/50 opacity-100 cursor-default'
+                : votedType === null
+                  ? 'opacity-0 group-hover:opacity-100 bg-red-500/30 hover:bg-red-500/50 cursor-pointer'
+                  : 'opacity-0 pointer-events-none'
+              }`}
+          >
+            <div className="flex flex-col items-center gap-1 text-white drop-shadow-lg select-none">
+              <span className="text-5xl">👎</span>
+              <span className="text-sm font-black uppercase tracking-wide">
+                {votedType === 'down' ? 'Downvoted!' : 'Downvote'}
+              </span>
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* Like count + fallback buttons (for image-less cards) + reset */}
       <div className="flex items-center gap-4">
-        <button onClick={() => handleVote('up')} disabled={isSubmitting || isLoadingVote || votedType !== null}
-          className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${votedType === 'up' ? 'border-blue-600 bg-blue-600 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'} ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}>
-          <span>👍</span><span className="text-xs font-bold uppercase">{votedType === 'up' ? 'Upvoted' : 'Up'}</span>
-        </button>
-        <button onClick={() => handleVote('down')} disabled={isSubmitting || isLoadingVote || votedType !== null}
-          className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${votedType === 'down' ? 'border-red-600 bg-red-600 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'} ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}>
-          <span>👎</span><span className="text-xs font-bold uppercase">{votedType === 'down' ? 'Downvoted' : 'Down'}</span>
-        </button>
+        <div className="text-sm font-mono text-zinc-500 dark:text-zinc-400">
+          likes: <span className="text-blue-500 dark:text-blue-400">{initialLikeCount}</span>
+        </div>
+        {!imageUrl && (
+          <>
+            <button onClick={() => handleVote('up')} disabled={isSubmitting || isLoadingVote || votedType !== null}
+              className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${votedType === 'up' ? 'border-blue-600 bg-blue-600 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'} ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}>
+              <span>👍</span><span className="text-xs font-bold uppercase">{votedType === 'up' ? 'Upvoted' : 'Up'}</span>
+            </button>
+            <button onClick={() => handleVote('down')} disabled={isSubmitting || isLoadingVote || votedType !== null}
+              className={`flex items-center gap-2 rounded-full border px-6 py-2 transition ${votedType === 'down' ? 'border-red-600 bg-red-600 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-50'} ${!votedType && !isSubmitting ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800' : 'cursor-default'}`}>
+              <span>👎</span><span className="text-xs font-bold uppercase">{votedType === 'down' ? 'Downvoted' : 'Down'}</span>
+            </button>
+          </>
+        )}
         {votedType && (
           <button onClick={handleUndo} disabled={isSubmitting}
-            className="ml-2 text-xs text-zinc-500 dark:text-zinc-400 underline hover:text-blue-500 dark:hover:text-blue-400 disabled:opacity-50">
+            className="text-xs text-zinc-500 dark:text-zinc-400 underline hover:text-blue-500 dark:hover:text-blue-400 disabled:opacity-50">
             Reset Vote
           </button>
         )}
@@ -396,15 +456,6 @@ export default function ListPage() {
             return (
               <div key={item.id} ref={el => { cardRefs.current[index] = el; }}
                 className={`overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-all duration-500 ${isActive ? 'scale-105 opacity-100 shadow-2xl' : 'scale-90 opacity-50 shadow-sm'}`}>
-                {item.images?.url && (
-                  <div className="w-full aspect-video relative">
-                    <img src={item.images.url} alt="Meme" className="h-full w-full object-cover" />
-                    {/* Position indicator */}
-                    <span className="absolute top-3 right-3 rounded-full bg-black/40 backdrop-blur-sm px-2.5 py-1 text-xs font-mono font-bold text-white">
-                      {posLabel}
-                    </span>
-                  </div>
-                )}
                 <div className="p-8">
                   {/* Position indicator for image-less cards */}
                   {!item.images?.url && (
@@ -423,6 +474,8 @@ export default function ListPage() {
                     initialLikeCount={Number(item.like_count ?? 0)}
                     onLikeCountChange={handleLikeCountChange}
                     onVoteCast={() => scrollToNext(index)}
+                    imageUrl={item.images?.url}
+                    posLabel={posLabel}
                   />
                 </div>
               </div>

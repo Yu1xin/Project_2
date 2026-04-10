@@ -435,8 +435,7 @@ export default function ListPage() {
   const [loading, setLoading] = useState(true);
   const [pileLoading, setPileLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [flipPhase, setFlipPhase] = useState<'idle' | 'exit' | 'enter'>('idle');
-  const [flipDir, setFlipDir] = useState<'next' | 'prev'>('next');
+  const [viewMode, setViewMode] = useState<'pile' | 'grid'>('pile');
   const [voteEffect, setVoteEffect] = useState<'idle' | 'liked' | 'disliked'>('idle');
   const [pile, setPile] = useState<Pile>('all');
 
@@ -459,8 +458,6 @@ export default function ListPage() {
   // Refs for stable keyboard handler
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
-  const flipPhaseRef = useRef(flipPhase);
-  flipPhaseRef.current = flipPhase;
   const voteEffectRef = useRef(voteEffect);
   voteEffectRef.current = voteEffect;
   const displayListLenRef = useRef(0);
@@ -539,20 +536,18 @@ export default function ListPage() {
 
   useEffect(() => {
     setCurrentIndex(0);
-    setFlipPhase('idle');
     setVoteEffect('idle');
   }, [displayList.length, searchQuery]);
 
   function navigateTo(newIndex: number, dir: 'next' | 'prev') {
-    if (flipPhaseRef.current !== 'idle' || voteEffectRef.current !== 'idle') return;
+    if (voteEffectRef.current !== 'idle') return;
     if (newIndex < 0 || newIndex >= displayListLenRef.current) return;
-    setFlipDir(dir);
-    setFlipPhase('exit');
+    // Slide out in the direction of navigation (next→right, prev→left)
+    setVoteEffect(dir === 'next' ? 'liked' : 'disliked');
     setTimeout(() => {
       setCurrentIndex(newIndex);
-      setFlipPhase('enter');
-      requestAnimationFrame(() => requestAnimationFrame(() => setFlipPhase('idle')));
-    }, 220);
+      setVoteEffect('idle');
+    }, 380);
   }
 
   const goNext = useCallback(() => navigateTo(currentIndexRef.current + 1, 'next'), []);
@@ -582,9 +577,9 @@ export default function ListPage() {
       image_url: caption.images?.url ?? null,
     };
     if (voteType === 'up') {
-      setLikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [meme, ...prev]);
+      setLikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [...prev, meme]);
     } else {
-      setDislikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [meme, ...prev]);
+      setDislikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [...prev, meme]);
     }
     setVoteEffect(voteType === 'up' ? 'liked' : 'disliked');
     setTimeout(() => {
@@ -641,13 +636,9 @@ export default function ListPage() {
         opacity: 0,
       }
     : {
-        transition: flipPhase === 'enter' ? 'none' : 'transform 0.22s ease-in-out, opacity 0.22s ease-in-out',
-        transform: flipPhase === 'exit'
-          ? `perspective(1000px) rotateY(${flipDir === 'next' ? '80deg' : '-80deg'}) scale(0.95)`
-          : flipPhase === 'enter'
-            ? `perspective(1000px) rotateY(${flipDir === 'next' ? '-80deg' : '80deg'}) scale(0.95)`
-            : 'perspective(1000px) rotateY(0deg) scale(1)',
-        opacity: flipPhase === 'exit' ? 0 : 1,
+        transition: 'transform 0.22s ease-in-out, opacity 0.22s ease-in-out',
+        transform: 'perspective(1000px) rotateY(0deg) scale(1)',
+        opacity: 1,
       };
 
   return (
@@ -656,6 +647,20 @@ export default function ListPage() {
       {/* ── Left sidebar ── */}
       <aside className="hidden md:flex flex-col gap-5 w-52 shrink-0 sticky top-0 h-screen overflow-y-auto px-4 py-8 border-r border-zinc-100 dark:border-zinc-800">
         <h1 className="text-2xl font-black tracking-tight text-blue-400 leading-tight">Meme<br/>Board</h1>
+
+        {/* View mode toggle */}
+        <div className="flex rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 text-xs font-bold">
+          <button
+            onClick={() => setViewMode('pile')}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${viewMode === 'pile' ? 'bg-blue-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}>
+            <span>🃏</span><span>Pile</span>
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}>
+            <span>⊞</span><span>Grid</span>
+          </button>
+        </div>
 
         {/* Pile selector */}
         <div className="flex flex-col gap-1.5">
@@ -722,10 +727,39 @@ export default function ListPage() {
             </>
           )}
         </div>
+      ) : viewMode === 'grid' ? (
+
+        /* ── Grid mode ── */
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {displayList.map((item, idx) => (
+            <div
+              key={item.id}
+              onClick={() => { setCurrentIndex(idx); setViewMode('pile'); }}
+              className="cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
+            >
+              {item.images?.url ? (
+                <img src={item.images.url} alt="" className="w-full h-24 object-cover" />
+              ) : (
+                <div className="w-full h-24 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl">🖼️</div>
+              )}
+              <div className="p-2">
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">
+                  "{item.content || '—'}"
+                </p>
+                {item.like_count != null && (
+                  <p className="mt-1 text-[10px] text-zinc-400 font-mono">{item.like_count > 0 ? '+' : ''}{item.like_count}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
       ) : (
+
+        /* ── Pile mode ── */
         <div className="flex flex-col items-center gap-6 max-w-lg mx-auto">
 
-          {/* ── Liked / Disliked pile row (identical to homepage) ── */}
+          {/* ── Liked / Disliked pile row ── */}
           <section className="w-full">
             <h2 className="mb-3 text-xs font-black text-zinc-400 uppercase tracking-widest">Your Votes</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -806,11 +840,11 @@ export default function ListPage() {
           {/* Navigation */}
           <div className="flex items-center gap-5">
             <button onClick={goPrev}
-              disabled={currentIndex === 0 || flipPhase !== 'idle' || voteEffect !== 'idle'}
+              disabled={currentIndex === 0 || voteEffect !== 'idle'}
               className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95">←</button>
             <span className="text-sm font-mono font-bold text-zinc-400 tabular-nums">{currentIndex + 1} / {displayList.length}</span>
             <button onClick={goNext}
-              disabled={currentIndex >= displayList.length - 1 || flipPhase !== 'idle' || voteEffect !== 'idle'}
+              disabled={currentIndex >= displayList.length - 1 || voteEffect !== 'idle'}
               className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95">→</button>
           </div>
           <p className="text-xs text-zinc-400 font-mono">← → arrow keys also work</p>

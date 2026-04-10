@@ -48,6 +48,7 @@ async function refreshCaptionLikeCount(captionId: string, userId: string) {
   return score;
 }
 
+// ── VotingGroup ───────────────────────────────────────────────
 function VotingGroup({
   captionId, userId, initialLikeCount, onLikeCountChange, onVoteCast, imageUrl, posLabel, caption,
 }: {
@@ -55,7 +56,7 @@ function VotingGroup({
   userId: string | undefined;
   initialLikeCount: number;
   onLikeCountChange: (id: string, n: number) => void;
-  onVoteCast: () => void;
+  onVoteCast: (type: 'up' | 'down') => void;
   imageUrl?: string | null;
   posLabel?: string;
   caption?: string | null;
@@ -93,7 +94,7 @@ function VotingGroup({
       setVotedType(type);
       const newLikeCount = await refreshCaptionLikeCount(captionId, userId);
       onLikeCountChange(captionId, newLikeCount);
-      setTimeout(onVoteCast, 500);
+      onVoteCast(type); // immediate — parent handles disappear animation
     } catch (err: any) { alert(`Vote failed: ${err.message}`); }
     finally { setIsSubmitting(false); }
   };
@@ -177,7 +178,6 @@ function VotingGroup({
           <div className="text-sm font-mono text-zinc-500 dark:text-zinc-400">
             likes: <span className="text-blue-500 dark:text-blue-400">{initialLikeCount}</span>
           </div>
-          {/* Fallback buttons for image-less cards */}
           {!imageUrl && (
             <>
               <button onClick={() => handleVote('up')} disabled={isSubmitting || isLoadingVote || votedType !== null}
@@ -202,6 +202,77 @@ function VotingGroup({
   );
 }
 
+// ── MiniPile ──────────────────────────────────────────────────
+function MiniPile({
+  type, memes, isOpen, onToggle, glow,
+}: {
+  type: 'liked' | 'disliked';
+  memes: CaptionItem[];
+  isOpen: boolean;
+  onToggle: () => void;
+  glow: boolean;
+}) {
+  const topMeme = memes[0];
+  const isEmpty = memes.length === 0;
+  const isLiked = type === 'liked';
+
+  return (
+    <button
+      onClick={onToggle}
+      disabled={isEmpty}
+      title={isLiked ? 'Liked memes' : 'Disliked memes'}
+      className={`relative w-20 focus:outline-none transition-all duration-300
+        ${isEmpty ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-1'}
+        ${glow ? 'scale-110' : 'scale-100'}
+      `}
+    >
+      {/* Ghost card 2 */}
+      {memes.length >= 3 && (
+        <div
+          className={`absolute inset-0 rounded-2xl border ${isLiked ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/60' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60'}`}
+          style={{ transform: `rotate(${isLiked ? 3 : -3}deg) translate(${isLiked ? 5 : -5}px, -4px)`, zIndex: 1, pointerEvents: 'none' }}
+        />
+      )}
+      {/* Ghost card 1 */}
+      {memes.length >= 2 && (
+        <div
+          className={`absolute inset-0 rounded-2xl border ${isLiked ? 'border-blue-200 dark:border-blue-800 bg-blue-100/80 dark:bg-blue-900/40' : 'border-red-200 dark:border-red-800 bg-red-100/80 dark:bg-red-900/40'}`}
+          style={{ transform: `rotate(${isLiked ? 1.5 : -1.5}deg) translate(${isLiked ? 2.5 : -2.5}px, -2px)`, zIndex: 2, pointerEvents: 'none' }}
+        />
+      )}
+
+      {/* Top card */}
+      <div
+        className={`relative z-10 rounded-2xl border overflow-hidden shadow-md transition-all duration-300
+          ${isLiked
+            ? `border-blue-200 dark:border-blue-800 ${glow ? 'ring-2 ring-blue-400 shadow-lg shadow-blue-200 dark:shadow-blue-900/50' : ''}`
+            : `border-red-200 dark:border-red-800 ${glow ? 'ring-2 ring-red-400 shadow-lg shadow-red-200 dark:shadow-red-900/50' : ''}`
+          }`}
+      >
+        {topMeme?.images?.url ? (
+          <img src={topMeme.images.url} alt="" className="w-full h-14 object-cover" />
+        ) : (
+          <div className={`w-full h-14 flex items-center justify-center text-2xl ${isLiked ? 'bg-blue-50 dark:bg-blue-950' : 'bg-red-50 dark:bg-red-950'}`}>
+            {isLiked ? '👍' : '👎'}
+          </div>
+        )}
+        <div className={`px-2 py-1.5 text-center ${isLiked ? 'bg-blue-50 dark:bg-blue-950/60' : 'bg-red-50 dark:bg-red-950/60'}`}>
+          <div className="text-base leading-none mb-0.5">{isLiked ? '👍' : '👎'}</div>
+          <div className={`text-[10px] font-black font-mono ${isLiked ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+            {isEmpty ? '—' : memes.length}
+          </div>
+        </div>
+      </div>
+
+      {/* "open" indicator */}
+      {isOpen && !isEmpty && (
+        <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isLiked ? 'bg-blue-400' : 'bg-red-400'}`} />
+      )}
+    </button>
+  );
+}
+
+// ── DuplicatePanel ────────────────────────────────────────────
 function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null; router: ReturnType<typeof useRouter> }) {
   const [copyCaption, setCopyCaption] = useState(false);
   const [copyImage, setCopyImage] = useState(false);
@@ -223,9 +294,9 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
   }
 
   const checks = [
-    { key: 'caption', label: 'Copy Caption',       icon: '💬', checked: copyCaption, set: setCopyCaption, available: !!activeMeme?.content },
-    { key: 'image',   label: 'Copy Image',          icon: '🖼️', checked: copyImage,   set: setCopyImage,   available: !!activeMeme?.image_id },
-    { key: 'flavor',  label: 'Copy Humor Flavor',   icon: '😂', checked: copyFlavor,  set: setCopyFlavor,  available: activeMeme?.humor_flavor_id != null },
+    { key: 'caption', label: 'Copy Caption',     icon: '💬', checked: copyCaption, set: setCopyCaption, available: !!activeMeme?.content },
+    { key: 'image',   label: 'Copy Image',        icon: '🖼️', checked: copyImage,   set: setCopyImage,   available: !!activeMeme?.image_id },
+    { key: 'flavor',  label: 'Copy Humor Flavor', icon: '😂', checked: copyFlavor,  set: setCopyFlavor,  available: activeMeme?.humor_flavor_id != null },
   ];
 
   return (
@@ -288,6 +359,7 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────
 export default function ListPage() {
   const [captionsList, setCaptionsList] = useState<CaptionItem[]>([]);
   const [userId, setUserId] = useState<string | undefined>(undefined);
@@ -296,7 +368,15 @@ export default function ListPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipPhase, setFlipPhase] = useState<'idle' | 'exit' | 'enter'>('idle');
   const [flipDir, setFlipDir] = useState<'next' | 'prev'>('next');
+  const [voteEffect, setVoteEffect] = useState<'idle' | 'liked' | 'disliked'>('idle');
   const [pile, setPile] = useState<Pile>('all');
+
+  // Voted piles
+  const [likedMemes, setLikedMemes] = useState<CaptionItem[]>([]);
+  const [dislikedMemes, setDislikedMemes] = useState<CaptionItem[]>([]);
+  const [openPile, setOpenPile] = useState<'liked' | 'disliked' | null>(null);
+  const [likedGlow, setLikedGlow] = useState(false);
+  const [dislikedGlow, setDislikedGlow] = useState(false);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -310,6 +390,8 @@ export default function ListPage() {
   currentIndexRef.current = currentIndex;
   const flipPhaseRef = useRef(flipPhase);
   flipPhaseRef.current = flipPhase;
+  const voteEffectRef = useRef(voteEffect);
+  voteEffectRef.current = voteEffect;
   const displayListLenRef = useRef(0);
 
   const router = useRouter();
@@ -345,12 +427,10 @@ export default function ListPage() {
     fetchData();
   }, [router, loadPile]);
 
-  // When searchQuery changes, debounce → call API
   useEffect(() => {
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
     const q = searchQuery.trim();
     if (!q) { setSearchResults(null); setSearchLoading(false); return; }
-
     setSearchLoading(true);
     searchDebounce.current = setTimeout(async () => {
       try {
@@ -370,11 +450,12 @@ export default function ListPage() {
   useEffect(() => {
     setCurrentIndex(0);
     setFlipPhase('idle');
+    setVoteEffect('idle');
   }, [displayList.length, searchQuery]);
 
-  // Navigation with flip animation
+  // Navigation with flip animation (for prev/next buttons & keyboard)
   function navigateTo(newIndex: number, dir: 'next' | 'prev') {
-    if (flipPhaseRef.current !== 'idle') return;
+    if (flipPhaseRef.current !== 'idle' || voteEffectRef.current !== 'idle') return;
     if (newIndex < 0 || newIndex >= displayListLenRef.current) return;
     setFlipDir(dir);
     setFlipPhase('exit');
@@ -385,13 +466,8 @@ export default function ListPage() {
     }, 220);
   }
 
-  const goNext = useCallback(() => {
-    navigateTo(currentIndexRef.current + 1, 'next');
-  }, []);
-
-  const goPrev = useCallback(() => {
-    navigateTo(currentIndexRef.current - 1, 'prev');
-  }, []);
+  const goNext = useCallback(() => navigateTo(currentIndexRef.current + 1, 'next'), []);
+  const goPrev = useCallback(() => navigateTo(currentIndexRef.current - 1, 'prev'), []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -408,21 +484,52 @@ export default function ListPage() {
     setCaptionsList(prev => prev.map(item => item.id === captionId ? { ...item, like_count: newLikeCount } : item));
   }
 
+  function handleVoteCast(voteType: 'up' | 'down') {
+    const meme = displayList[currentIndexRef.current];
+    if (!meme) return;
+
+    if (voteType === 'up') {
+      setLikedMemes(prev => [meme, ...prev]);
+      setLikedGlow(true);
+      setTimeout(() => setLikedGlow(false), 700);
+    } else {
+      setDislikedMemes(prev => [meme, ...prev]);
+      setDislikedGlow(true);
+      setTimeout(() => setDislikedGlow(false), 700);
+    }
+
+    // Card disappear effect
+    setVoteEffect(voteType === 'up' ? 'liked' : 'disliked');
+    setTimeout(() => {
+      setVoteEffect('idle');
+      const next = currentIndexRef.current + 1;
+      if (next < displayListLenRef.current) setCurrentIndex(next);
+    }, 380);
+  }
+
   if (loading) return <div className="p-10 text-center font-mono text-zinc-300">LOADING...</div>;
 
   const activeMeme = displayList[currentIndex] ?? null;
   const remaining = displayList.length - currentIndex - 1;
 
-  // Card flip style
-  const cardStyle: React.CSSProperties = {
-    transition: flipPhase === 'enter' ? 'none' : 'transform 0.22s ease-in-out, opacity 0.22s ease-in-out',
-    transform: flipPhase === 'exit'
-      ? `perspective(1000px) rotateY(${flipDir === 'next' ? '80deg' : '-80deg'}) scale(0.95)`
-      : flipPhase === 'enter'
-        ? `perspective(1000px) rotateY(${flipDir === 'next' ? '-80deg' : '80deg'}) scale(0.95)`
-        : 'perspective(1000px) rotateY(0deg) scale(1)',
-    opacity: flipPhase === 'exit' ? 0 : 1,
-  };
+  // Card style: vote-effect takes priority over flip
+  const cardStyle: React.CSSProperties = voteEffect !== 'idle'
+    ? {
+        transition: 'transform 0.35s ease-in-out, opacity 0.35s ease-in-out',
+        transform: voteEffect === 'liked'
+          ? 'translateX(220px) scale(0.5) rotate(10deg)'
+          : 'translateX(-220px) scale(0.5) rotate(-10deg)',
+        opacity: 0,
+      }
+    : {
+        transition: flipPhase === 'enter' ? 'none' : 'transform 0.22s ease-in-out, opacity 0.22s ease-in-out',
+        transform: flipPhase === 'exit'
+          ? `perspective(1000px) rotateY(${flipDir === 'next' ? '80deg' : '-80deg'}) scale(0.95)`
+          : flipPhase === 'enter'
+            ? `perspective(1000px) rotateY(${flipDir === 'next' ? '-80deg' : '80deg'}) scale(0.95)`
+            : 'perspective(1000px) rotateY(0deg) scale(1)',
+        opacity: flipPhase === 'exit' ? 0 : 1,
+      };
 
   return (
     <div className="min-h-screen bg-transparent p-6 text-zinc-900 dark:text-zinc-100">
@@ -494,94 +601,149 @@ export default function ListPage() {
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-6">
 
-          {/* Card deck */}
-          <div className="relative" style={{ width: '100%', maxWidth: 520 }}>
+          {/* ── Three-column: disliked | card deck | liked ── */}
+          <div className="flex items-start justify-center gap-5 w-full">
 
-            {/* Ghost card 2 — furthest back */}
-            {remaining >= 2 && (
-              <div
-                className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
-                style={{ transform: 'rotate(2.8deg) translate(14px, -5px)', zIndex: 1, pointerEvents: 'none' }}
+            {/* Disliked pile — left */}
+            <div className="flex-shrink-0 pt-6">
+              <MiniPile
+                type="disliked"
+                memes={dislikedMemes}
+                isOpen={openPile === 'disliked'}
+                onToggle={() => setOpenPile(p => p === 'disliked' ? null : 'disliked')}
+                glow={dislikedGlow}
               />
-            )}
-            {/* Ghost card 1 */}
-            {remaining >= 1 && (
-              <div
-                className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800"
-                style={{ transform: 'rotate(1.4deg) translate(7px, -2px)', zIndex: 2, pointerEvents: 'none' }}
-              />
-            )}
+            </div>
 
-            {/* Side pile-thickness indicator */}
-            <div
-              className="absolute top-8 bottom-8 flex flex-col justify-center gap-[3px]"
-              style={{ left: 'calc(100% + 10px)', pointerEvents: 'none' }}
-            >
-              {Array.from({ length: Math.min(remaining + 1, 16) }).map((_, i) => (
+            {/* Card deck + navigation */}
+            <div className="flex flex-col items-center gap-6">
+              <div className="relative" style={{ width: '100%', maxWidth: 520 }}>
+
+                {/* Ghost cards */}
+                {remaining >= 2 && (
+                  <div
+                    className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
+                    style={{ transform: 'rotate(2.8deg) translate(14px, -5px)', zIndex: 1, pointerEvents: 'none' }}
+                  />
+                )}
+                {remaining >= 1 && (
+                  <div
+                    className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800"
+                    style={{ transform: 'rotate(1.4deg) translate(7px, -2px)', zIndex: 2, pointerEvents: 'none' }}
+                  />
+                )}
+
+                {/* Side pile-thickness indicator */}
                 <div
-                  key={i}
-                  style={{
-                    height: 3,
-                    width: Math.max(5, 18 - i),
-                    backgroundColor: i === 0 ? '#60a5fa' : '#d4d4d8',
-                    borderRadius: '0 3px 3px 0',
-                    opacity: Math.max(0.2, 1 - i * 0.055),
-                  }}
-                />
-              ))}
-              {remaining + 1 > 16 && (
-                <div style={{ fontSize: 8, color: '#a1a1aa', fontFamily: 'monospace', lineHeight: 1 }}>
-                  +{remaining + 1 - 16}
+                  className="absolute top-8 bottom-8 flex flex-col justify-center gap-[3px]"
+                  style={{ left: 'calc(100% + 10px)', pointerEvents: 'none' }}
+                >
+                  {Array.from({ length: Math.min(remaining + 1, 16) }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        height: 3,
+                        width: Math.max(5, 18 - i),
+                        backgroundColor: i === 0 ? '#60a5fa' : '#d4d4d8',
+                        borderRadius: '0 3px 3px 0',
+                        opacity: Math.max(0.2, 1 - i * 0.055),
+                      }}
+                    />
+                  ))}
+                  {remaining + 1 > 16 && (
+                    <div style={{ fontSize: 8, color: '#a1a1aa', fontFamily: 'monospace' }}>+{remaining + 1 - 16}</div>
+                  )}
+                  <div style={{ fontSize: 11, fontWeight: 900, color: '#71717a', fontFamily: 'monospace', marginTop: 3 }}>
+                    {remaining + 1}
+                  </div>
                 </div>
-              )}
-              <div style={{ fontSize: 11, fontWeight: 900, color: '#71717a', fontFamily: 'monospace', marginTop: 3 }}>
-                {remaining + 1}
+
+                {/* Main card */}
+                <div
+                  className="relative overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl"
+                  style={{ zIndex: 10, ...cardStyle }}
+                >
+                  <VotingGroup
+                    key={activeMeme?.id}
+                    captionId={activeMeme?.id ?? ''}
+                    userId={userId}
+                    initialLikeCount={Number(activeMeme?.like_count ?? 0)}
+                    onLikeCountChange={handleLikeCountChange}
+                    onVoteCast={handleVoteCast}
+                    imageUrl={activeMeme?.images?.url}
+                    posLabel={`${currentIndex + 1} / ${displayList.length}`}
+                    caption={activeMeme?.content}
+                  />
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center gap-5">
+                <button
+                  onClick={goPrev}
+                  disabled={currentIndex === 0 || flipPhase !== 'idle' || voteEffect !== 'idle'}
+                  className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                >←</button>
+                <span className="text-sm font-mono font-bold text-zinc-400 tabular-nums">
+                  {currentIndex + 1} / {displayList.length}
+                </span>
+                <button
+                  onClick={goNext}
+                  disabled={currentIndex >= displayList.length - 1 || flipPhase !== 'idle' || voteEffect !== 'idle'}
+                  className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                >→</button>
+              </div>
+              <p className="text-xs text-zinc-400 font-mono">← → arrow keys also work</p>
+            </div>
+
+            {/* Liked pile — right */}
+            <div className="flex-shrink-0 pt-6">
+              <MiniPile
+                type="liked"
+                memes={likedMemes}
+                isOpen={openPile === 'liked'}
+                onToggle={() => setOpenPile(p => p === 'liked' ? null : 'liked')}
+                glow={likedGlow}
+              />
+            </div>
+          </div>
+
+          {/* ── Expanded pile panel ── */}
+          {openPile && (
+            <div className={`w-full max-w-2xl rounded-2xl border p-4 transition-all
+              ${openPile === 'liked'
+                ? 'border-blue-200 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-950/20'
+                : 'border-red-200 dark:border-red-800 bg-red-50/40 dark:bg-red-950/20'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className={`text-sm font-black ${openPile === 'liked' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {openPile === 'liked' ? '👍 Liked' : '👎 Disliked'} · {(openPile === 'liked' ? likedMemes : dislikedMemes).length}
+                </h3>
+                <button
+                  onClick={() => setOpenPile(null)}
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm px-1"
+                >✕</button>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                {(openPile === 'liked' ? likedMemes : dislikedMemes).map(m => (
+                  <div key={m.id} className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+                    {m.images?.url ? (
+                      <img src={m.images.url} alt="" className="w-full h-16 object-cover" />
+                    ) : (
+                      <div className="w-full h-16 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xl">
+                        {openPile === 'liked' ? '👍' : '👎'}
+                      </div>
+                    )}
+                    <p className="text-[9px] text-zinc-500 dark:text-zinc-400 p-1.5 italic line-clamp-2">"{m.content || '—'}"</p>
+                  </div>
+                ))}
               </div>
             </div>
+          )}
 
-            {/* Main card */}
-            <div
-              className="relative overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl"
-              style={{ zIndex: 10, ...cardStyle }}
-            >
-              <VotingGroup
-                key={activeMeme?.id}
-                captionId={activeMeme?.id ?? ''}
-                userId={userId}
-                initialLikeCount={Number(activeMeme?.like_count ?? 0)}
-                onLikeCountChange={handleLikeCountChange}
-                onVoteCast={goNext}
-                imageUrl={activeMeme?.images?.url}
-                posLabel={`${currentIndex + 1} / ${displayList.length}`}
-                caption={activeMeme?.content}
-              />
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex items-center gap-5">
-            <button
-              onClick={goPrev}
-              disabled={currentIndex === 0 || flipPhase !== 'idle'}
-              className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
-            >
-              ←
-            </button>
-            <span className="text-sm font-mono font-bold text-zinc-400 tabular-nums">
-              {currentIndex + 1} / {displayList.length}
-            </span>
-            <button
-              onClick={goNext}
-              disabled={currentIndex >= displayList.length - 1 || flipPhase !== 'idle'}
-              className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
-            >
-              →
-            </button>
-          </div>
-
-          <p className="text-xs text-zinc-400 font-mono">← → arrow keys also work</p>
         </div>
       )}
 

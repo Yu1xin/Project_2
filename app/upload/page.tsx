@@ -406,11 +406,12 @@ function UploadPageInner() {
     return extractCaption((await res.json()) as CaptionApiResponse, uploadedImageId);
   }
 
-  // After the API auto-saves a caption, find it and mark as draft (is_public: false).
-  // Retries up to 6 times to handle API write latency.
-  async function draftAutoSavedCaption(imgId: string, uid: string) {
-    const since = new Date(Date.now() - 60_000).toISOString(); // within the last 60s
-    for (let i = 0; i < 6; i++) {
+  // After the API auto-saves caption(s), find ALL of them and mark as drafts (is_public: false).
+  // The API may save multiple records per generation, so we hide every one.
+  // Retries up to 8 times to handle API write latency.
+  async function draftAutoSavedCaptions(imgId: string, uid: string) {
+    const since = new Date(Date.now() - 90_000).toISOString();
+    for (let i = 0; i < 8; i++) {
       await new Promise(r => setTimeout(r, 600 + i * 500));
       const { data } = await supabase
         .from('captions')
@@ -419,12 +420,11 @@ function UploadPageInner() {
         .eq('profile_id', uid)
         .eq('is_public', true)
         .gte('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data?.id) {
-        await supabase.from('captions').update({ is_public: false }).eq('id', data.id);
-        setAutoSavedCaptionId(data.id);
+        .order('created_at', { ascending: false });
+      if (data && data.length > 0) {
+        const ids = data.map(r => r.id);
+        await supabase.from('captions').update({ is_public: false }).in('id', ids);
+        setAutoSavedCaptionId(ids[0]); // most recent becomes the save target
         return;
       }
     }
@@ -464,7 +464,7 @@ function UploadPageInner() {
       setEditedCaption(finalCaption);
       setPreviewUrl(presignData.cdnUrl);
       setStatus('Success! Edit the caption, revise it, or save it.');
-      draftAutoSavedCaption(uploadImageData.imageId, uid);
+      draftAutoSavedCaptions(uploadImageData.imageId, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Something went wrong.'}`);
     } finally { setLoading(false); }
@@ -482,7 +482,7 @@ function UploadPageInner() {
       setGeneratedCaption(caption);
       setEditedCaption(caption);
       setStatus('Success! Edit the caption, revise it, or save it.');
-      draftAutoSavedCaption(selectedGalleryImage.id, uid);
+      draftAutoSavedCaptions(selectedGalleryImage.id, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Something went wrong.'}`);
     } finally { setLoading(false); }
@@ -497,7 +497,7 @@ function UploadPageInner() {
       setGeneratedCaption(revisedCaption);
       setEditedCaption(revisedCaption);
       setStatus('Revised! You can revise again or save it.');
-      draftAutoSavedCaption(imageId, uid);
+      draftAutoSavedCaptions(imageId, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Failed to revise caption.'}`);
     } finally { setIsRevising(false); }
@@ -531,6 +531,8 @@ function UploadPageInner() {
   };
 
   const resetPage = () => {
+    // Proactively hide any auto-saved captions still pending
+    if (imageId && userId) draftAutoSavedCaptions(imageId, userId);
     setFile(null); setPreviewUrl(null); setImageId(null);
     setGeneratedCaption(''); setEditedCaption(''); setStatus('');
     setSelectedGalleryImage(null); setAutoSavedCaptionId(null);

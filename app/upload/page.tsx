@@ -67,14 +67,17 @@ function HowItWorks() {
   );
 }
 
+type MyMeme = { id: string; content: string | null; like_count: number | null; image_url?: string | null };
+
 function MyMemesPile({
-  memes, loading, isOpen, onToggle, onClickItem,
+  memes, loading, isOpen, onToggle, onClickItem, onDelete,
 }: {
-  memes: { id: string; content: string | null; like_count: number | null; image_url?: string | null }[];
+  memes: MyMeme[];
   loading: boolean;
   isOpen: boolean;
   onToggle: () => void;
-  onClickItem: (item: { id: string; content: string | null; like_count: number | null; image_url?: string | null }) => void;
+  onClickItem: (item: MyMeme) => void;
+  onDelete: (item: MyMeme) => void;
 }) {
   const topImage = memes[0]?.image_url;
   return (
@@ -111,17 +114,23 @@ function MyMemesPile({
               {memes.map(m => (
                 <div
                   key={m.id}
-                  onClick={() => onClickItem(m)}
-                  className="cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
+                  className="group relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
                 >
-                  {m.image_url ? (
-                    <img src={m.image_url} alt="" className="w-full h-16 object-cover" />
-                  ) : (
-                    <div className="w-full h-16 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-lg">🖼️</div>
-                  )}
-                  <div className="p-1.5">
-                    <p className="text-[10px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">"{m.content || '—'}"</p>
+                  <div onClick={() => onClickItem(m)} className="cursor-pointer">
+                    {m.image_url ? (
+                      <img src={m.image_url} alt="" className="w-full h-16 object-cover" />
+                    ) : (
+                      <div className="w-full h-16 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-lg">🖼️</div>
+                    )}
+                    <div className="p-1.5">
+                      <p className="text-[10px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">"{m.content || '—'}"</p>
+                    </div>
                   </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); onDelete(m); }}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
+                    title="Delete"
+                  >×</button>
                 </div>
               ))}
             </div>
@@ -277,10 +286,10 @@ function UploadPageInner() {
 
   // My Memes pile
   const [userId, setUserId] = useState<string | null>(null);
-  const [myMemes, setMyMemes] = useState<{ id: string; content: string | null; like_count: number | null; image_url?: string | null }[]>([]);
+  const [myMemes, setMyMemes] = useState<MyMeme[]>([]);
   const [myMemesLoading, setMyMemesLoading] = useState(false);
   const [myMemesOpen, setMyMemesOpen] = useState(false);
-  const [myMemesModalItem, setMyMemesModalItem] = useState<{ id: string; content: string | null; like_count: number | null; image_url?: string | null } | null>(null);
+  const [myMemesModalItem, setMyMemesModalItem] = useState<MyMeme | null>(null);
 
   const supabase = useMemo(
     () => createBrowserClient(
@@ -338,6 +347,14 @@ function UploadPageInner() {
     });
   }, [supabase]);
 
+  async function handleDeleteMeme(item: MyMeme) {
+    if (!userId || !window.confirm('Delete this meme permanently?')) return;
+    const { error } = await supabase.from('captions').delete()
+      .eq('id', item.id).eq('profile_id', userId);
+    if (!error) setMyMemes(prev => prev.filter(m => m.id !== item.id));
+    else alert(`Failed: ${error.message}`);
+  }
+
   // Pre-fill from "Duplicate the Humor" params
   useEffect(() => {
     const paramCaption  = searchParams.get('caption');
@@ -389,23 +406,27 @@ function UploadPageInner() {
     return extractCaption((await res.json()) as CaptionApiResponse, uploadedImageId);
   }
 
-  // After the API auto-saves a caption, immediately mark it as draft (is_public: false)
-  async function draftAutoSavedCaption(imgId: string, uid: string, flavorId: string) {
-    // Small delay to let the API's DB write land
-    await new Promise(r => setTimeout(r, 600));
-    const { data } = await supabase
-      .from('captions')
-      .select('id')
-      .eq('image_id', imgId)
-      .eq('profile_id', uid)
-      .eq('humor_flavor_id', Number(flavorId))
-      .eq('is_public', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (data?.id) {
-      await supabase.from('captions').update({ is_public: false }).eq('id', data.id);
-      setAutoSavedCaptionId(data.id);
+  // After the API auto-saves a caption, find it and mark as draft (is_public: false).
+  // Retries up to 6 times to handle API write latency.
+  async function draftAutoSavedCaption(imgId: string, uid: string) {
+    const since = new Date(Date.now() - 60_000).toISOString(); // within the last 60s
+    for (let i = 0; i < 6; i++) {
+      await new Promise(r => setTimeout(r, 600 + i * 500));
+      const { data } = await supabase
+        .from('captions')
+        .select('id')
+        .eq('image_id', imgId)
+        .eq('profile_id', uid)
+        .eq('is_public', true)
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data?.id) {
+        await supabase.from('captions').update({ is_public: false }).eq('id', data.id);
+        setAutoSavedCaptionId(data.id);
+        return;
+      }
     }
   }
 
@@ -443,7 +464,7 @@ function UploadPageInner() {
       setEditedCaption(finalCaption);
       setPreviewUrl(presignData.cdnUrl);
       setStatus('Success! Edit the caption, revise it, or save it.');
-      draftAutoSavedCaption(uploadImageData.imageId, uid, selectedFlavorId);
+      draftAutoSavedCaption(uploadImageData.imageId, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Something went wrong.'}`);
     } finally { setLoading(false); }
@@ -461,7 +482,7 @@ function UploadPageInner() {
       setGeneratedCaption(caption);
       setEditedCaption(caption);
       setStatus('Success! Edit the caption, revise it, or save it.');
-      draftAutoSavedCaption(selectedGalleryImage.id, uid, selectedFlavorId);
+      draftAutoSavedCaption(selectedGalleryImage.id, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Something went wrong.'}`);
     } finally { setLoading(false); }
@@ -476,7 +497,7 @@ function UploadPageInner() {
       setGeneratedCaption(revisedCaption);
       setEditedCaption(revisedCaption);
       setStatus('Revised! You can revise again or save it.');
-      draftAutoSavedCaption(imageId, uid, selectedFlavorId);
+      draftAutoSavedCaption(imageId, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Failed to revise caption.'}`);
     } finally { setIsRevising(false); }
@@ -568,6 +589,7 @@ function UploadPageInner() {
                 isOpen={myMemesOpen}
                 onToggle={() => setMyMemesOpen(o => !o)}
                 onClickItem={setMyMemesModalItem}
+                onDelete={handleDeleteMeme}
               />
             </aside>
 
@@ -655,6 +677,7 @@ function UploadPageInner() {
                 isOpen={myMemesOpen}
                 onToggle={() => setMyMemesOpen(o => !o)}
                 onClickItem={setMyMemesModalItem}
+                onDelete={handleDeleteMeme}
               />
             </aside>
             <div className="flex-1 text-zinc-900 dark:text-zinc-100">

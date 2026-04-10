@@ -5,95 +5,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
-type MemeItem = {
-  id: string;
-  content: string | null;
-  like_count: number | null;
-  image_url?: string | null;
-};
-
 type FlavorItem = {
   id: number;
   slug: string | null;
   description: string | null;
 };
 
-type PileKey = 'myMemes' | 'myFlavors';
+type PileKey = 'myFlavors';
 
 const PILE_CONFIG: Record<PileKey, {
   label: string; icon: string;
   cardBg: string; border: string; accent: string; countColor: string;
 }> = {
-  myMemes:   { label: 'My Memes',   icon: '🖼️', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-emerald-200 dark:border-emerald-800', accent: 'text-emerald-600 dark:text-emerald-400', countColor: 'bg-emerald-600' },
   myFlavors: { label: 'My Flavors', icon: '🎭', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-violet-200 dark:border-violet-800',  accent: 'text-violet-600 dark:text-violet-400',   countColor: 'bg-violet-600' },
 };
-
-// ── Meme modal (view-only) ────────────────────────────────────
-function MemeModal({ item, onClose }: { item: MemeItem; onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-lg rounded-3xl overflow-hidden bg-white dark:bg-zinc-950 shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
-        {item.image_url && (
-          <img src={item.image_url} alt="" className="w-full max-h-96 object-cover" />
-        )}
-        <div className="p-6">
-          <p className="text-lg font-semibold italic text-zinc-900 dark:text-zinc-100 leading-snug">
-            "{item.content || '—'}"
-          </p>
-          {item.like_count != null && (
-            <p className="mt-2 text-sm text-zinc-400 font-mono">
-              {item.like_count > 0 ? '+' : ''}{item.like_count} likes
-            </p>
-          )}
-        </div>
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 text-white text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
-        >
-          ✕
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Cards ─────────────────────────────────────────────────────
-function MemeCard({ item, onClick, onDelete }: { item: MemeItem; onClick: () => void; onDelete?: () => void }) {
-  return (
-    <div className="group relative cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150">
-      <div onClick={onClick}>
-        {item.image_url ? (
-          <img src={item.image_url} alt="" className="w-full h-24 object-cover" />
-        ) : (
-          <div className="w-full h-24 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl">🖼️</div>
-        )}
-        <div className="p-2">
-          <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">
-            "{item.content || '—'}"
-          </p>
-          {item.like_count != null && (
-            <p className="mt-1 text-[10px] text-zinc-400 font-mono">{item.like_count > 0 ? '+' : ''}{item.like_count}</p>
-          )}
-        </div>
-      </div>
-      {onDelete && (
-        <button
-          onClick={e => { e.stopPropagation(); onDelete(); }}
-          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all"
-          title="Delete"
-        >
-          ×
-        </button>
-      )}
-    </div>
-  );
-}
 
 function FlavorCard({ item }: { item: FlavorItem }) {
   return (
@@ -106,18 +31,17 @@ function FlavorCard({ item }: { item: FlavorItem }) {
 
 // ── PileCard (trigger only, no expanded content) ──────────────
 function PileCard({
-  pileKey, items, loading, isOpen, onToggle, countOverride,
+  pileKey, loading, isOpen, onToggle, countOverride,
 }: {
   pileKey: PileKey;
-  items: MemeItem[];
   loading: boolean;
   isOpen: boolean;
   onToggle: () => void;
   countOverride?: number;
 }) {
   const cfg = PILE_CONFIG[pileKey];
-  const count = countOverride ?? items.length;
-  const topImage = items[0]?.image_url;
+  const count = countOverride ?? 0;
+  const topImage = undefined;
 
   return (
     <button onClick={onToggle} className="w-full text-left group focus:outline-none">
@@ -156,11 +80,9 @@ export default function MainPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
 
-  const [myMemes, setMyMemes] = useState<MemeItem[]>([]);
   const [myFlavors, setMyFlavors] = useState<FlavorItem[]>([]);
 
   const [openPile, setOpenPile] = useState<PileKey | null>(null);
-  const [modalMeme, setModalMeme] = useState<MemeItem | null>(null);
   const [topMemeUrl, setTopMemeUrl] = useState<string | null>(null);
 
   const router = useRouter();
@@ -202,7 +124,6 @@ export default function MainPage() {
     fetch(`/api/user-center?userId=${userId}`)
       .then(r => r.json())
       .then(d => {
-        setMyMemes(d.myMemes ?? []);
         setMyFlavors(d.myFlavors ?? []);
       })
       .catch(() => {})
@@ -213,28 +134,6 @@ export default function MainPage() {
     return <div className="min-h-screen p-10 text-center font-mono text-zinc-300">LOADING...</div>;
   }
 
-  const pileItems: Record<PileKey, MemeItem[]> = {
-    myMemes, myFlavors: [],
-  };
-
-  function togglePile(key: PileKey) {
-    setOpenPile(prev => prev === key ? null : key);
-  }
-
-  function openModal(item: MemeItem) {
-    setModalMeme(item);
-  }
-
-  async function handleDeleteMeme(item: MemeItem) {
-    if (!userId || !window.confirm('Delete this meme permanently?')) return;
-    try {
-      await supabase.from('captions').delete()
-        .eq('id', item.id).eq('profile_id', userId);
-      setMyMemes(prev => prev.filter(m => m.id !== item.id));
-    } catch (err: any) { alert(`Failed: ${err.message}`); }
-  }
-
-  const expandedMemes = openPile && openPile !== 'myFlavors' ? pileItems[openPile] : null;
   const expandedFlavors = openPile === 'myFlavors' ? myFlavors : null;
 
   return (
@@ -249,44 +148,25 @@ export default function MainPage() {
           <p className="mt-1 text-sm italic text-zinc-500 dark:text-zinc-400 break-words">{userEmail}</p>
         </div>
 
-        {/* Pile row */}
-        <section className="mb-1">
-          <h2 className="mb-3 text-xs font-black text-zinc-400 uppercase tracking-widest">Your Collection</h2>
-          <div className={`grid gap-3 ${isSuperAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            {(['myMemes', ...(isSuperAdmin ? ['myFlavors'] : [])] as PileKey[]).map(key => (
-              <PileCard
-                key={key}
-                pileKey={key}
-                items={pileItems[key]}
-                loading={dataLoading}
-                isOpen={openPile === key}
-                onToggle={() => togglePile(key)}
-                countOverride={key === 'myFlavors' ? myFlavors.length : undefined}
-              />
-            ))}
-          </div>
-        </section>
+        {/* Pile row — superAdmins only (My Flavors) */}
+        {isSuperAdmin && (
+          <section className="mb-1">
+            <h2 className="mb-3 text-xs font-black text-zinc-400 uppercase tracking-widest">Your Collection</h2>
+            <PileCard
+              pileKey="myFlavors"
+              loading={dataLoading}
+              isOpen={openPile === 'myFlavors'}
+              onToggle={() => setOpenPile(p => p === 'myFlavors' ? null : 'myFlavors')}
+              countOverride={myFlavors.length}
+            />
+          </section>
+        )}
       </div>
 
       {/* Expanded pile content */}
       {openPile && !dataLoading && (
         <div className="px-6 py-4 mt-2 border-y border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/80 dark:bg-zinc-900/40">
           <div className="mx-auto max-w-4xl">
-          {expandedMemes && expandedMemes.length === 0 && (
-            <p className="text-center text-sm text-zinc-400 py-4">Nothing here yet</p>
-          )}
-          {expandedMemes && expandedMemes.length > 0 && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
-              {expandedMemes.map(m => (
-                <MemeCard
-                  key={m.id}
-                  item={m}
-                  onClick={() => openModal(m)}
-                  onDelete={openPile === 'myMemes' ? () => handleDeleteMeme(m) : undefined}
-                />
-              ))}
-            </div>
-          )}
           {expandedFlavors && expandedFlavors.length === 0 && (
             <p className="text-center text-sm text-zinc-400 py-4">Nothing here yet</p>
           )}
@@ -347,13 +227,6 @@ export default function MainPage() {
         </section>
       </div>
 
-      {/* Meme modal */}
-      {modalMeme && (
-        <MemeModal
-          item={modalMeme}
-          onClose={() => setModalMeme(null)}
-        />
-      )}
     </div>
   );
 }

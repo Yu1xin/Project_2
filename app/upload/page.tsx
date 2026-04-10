@@ -67,6 +67,71 @@ function HowItWorks() {
   );
 }
 
+function MyMemesPile({
+  memes, loading, isOpen, onToggle, onClickItem,
+}: {
+  memes: { id: string; content: string | null; like_count: number | null; image_url?: string | null }[];
+  loading: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClickItem: (item: { id: string; content: string | null; like_count: number | null; image_url?: string | null }) => void;
+}) {
+  const topImage = memes[0]?.image_url;
+  return (
+    <div className="flex flex-col gap-2">
+      <button onClick={onToggle} className="w-full text-left group focus:outline-none">
+        <div className={`relative rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200 ${isOpen ? 'shadow-md' : ''}`}>
+          {topImage && (
+            <img src={topImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-15 dark:opacity-10" />
+          )}
+          <div className="relative p-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xl">🖼️</span>
+              {loading ? (
+                <span className="text-[9px] font-mono text-zinc-400 animate-pulse">…</span>
+              ) : (
+                <span className="bg-emerald-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">{memes.length}</span>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 leading-tight">My Memes</p>
+              <p className="text-[9px] text-zinc-400 mt-0.5 leading-tight">
+                {loading ? '—' : memes.length === 0 ? 'Nothing yet' : isOpen ? 'tap to close' : 'tap to view'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </button>
+      {isOpen && !loading && (
+        <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/40 px-3 py-3">
+          {memes.length === 0 ? (
+            <p className="text-center text-xs text-zinc-400 py-2">Nothing here yet</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {memes.map(m => (
+                <div
+                  key={m.id}
+                  onClick={() => onClickItem(m)}
+                  className="cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
+                >
+                  {m.image_url ? (
+                    <img src={m.image_url} alt="" className="w-full h-16 object-cover" />
+                  ) : (
+                    <div className="w-full h-16 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-lg">🖼️</div>
+                  )}
+                  <div className="p-1.5">
+                    <p className="text-[10px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">"{m.content || '—'}"</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StepLabel({ num, label, hint }: { num: string; label: string; hint?: string }) {
   return (
     <div className="flex items-center gap-2 mb-3">
@@ -207,6 +272,13 @@ function UploadPageInner() {
   const [galleryLoading, setGalleryLoading] = useState(true);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<GalleryImage | null>(null);
 
+  // My Memes pile
+  const [userId, setUserId] = useState<string | null>(null);
+  const [myMemes, setMyMemes] = useState<{ id: string; content: string | null; like_count: number | null; image_url?: string | null }[]>([]);
+  const [myMemesLoading, setMyMemesLoading] = useState(false);
+  const [myMemesOpen, setMyMemesOpen] = useState(false);
+  const [myMemesModalItem, setMyMemesModalItem] = useState<{ id: string; content: string | null; like_count: number | null; image_url?: string | null } | null>(null);
+
   const supabase = useMemo(
     () => createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -248,6 +320,20 @@ function UploadPageInner() {
     }
     loadHumorFlavors();
   }, [supabase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load userId + My Memes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      setUserId(session.user.id);
+      setMyMemesLoading(true);
+      fetch(`/api/user-center?userId=${session.user.id}`)
+        .then(r => r.json())
+        .then(d => setMyMemes((d.myMemes ?? []).map((m: any) => ({ id: m.id, content: m.content ?? null, like_count: m.like_count ?? null, image_url: m.image_url ?? null }))))
+        .catch(() => {})
+        .finally(() => setMyMemesLoading(false));
+    });
+  }, [supabase]);
 
   // Pre-fill from "Duplicate the Humor" params
   useEffect(() => {
@@ -435,10 +521,19 @@ function UploadPageInner() {
           <div className="flex gap-12 items-start">
 
             {/* Left sidebar: instructions */}
-            <aside className="hidden md:block w-48 shrink-0 sticky top-10">
-              <h1 className="mb-1 text-2xl font-black text-zinc-900 dark:text-zinc-100">Meme Lab 🧪</h1>
-              <p className="mb-6 text-xs text-zinc-500 dark:text-zinc-400">AI caption generation</p>
-              <HowItWorks />
+            <aside className="hidden md:flex flex-col gap-6 w-48 shrink-0 sticky top-10">
+              <div>
+                <h1 className="mb-1 text-2xl font-black text-zinc-900 dark:text-zinc-100">Meme Lab 🧪</h1>
+                <p className="mb-6 text-xs text-zinc-500 dark:text-zinc-400">AI caption generation</p>
+                <HowItWorks />
+              </div>
+              <MyMemesPile
+                memes={myMemes}
+                loading={myMemesLoading}
+                isOpen={myMemesOpen}
+                onToggle={() => setMyMemesOpen(o => !o)}
+                onClickItem={setMyMemesModalItem}
+              />
             </aside>
 
             {/* Right: form, no outer box */}
@@ -514,9 +609,18 @@ function UploadPageInner() {
         ) : (
           /* ── Result view ── */
           <div className="flex gap-12 items-start">
-            <aside className="hidden md:block w-48 shrink-0 sticky top-10">
-              <h1 className="mb-1 text-2xl font-black text-zinc-900 dark:text-zinc-100">Meme Lab 🧪</h1>
-              <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">Your meme is ready</p>
+            <aside className="hidden md:flex flex-col gap-6 w-48 shrink-0 sticky top-10">
+              <div>
+                <h1 className="mb-1 text-2xl font-black text-zinc-900 dark:text-zinc-100">Meme Lab 🧪</h1>
+                <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">Your meme is ready</p>
+              </div>
+              <MyMemesPile
+                memes={myMemes}
+                loading={myMemesLoading}
+                isOpen={myMemesOpen}
+                onToggle={() => setMyMemesOpen(o => !o)}
+                onClickItem={setMyMemesModalItem}
+              />
             </aside>
             <div className="flex-1 text-zinc-900 dark:text-zinc-100">
               <h2 className="mb-6 text-xl font-bold">Final Result ✨</h2>
@@ -590,6 +694,37 @@ function UploadPageInner() {
         </div>
         )}
       </div>
+
+      {/* My Memes modal */}
+      {myMemesModalItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setMyMemesModalItem(null)}
+        >
+          <div
+            className="relative w-full max-w-lg rounded-3xl overflow-hidden bg-white dark:bg-zinc-950 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            {myMemesModalItem.image_url && (
+              <img src={myMemesModalItem.image_url} alt="" className="w-full max-h-96 object-cover" />
+            )}
+            <div className="p-6">
+              <p className="text-lg font-semibold italic text-zinc-900 dark:text-zinc-100 leading-snug">
+                "{myMemesModalItem.content || '—'}"
+              </p>
+              {myMemesModalItem.like_count != null && (
+                <p className="mt-2 text-sm text-zinc-400 font-mono">
+                  {myMemesModalItem.like_count > 0 ? '+' : ''}{myMemesModalItem.like_count} likes
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setMyMemesModalItem(null)}
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 text-white text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+            >✕</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

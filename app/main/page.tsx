@@ -204,16 +204,17 @@ function VotingGroup({
 
 // ── MiniPile ──────────────────────────────────────────────────
 function MiniPile({
-  type, memes, isOpen, onToggle, glow,
+  type, memes, isOpen, onToggle, glow, loading,
 }: {
   type: 'liked' | 'disliked';
   memes: CaptionItem[];
   isOpen: boolean;
   onToggle: () => void;
   glow: boolean;
+  loading?: boolean;
 }) {
   const topMeme = memes[0];
-  const isEmpty = memes.length === 0;
+  const isEmpty = memes.length === 0 && !loading;
   const isLiked = type === 'liked';
 
   return (
@@ -259,7 +260,7 @@ function MiniPile({
         <div className={`px-2 py-1.5 text-center ${isLiked ? 'bg-blue-50 dark:bg-blue-950/60' : 'bg-red-50 dark:bg-red-950/60'}`}>
           <div className="text-base leading-none mb-0.5">{isLiked ? '👍' : '👎'}</div>
           <div className={`text-[10px] font-black font-mono ${isLiked ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
-            {isEmpty ? '—' : memes.length}
+            {loading ? '…' : isEmpty ? '—' : memes.length}
           </div>
         </div>
       </div>
@@ -374,6 +375,7 @@ export default function ListPage() {
   // Voted piles
   const [likedMemes, setLikedMemes] = useState<CaptionItem[]>([]);
   const [dislikedMemes, setDislikedMemes] = useState<CaptionItem[]>([]);
+  const [pilesLoading, setPilesLoading] = useState(false);
   const [openPile, setOpenPile] = useState<'liked' | 'disliked' | null>(null);
   const [likedGlow, setLikedGlow] = useState(false);
   const [dislikedGlow, setDislikedGlow] = useState(false);
@@ -443,6 +445,29 @@ export default function ListPage() {
     }, 350);
   }, [searchQuery, searchField]);
 
+  // Load persisted liked/disliked from DB once userId is known
+  useEffect(() => {
+    if (!userId) return;
+    setPilesLoading(true);
+    fetch(`/api/user-center?userId=${userId}`)
+      .then(r => r.json())
+      .then(d => {
+        const mapToItem = (m: any): CaptionItem => ({
+          id: m.id,
+          content: m.content ?? null,
+          like_count: m.like_count ?? null,
+          image_id: null,
+          humor_flavor_id: null,
+          profile_id: null,
+          images: m.image_url ? { url: m.image_url } : null,
+        });
+        setLikedMemes((d.liked ?? []).map(mapToItem));
+        setDislikedMemes((d.disliked ?? []).map(mapToItem));
+      })
+      .catch(() => {})
+      .finally(() => setPilesLoading(false));
+  }, [userId]);
+
   const displayList = searchResults ?? captionsList;
   displayListLenRef.current = displayList.length;
 
@@ -489,11 +514,11 @@ export default function ListPage() {
     if (!meme) return;
 
     if (voteType === 'up') {
-      setLikedMemes(prev => [meme, ...prev]);
+      setLikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [meme, ...prev]);
       setLikedGlow(true);
       setTimeout(() => setLikedGlow(false), 700);
     } else {
-      setDislikedMemes(prev => [meme, ...prev]);
+      setDislikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [meme, ...prev]);
       setDislikedGlow(true);
       setTimeout(() => setDislikedGlow(false), 700);
     }
@@ -614,6 +639,7 @@ export default function ListPage() {
                 isOpen={openPile === 'disliked'}
                 onToggle={() => setOpenPile(p => p === 'disliked' ? null : 'disliked')}
                 glow={dislikedGlow}
+                loading={pilesLoading}
               />
             </div>
 
@@ -706,6 +732,7 @@ export default function ListPage() {
                 isOpen={openPile === 'liked'}
                 onToggle={() => setOpenPile(p => p === 'liked' ? null : 'liked')}
                 glow={likedGlow}
+                loading={pilesLoading}
               />
             </div>
           </div>

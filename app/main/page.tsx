@@ -37,6 +37,24 @@ type CaptionItem = {
   images?: { url?: string | null; image_description?: string | null } | null;
 };
 
+// Same MemeItem shape as homepage
+type MemeItem = {
+  id: string;
+  content: string | null;
+  like_count: number | null;
+  image_url?: string | null;
+};
+
+type PileKey = 'liked' | 'disliked';
+
+const PILE_CONFIG: Record<PileKey, {
+  label: string; icon: string;
+  cardBg: string; border: string; accent: string; countColor: string;
+}> = {
+  liked:    { label: 'Liked Memes',    icon: '👍', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-blue-200 dark:border-blue-800',  accent: 'text-blue-600 dark:text-blue-400',  countColor: 'bg-blue-600' },
+  disliked: { label: 'Disliked Memes', icon: '👎', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-red-200 dark:border-red-800',    accent: 'text-red-600 dark:text-red-400',    countColor: 'bg-red-500'  },
+};
+
 async function refreshCaptionLikeCount(captionId: string, userId: string) {
   const { data, error } = await supabase
     .from('caption_votes').select('vote_value').eq('caption_id', captionId);
@@ -46,6 +64,139 @@ async function refreshCaptionLikeCount(captionId: string, userId: string) {
     .from('captions').update({ like_count: score, modified_by_user_id: userId }).eq('id', captionId);
   if (updateError) throw updateError;
   return score;
+}
+
+// ── Meme modal (copied from homepage) ────────────────────────
+function MemeModal({
+  item, pile, onClose, onUnlike, onSwitchToDownvote, actionLoading,
+}: {
+  item: MemeItem;
+  pile: PileKey | null;
+  onClose: () => void;
+  onUnlike?: () => void;
+  onSwitchToDownvote?: () => void;
+  actionLoading?: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-lg rounded-3xl overflow-hidden bg-white dark:bg-zinc-950 shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        {item.image_url && (
+          <img src={item.image_url} alt="" className="w-full max-h-96 object-cover" />
+        )}
+        <div className="p-6">
+          <p className="text-lg font-semibold italic text-zinc-900 dark:text-zinc-100 leading-snug">
+            "{item.content || '—'}"
+          </p>
+          {item.like_count != null && (
+            <p className="mt-2 text-sm text-zinc-400 font-mono">
+              {item.like_count > 0 ? '+' : ''}{item.like_count} likes
+            </p>
+          )}
+          {(pile === 'liked' || pile === 'disliked') && (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={onUnlike}
+                disabled={actionLoading}
+                className="flex-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 py-2.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 disabled:opacity-50 transition-all"
+              >
+                {pile === 'liked' ? '💔 Take back the like' : '🫶 Take back the dislike'}
+              </button>
+              <button
+                onClick={onSwitchToDownvote}
+                disabled={actionLoading}
+                className={`flex-1 rounded-xl py-2.5 text-xs font-bold disabled:opacity-50 transition-all ${
+                  pile === 'liked'
+                    ? 'bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 text-red-600 dark:text-red-400'
+                    : 'bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-950/70 text-blue-600 dark:text-blue-400'
+                }`}
+              >
+                {pile === 'liked' ? '👎 Switch to downvote' : '👍 Switch to upvote'}
+              </button>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 text-white text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── MemeCard (copied from homepage) ──────────────────────────
+function MemeCard({ item, onClick }: { item: MemeItem; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className="cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
+    >
+      {item.image_url ? (
+        <img src={item.image_url} alt="" className="w-full h-24 object-cover" />
+      ) : (
+        <div className="w-full h-24 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl">🖼️</div>
+      )}
+      <div className="p-2">
+        <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">
+          "{item.content || '—'}"
+        </p>
+        {item.like_count != null && (
+          <p className="mt-1 text-[10px] text-zinc-400 font-mono">{item.like_count > 0 ? '+' : ''}{item.like_count}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── PileCard (copied from homepage) ──────────────────────────
+function PileCard({
+  pileKey, items, loading, isOpen, onToggle,
+}: {
+  pileKey: PileKey;
+  items: MemeItem[];
+  loading: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const cfg = PILE_CONFIG[pileKey];
+  const count = items.length;
+  const topImage = items[0]?.image_url;
+
+  return (
+    <button onClick={onToggle} className="w-full text-left group focus:outline-none">
+      <div className={`relative rounded-2xl border-2 ${cfg.border} ${cfg.cardBg} overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200 ${isOpen ? 'shadow-md' : ''}`}>
+        {topImage && (
+          <img src={topImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-15 dark:opacity-10" />
+        )}
+        <div className="relative p-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xl">{cfg.icon}</span>
+            {loading ? (
+              <span className="text-[9px] font-mono text-zinc-400 animate-pulse">…</span>
+            ) : (
+              <span className={`${cfg.countColor} text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none`}>
+                {count}
+              </span>
+            )}
+          </div>
+          <div>
+            <p className={`text-xs font-black ${cfg.accent} leading-tight`}>{cfg.label}</p>
+            <p className="text-[9px] text-zinc-400 mt-0.5 leading-tight">
+              {loading ? '—' : count === 0 ? 'Nothing yet' : isOpen ? 'tap to close' : 'tap to view'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
 }
 
 // ── VotingGroup ───────────────────────────────────────────────
@@ -94,7 +245,7 @@ function VotingGroup({
       setVotedType(type);
       const newLikeCount = await refreshCaptionLikeCount(captionId, userId);
       onLikeCountChange(captionId, newLikeCount);
-      onVoteCast(type); // immediate — parent handles disappear animation
+      onVoteCast(type);
     } catch (err: any) { alert(`Vote failed: ${err.message}`); }
     finally { setIsSubmitting(false); }
   };
@@ -114,18 +265,14 @@ function VotingGroup({
 
   return (
     <div className="flex flex-col">
-      {/* Image full-bleed with left/right vote overlays */}
       {imageUrl && (
         <div className="w-full aspect-video relative group overflow-hidden">
           <img src={imageUrl} alt="Meme" className="h-full w-full object-cover" />
-
           {posLabel && (
             <span className="absolute top-3 right-3 z-10 rounded-full bg-black/40 backdrop-blur-sm px-2.5 py-1 text-xs font-mono font-bold text-white">
               {posLabel}
             </span>
           )}
-
-          {/* Left half — Upvote */}
           <button
             onClick={() => handleVote('up')}
             disabled={isSubmitting || isLoadingVote || votedType !== null}
@@ -144,8 +291,6 @@ function VotingGroup({
               </span>
             </div>
           </button>
-
-          {/* Right half — Downvote */}
           <button
             onClick={() => handleVote('down')}
             disabled={isSubmitting || isLoadingVote || votedType !== null}
@@ -166,8 +311,6 @@ function VotingGroup({
           </button>
         </div>
       )}
-
-      {/* Content area */}
       <div className="p-6 flex flex-col gap-3">
         {caption && (
           <blockquote className="text-xl font-semibold italic text-zinc-900 dark:text-zinc-100 leading-snug">
@@ -199,77 +342,6 @@ function VotingGroup({
         </div>
       </div>
     </div>
-  );
-}
-
-// ── MiniPile ──────────────────────────────────────────────────
-function MiniPile({
-  type, memes, isOpen, onToggle, glow, loading,
-}: {
-  type: 'liked' | 'disliked';
-  memes: CaptionItem[];
-  isOpen: boolean;
-  onToggle: () => void;
-  glow: boolean;
-  loading?: boolean;
-}) {
-  const topMeme = memes[0];
-  const isEmpty = memes.length === 0 && !loading;
-  const isLiked = type === 'liked';
-
-  return (
-    <button
-      onClick={onToggle}
-      disabled={isEmpty}
-      title={isLiked ? 'Liked memes' : 'Disliked memes'}
-      className={`relative w-20 focus:outline-none transition-all duration-300
-        ${isEmpty ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-1'}
-        ${glow ? 'scale-110' : 'scale-100'}
-      `}
-    >
-      {/* Ghost card 2 */}
-      {memes.length >= 3 && (
-        <div
-          className={`absolute inset-0 rounded-2xl border ${isLiked ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/60' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60'}`}
-          style={{ transform: `rotate(${isLiked ? 3 : -3}deg) translate(${isLiked ? 5 : -5}px, -4px)`, zIndex: 1, pointerEvents: 'none' }}
-        />
-      )}
-      {/* Ghost card 1 */}
-      {memes.length >= 2 && (
-        <div
-          className={`absolute inset-0 rounded-2xl border ${isLiked ? 'border-blue-200 dark:border-blue-800 bg-blue-100/80 dark:bg-blue-900/40' : 'border-red-200 dark:border-red-800 bg-red-100/80 dark:bg-red-900/40'}`}
-          style={{ transform: `rotate(${isLiked ? 1.5 : -1.5}deg) translate(${isLiked ? 2.5 : -2.5}px, -2px)`, zIndex: 2, pointerEvents: 'none' }}
-        />
-      )}
-
-      {/* Top card */}
-      <div
-        className={`relative z-10 rounded-2xl border overflow-hidden shadow-md transition-all duration-300
-          ${isLiked
-            ? `border-blue-200 dark:border-blue-800 ${glow ? 'ring-2 ring-blue-400 shadow-lg shadow-blue-200 dark:shadow-blue-900/50' : ''}`
-            : `border-red-200 dark:border-red-800 ${glow ? 'ring-2 ring-red-400 shadow-lg shadow-red-200 dark:shadow-red-900/50' : ''}`
-          }`}
-      >
-        {topMeme?.images?.url ? (
-          <img src={topMeme.images.url} alt="" className="w-full h-14 object-cover" />
-        ) : (
-          <div className={`w-full h-14 flex items-center justify-center text-2xl ${isLiked ? 'bg-blue-50 dark:bg-blue-950' : 'bg-red-50 dark:bg-red-950'}`}>
-            {isLiked ? '👍' : '👎'}
-          </div>
-        )}
-        <div className={`px-2 py-1.5 text-center ${isLiked ? 'bg-blue-50 dark:bg-blue-950/60' : 'bg-red-50 dark:bg-red-950/60'}`}>
-          <div className="text-base leading-none mb-0.5">{isLiked ? '👍' : '👎'}</div>
-          <div className={`text-[10px] font-black font-mono ${isLiked ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
-            {loading ? '…' : isEmpty ? '—' : memes.length}
-          </div>
-        </div>
-      </div>
-
-      {/* "open" indicator */}
-      {isOpen && !isEmpty && (
-        <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isLiked ? 'bg-blue-400' : 'bg-red-400'}`} />
-      )}
-    </button>
   );
 }
 
@@ -316,7 +388,6 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
             </div>
             <button onClick={() => setCollapsed(true)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs px-1">✕</button>
           </div>
-
           {activeMeme ? (
             <div className="mb-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 p-2.5 border border-zinc-200 dark:border-zinc-800">
               {activeMeme.images?.url && (
@@ -327,7 +398,6 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
           ) : (
             <div className="mb-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 p-3 text-center text-[11px] text-zinc-400">No meme selected</div>
           )}
-
           <div className="space-y-2 mb-4">
             {checks.map(c => (
               <label key={c.key}
@@ -338,7 +408,6 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
               </label>
             ))}
           </div>
-
           <button onClick={handleGo} disabled={nothingSelected || !activeMeme}
             className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-black text-white shadow-md transition-all hover:bg-violet-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
             Let's go 🚀
@@ -346,7 +415,6 @@ function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null
           {nothingSelected && activeMeme && (
             <p className="text-[10px] text-zinc-400 text-center mt-2">Pick at least one option</p>
           )}
-
           <button onClick={() => router.push('/upload')}
             className="w-full mt-2 rounded-xl border border-violet-300/30 dark:border-violet-700/40 py-2.5 px-3 text-left transition-all hover:border-violet-400 dark:hover:border-violet-500 hover:bg-violet-50/50 dark:hover:bg-violet-900/10">
             <div className="flex items-center gap-1.5">
@@ -372,13 +440,14 @@ export default function ListPage() {
   const [voteEffect, setVoteEffect] = useState<'idle' | 'liked' | 'disliked'>('idle');
   const [pile, setPile] = useState<Pile>('all');
 
-  // Voted piles
-  const [likedMemes, setLikedMemes] = useState<CaptionItem[]>([]);
-  const [dislikedMemes, setDislikedMemes] = useState<CaptionItem[]>([]);
+  // Voted piles — persisted via user-center API
+  const [likedMemes, setLikedMemes] = useState<MemeItem[]>([]);
+  const [dislikedMemes, setDislikedMemes] = useState<MemeItem[]>([]);
   const [pilesLoading, setPilesLoading] = useState(false);
-  const [openPile, setOpenPile] = useState<'liked' | 'disliked' | null>(null);
-  const [likedGlow, setLikedGlow] = useState(false);
-  const [dislikedGlow, setDislikedGlow] = useState(false);
+  const [openPile, setOpenPile] = useState<PileKey | null>(null);
+  const [modalMeme, setModalMeme] = useState<MemeItem | null>(null);
+  const [modalPile, setModalPile] = useState<PileKey | null>(null);
+  const [modalActionLoading, setModalActionLoading] = useState(false);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -429,6 +498,26 @@ export default function ListPage() {
     fetchData();
   }, [router, loadPile]);
 
+  // Load persisted liked/disliked from DB
+  useEffect(() => {
+    if (!userId) return;
+    setPilesLoading(true);
+    fetch(`/api/user-center?userId=${userId}`)
+      .then(r => r.json())
+      .then(d => {
+        const map = (m: any): MemeItem => ({
+          id: m.id,
+          content: m.content ?? null,
+          like_count: m.like_count ?? null,
+          image_url: m.image_url ?? null,
+        });
+        setLikedMemes((d.liked ?? []).map(map));
+        setDislikedMemes((d.disliked ?? []).map(map));
+      })
+      .catch(() => {})
+      .finally(() => setPilesLoading(false));
+  }, [userId]);
+
   useEffect(() => {
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
     const q = searchQuery.trim();
@@ -445,40 +534,15 @@ export default function ListPage() {
     }, 350);
   }, [searchQuery, searchField]);
 
-  // Load persisted liked/disliked from DB once userId is known
-  useEffect(() => {
-    if (!userId) return;
-    setPilesLoading(true);
-    fetch(`/api/user-center?userId=${userId}`)
-      .then(r => r.json())
-      .then(d => {
-        const mapToItem = (m: any): CaptionItem => ({
-          id: m.id,
-          content: m.content ?? null,
-          like_count: m.like_count ?? null,
-          image_id: null,
-          humor_flavor_id: null,
-          profile_id: null,
-          images: m.image_url ? { url: m.image_url } : null,
-        });
-        setLikedMemes((d.liked ?? []).map(mapToItem));
-        setDislikedMemes((d.disliked ?? []).map(mapToItem));
-      })
-      .catch(() => {})
-      .finally(() => setPilesLoading(false));
-  }, [userId]);
-
   const displayList = searchResults ?? captionsList;
   displayListLenRef.current = displayList.length;
 
-  // Reset to first card when list changes
   useEffect(() => {
     setCurrentIndex(0);
     setFlipPhase('idle');
     setVoteEffect('idle');
   }, [displayList.length, searchQuery]);
 
-  // Navigation with flip animation (for prev/next buttons & keyboard)
   function navigateTo(newIndex: number, dir: 'next' | 'prev') {
     if (flipPhaseRef.current !== 'idle' || voteEffectRef.current !== 'idle') return;
     if (newIndex < 0 || newIndex >= displayListLenRef.current) return;
@@ -494,7 +558,6 @@ export default function ListPage() {
   const goNext = useCallback(() => navigateTo(currentIndexRef.current + 1, 'next'), []);
   const goPrev = useCallback(() => navigateTo(currentIndexRef.current - 1, 'prev'), []);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === 'INPUT') return;
@@ -510,20 +573,19 @@ export default function ListPage() {
   }
 
   function handleVoteCast(voteType: 'up' | 'down') {
-    const meme = displayList[currentIndexRef.current];
-    if (!meme) return;
-
+    const caption = displayList[currentIndexRef.current];
+    if (!caption) return;
+    const meme: MemeItem = {
+      id: caption.id,
+      content: caption.content,
+      like_count: caption.like_count,
+      image_url: caption.images?.url ?? null,
+    };
     if (voteType === 'up') {
       setLikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [meme, ...prev]);
-      setLikedGlow(true);
-      setTimeout(() => setLikedGlow(false), 700);
     } else {
       setDislikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [meme, ...prev]);
-      setDislikedGlow(true);
-      setTimeout(() => setDislikedGlow(false), 700);
     }
-
-    // Card disappear effect
     setVoteEffect(voteType === 'up' ? 'liked' : 'disliked');
     setTimeout(() => {
       setVoteEffect('idle');
@@ -532,12 +594,44 @@ export default function ListPage() {
     }, 380);
   }
 
+  async function handleUnlike() {
+    if (!modalMeme || !userId) return;
+    setModalActionLoading(true);
+    try {
+      await supabase.from('caption_votes').delete()
+        .eq('profile_id', userId).eq('caption_id', modalMeme.id);
+      if (modalPile === 'liked') setLikedMemes(prev => prev.filter(m => m.id !== modalMeme.id));
+      else setDislikedMemes(prev => prev.filter(m => m.id !== modalMeme.id));
+      setModalMeme(null);
+    } catch (err: any) { alert(`Failed: ${err.message}`); }
+    finally { setModalActionLoading(false); }
+  }
+
+  async function handleSwitchVote() {
+    if (!modalMeme || !userId) return;
+    setModalActionLoading(true);
+    const newValue = modalPile === 'liked' ? -1 : 1;
+    try {
+      await supabase.from('caption_votes')
+        .update({ vote_value: newValue, modified_by_user_id: userId })
+        .eq('profile_id', userId).eq('caption_id', modalMeme.id);
+      if (modalPile === 'liked') {
+        setLikedMemes(prev => prev.filter(m => m.id !== modalMeme.id));
+        setDislikedMemes(prev => [modalMeme, ...prev]);
+      } else {
+        setDislikedMemes(prev => prev.filter(m => m.id !== modalMeme.id));
+        setLikedMemes(prev => [modalMeme, ...prev]);
+      }
+      setModalMeme(null);
+    } catch (err: any) { alert(`Failed: ${err.message}`); }
+    finally { setModalActionLoading(false); }
+  }
+
   if (loading) return <div className="p-10 text-center font-mono text-zinc-300">LOADING...</div>;
 
   const activeMeme = displayList[currentIndex] ?? null;
   const remaining = displayList.length - currentIndex - 1;
 
-  // Card style: vote-effect takes priority over flip
   const cardStyle: React.CSSProperties = voteEffect !== 'idle'
     ? {
         transition: 'transform 0.35s ease-in-out, opacity 0.35s ease-in-out',
@@ -558,10 +652,9 @@ export default function ListPage() {
 
   return (
     <div className="min-h-screen bg-transparent p-6 text-zinc-900 dark:text-zinc-100">
-      <header className="mb-10 text-center max-w-3xl mx-auto">
+      <header className="mb-8 text-center max-w-3xl mx-auto">
         <h1 className="mb-6 text-5xl font-black tracking-tight text-blue-400">Meme Board</h1>
 
-        {/* Pile selector */}
         <div className="flex flex-wrap justify-center gap-2 mb-4">
           {PILES.map(p => (
             <button key={p.key} onClick={() => { setPile(p.key); loadPile(p.key, userId); }} disabled={pileLoading}
@@ -583,17 +676,13 @@ export default function ListPage() {
           )}
         </div>
 
-        {/* Search bar */}
         <div className="flex gap-2 max-w-lg mx-auto">
           <select value={searchField} onChange={e => setSearchField(e.target.value as SearchField)}
             className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0">
             {SEARCH_FIELDS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
           </select>
           <div className="relative flex-1">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search memes..."
               className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
@@ -626,152 +715,110 @@ export default function ListPage() {
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col items-center gap-6 max-w-lg mx-auto">
 
-          {/* ── Three-column: disliked | card deck | liked ── */}
-          <div className="flex items-start justify-center gap-5 w-full">
-
-            {/* Disliked pile — left */}
-            <div className="flex-shrink-0 pt-6">
-              <MiniPile
-                type="disliked"
-                memes={dislikedMemes}
-                isOpen={openPile === 'disliked'}
-                onToggle={() => setOpenPile(p => p === 'disliked' ? null : 'disliked')}
-                glow={dislikedGlow}
-                loading={pilesLoading}
-              />
+          {/* ── Liked / Disliked pile row (identical to homepage) ── */}
+          <section className="w-full">
+            <h2 className="mb-3 text-xs font-black text-zinc-400 uppercase tracking-widest">Your Votes</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {(['liked', 'disliked'] as PileKey[]).map(key => (
+                <PileCard
+                  key={key}
+                  pileKey={key}
+                  items={key === 'liked' ? likedMemes : dislikedMemes}
+                  loading={pilesLoading}
+                  isOpen={openPile === key}
+                  onToggle={() => setOpenPile(p => p === key ? null : key)}
+                />
+              ))}
             </div>
+          </section>
 
-            {/* Card deck + navigation */}
-            <div className="flex flex-col items-center gap-6">
-              <div className="relative" style={{ width: '100%', maxWidth: 520 }}>
-
-                {/* Ghost cards */}
-                {remaining >= 2 && (
-                  <div
-                    className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
-                    style={{ transform: 'rotate(2.8deg) translate(14px, -5px)', zIndex: 1, pointerEvents: 'none' }}
-                  />
-                )}
-                {remaining >= 1 && (
-                  <div
-                    className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800"
-                    style={{ transform: 'rotate(1.4deg) translate(7px, -2px)', zIndex: 2, pointerEvents: 'none' }}
-                  />
-                )}
-
-                {/* Side pile-thickness indicator */}
-                <div
-                  className="absolute top-8 bottom-8 flex flex-col justify-center gap-[3px]"
-                  style={{ left: 'calc(100% + 10px)', pointerEvents: 'none' }}
-                >
-                  {Array.from({ length: Math.min(remaining + 1, 16) }).map((_, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        height: 3,
-                        width: Math.max(5, 18 - i),
-                        backgroundColor: i === 0 ? '#60a5fa' : '#d4d4d8',
-                        borderRadius: '0 3px 3px 0',
-                        opacity: Math.max(0.2, 1 - i * 0.055),
-                      }}
+          {/* ── Expanded pile content ── */}
+          {openPile && !pilesLoading && (
+            <div className="w-full border-y border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/80 dark:bg-zinc-900/40 rounded-2xl px-4 py-4">
+              {(openPile === 'liked' ? likedMemes : dislikedMemes).length === 0 ? (
+                <p className="text-center text-sm text-zinc-400 py-2">Nothing here yet</p>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                  {(openPile === 'liked' ? likedMemes : dislikedMemes).map(m => (
+                    <MemeCard
+                      key={m.id}
+                      item={m}
+                      onClick={() => { setModalMeme(m); setModalPile(openPile); }}
                     />
                   ))}
-                  {remaining + 1 > 16 && (
-                    <div style={{ fontSize: 8, color: '#a1a1aa', fontFamily: 'monospace' }}>+{remaining + 1 - 16}</div>
-                  )}
-                  <div style={{ fontSize: 11, fontWeight: 900, color: '#71717a', fontFamily: 'monospace', marginTop: 3 }}>
-                    {remaining + 1}
-                  </div>
                 </div>
+              )}
+            </div>
+          )}
 
-                {/* Main card */}
-                <div
-                  className="relative overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl"
-                  style={{ zIndex: 10, ...cardStyle }}
-                >
-                  <VotingGroup
-                    key={activeMeme?.id}
-                    captionId={activeMeme?.id ?? ''}
-                    userId={userId}
-                    initialLikeCount={Number(activeMeme?.like_count ?? 0)}
-                    onLikeCountChange={handleLikeCountChange}
-                    onVoteCast={handleVoteCast}
-                    imageUrl={activeMeme?.images?.url}
-                    posLabel={`${currentIndex + 1} / ${displayList.length}`}
-                    caption={activeMeme?.content}
-                  />
-                </div>
-              </div>
+          {/* ── Card deck ── */}
+          <div className="relative w-full">
+            {remaining >= 2 && (
+              <div className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
+                style={{ transform: 'rotate(2.8deg) translate(14px, -5px)', zIndex: 1, pointerEvents: 'none' }} />
+            )}
+            {remaining >= 1 && (
+              <div className="absolute inset-0 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800"
+                style={{ transform: 'rotate(1.4deg) translate(7px, -2px)', zIndex: 2, pointerEvents: 'none' }} />
+            )}
 
-              {/* Navigation */}
-              <div className="flex items-center gap-5">
-                <button
-                  onClick={goPrev}
-                  disabled={currentIndex === 0 || flipPhase !== 'idle' || voteEffect !== 'idle'}
-                  className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
-                >←</button>
-                <span className="text-sm font-mono font-bold text-zinc-400 tabular-nums">
-                  {currentIndex + 1} / {displayList.length}
-                </span>
-                <button
-                  onClick={goNext}
-                  disabled={currentIndex >= displayList.length - 1 || flipPhase !== 'idle' || voteEffect !== 'idle'}
-                  className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
-                >→</button>
-              </div>
-              <p className="text-xs text-zinc-400 font-mono">← → arrow keys also work</p>
+            {/* Side pile-thickness indicator */}
+            <div className="absolute top-8 bottom-8 flex flex-col justify-center gap-[3px]"
+              style={{ left: 'calc(100% + 10px)', pointerEvents: 'none' }}>
+              {Array.from({ length: Math.min(remaining + 1, 16) }).map((_, i) => (
+                <div key={i} style={{
+                  height: 3, width: Math.max(5, 18 - i),
+                  backgroundColor: i === 0 ? '#60a5fa' : '#d4d4d8',
+                  borderRadius: '0 3px 3px 0',
+                  opacity: Math.max(0.2, 1 - i * 0.055),
+                }} />
+              ))}
+              {remaining + 1 > 16 && <div style={{ fontSize: 8, color: '#a1a1aa', fontFamily: 'monospace' }}>+{remaining + 1 - 16}</div>}
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#71717a', fontFamily: 'monospace', marginTop: 3 }}>{remaining + 1}</div>
             </div>
 
-            {/* Liked pile — right */}
-            <div className="flex-shrink-0 pt-6">
-              <MiniPile
-                type="liked"
-                memes={likedMemes}
-                isOpen={openPile === 'liked'}
-                onToggle={() => setOpenPile(p => p === 'liked' ? null : 'liked')}
-                glow={likedGlow}
-                loading={pilesLoading}
+            <div className="relative overflow-hidden rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl"
+              style={{ zIndex: 10, ...cardStyle }}>
+              <VotingGroup
+                key={activeMeme?.id}
+                captionId={activeMeme?.id ?? ''}
+                userId={userId}
+                initialLikeCount={Number(activeMeme?.like_count ?? 0)}
+                onLikeCountChange={handleLikeCountChange}
+                onVoteCast={handleVoteCast}
+                imageUrl={activeMeme?.images?.url}
+                posLabel={`${currentIndex + 1} / ${displayList.length}`}
+                caption={activeMeme?.content}
               />
             </div>
           </div>
 
-          {/* ── Expanded pile panel ── */}
-          {openPile && (
-            <div className={`w-full max-w-2xl rounded-2xl border p-4 transition-all
-              ${openPile === 'liked'
-                ? 'border-blue-200 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-950/20'
-                : 'border-red-200 dark:border-red-800 bg-red-50/40 dark:bg-red-950/20'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className={`text-sm font-black ${openPile === 'liked' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {openPile === 'liked' ? '👍 Liked' : '👎 Disliked'} · {(openPile === 'liked' ? likedMemes : dislikedMemes).length}
-                </h3>
-                <button
-                  onClick={() => setOpenPile(null)}
-                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm px-1"
-                >✕</button>
-              </div>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                {(openPile === 'liked' ? likedMemes : dislikedMemes).map(m => (
-                  <div key={m.id} className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
-                    {m.images?.url ? (
-                      <img src={m.images.url} alt="" className="w-full h-16 object-cover" />
-                    ) : (
-                      <div className="w-full h-16 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xl">
-                        {openPile === 'liked' ? '👍' : '👎'}
-                      </div>
-                    )}
-                    <p className="text-[9px] text-zinc-500 dark:text-zinc-400 p-1.5 italic line-clamp-2">"{m.content || '—'}"</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
+          {/* Navigation */}
+          <div className="flex items-center gap-5">
+            <button onClick={goPrev}
+              disabled={currentIndex === 0 || flipPhase !== 'idle' || voteEffect !== 'idle'}
+              className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95">←</button>
+            <span className="text-sm font-mono font-bold text-zinc-400 tabular-nums">{currentIndex + 1} / {displayList.length}</span>
+            <button onClick={goNext}
+              disabled={currentIndex >= displayList.length - 1 || flipPhase !== 'idle' || voteEffect !== 'idle'}
+              className="w-11 h-11 rounded-full border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center text-lg text-zinc-600 dark:text-zinc-300 hover:border-blue-400 hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95">→</button>
+          </div>
+          <p className="text-xs text-zinc-400 font-mono">← → arrow keys also work</p>
         </div>
+      )}
+
+      {/* Meme modal */}
+      {modalMeme && (
+        <MemeModal
+          item={modalMeme}
+          pile={modalPile}
+          onClose={() => setModalMeme(null)}
+          onUnlike={handleUnlike}
+          onSwitchToDownvote={handleSwitchVote}
+          actionLoading={modalActionLoading}
+        />
       )}
 
       <DuplicatePanel activeMeme={activeMeme} router={router} />

@@ -18,29 +18,18 @@ type FlavorItem = {
   description: string | null;
 };
 
-type PileKey = 'liked' | 'disliked' | 'myMemes' | 'myFlavors';
+type PileKey = 'myMemes' | 'myFlavors';
 
 const PILE_CONFIG: Record<PileKey, {
   label: string; icon: string;
   cardBg: string; border: string; accent: string; countColor: string;
 }> = {
-  liked:     { label: 'Liked Memes',    icon: '👍', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-blue-200 dark:border-blue-800',    accent: 'text-blue-600 dark:text-blue-400',       countColor: 'bg-blue-600' },
-  disliked:  { label: 'Disliked Memes', icon: '👎', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-red-200 dark:border-red-800',        accent: 'text-red-600 dark:text-red-400',         countColor: 'bg-red-500' },
-  myMemes:   { label: 'My Memes',       icon: '🖼️', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-emerald-200 dark:border-emerald-800', accent: 'text-emerald-600 dark:text-emerald-400', countColor: 'bg-emerald-600' },
-  myFlavors: { label: 'My Flavors',     icon: '🎭', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-violet-200 dark:border-violet-800',  accent: 'text-violet-600 dark:text-violet-400',   countColor: 'bg-violet-600' },
+  myMemes:   { label: 'My Memes',   icon: '🖼️', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-emerald-200 dark:border-emerald-800', accent: 'text-emerald-600 dark:text-emerald-400', countColor: 'bg-emerald-600' },
+  myFlavors: { label: 'My Flavors', icon: '🎭', cardBg: 'bg-white dark:bg-zinc-950', border: 'border-violet-200 dark:border-violet-800',  accent: 'text-violet-600 dark:text-violet-400',   countColor: 'bg-violet-600' },
 };
 
-// ── Meme modal ────────────────────────────────────────────────
-function MemeModal({
-  item, pile, onClose, onUnlike, onSwitchToDownvote, actionLoading,
-}: {
-  item: MemeItem;
-  pile: PileKey | null;
-  onClose: () => void;
-  onUnlike?: () => void;
-  onSwitchToDownvote?: () => void;
-  actionLoading?: boolean;
-}) {
+// ── Meme modal (view-only) ────────────────────────────────────
+function MemeModal({ item, onClose }: { item: MemeItem; onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
@@ -61,28 +50,6 @@ function MemeModal({
             <p className="mt-2 text-sm text-zinc-400 font-mono">
               {item.like_count > 0 ? '+' : ''}{item.like_count} likes
             </p>
-          )}
-          {(pile === 'liked' || pile === 'disliked') && (
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={onUnlike}
-                disabled={actionLoading}
-                className="flex-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 py-2.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 disabled:opacity-50 transition-all"
-              >
-                {pile === 'liked' ? '💔 Take back the like' : '🫶 Take back the dislike'}
-              </button>
-              <button
-                onClick={onSwitchToDownvote}
-                disabled={actionLoading}
-                className={`flex-1 rounded-xl py-2.5 text-xs font-bold disabled:opacity-50 transition-all ${
-                  pile === 'liked'
-                    ? 'bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/70 text-red-600 dark:text-red-400'
-                    : 'bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-950/70 text-blue-600 dark:text-blue-400'
-                }`}
-              >
-                {pile === 'liked' ? '👎 Switch to downvote' : '👍 Switch to upvote'}
-              </button>
-            </div>
           )}
         </div>
         <button
@@ -189,15 +156,11 @@ export default function MainPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
 
-  const [liked, setLiked] = useState<MemeItem[]>([]);
-  const [disliked, setDisliked] = useState<MemeItem[]>([]);
   const [myMemes, setMyMemes] = useState<MemeItem[]>([]);
   const [myFlavors, setMyFlavors] = useState<FlavorItem[]>([]);
 
   const [openPile, setOpenPile] = useState<PileKey | null>(null);
   const [modalMeme, setModalMeme] = useState<MemeItem | null>(null);
-  const [modalPile, setModalPile] = useState<PileKey | null>(null);
-  const [modalActionLoading, setModalActionLoading] = useState(false);
   const [topMemeUrl, setTopMemeUrl] = useState<string | null>(null);
 
   const router = useRouter();
@@ -239,8 +202,6 @@ export default function MainPage() {
     fetch(`/api/user-center?userId=${userId}`)
       .then(r => r.json())
       .then(d => {
-        setLiked(d.liked ?? []);
-        setDisliked(d.disliked ?? []);
         setMyMemes(d.myMemes ?? []);
         setMyFlavors(d.myFlavors ?? []);
       })
@@ -253,49 +214,15 @@ export default function MainPage() {
   }
 
   const pileItems: Record<PileKey, MemeItem[]> = {
-    liked, disliked, myMemes, myFlavors: [],
+    myMemes, myFlavors: [],
   };
 
   function togglePile(key: PileKey) {
     setOpenPile(prev => prev === key ? null : key);
   }
 
-  function openModal(item: MemeItem, pile: PileKey) {
+  function openModal(item: MemeItem) {
     setModalMeme(item);
-    setModalPile(pile);
-  }
-
-  async function handleUnlike() {
-    if (!modalMeme || !userId) return;
-    setModalActionLoading(true);
-    try {
-      await supabase.from('caption_votes').delete()
-        .eq('profile_id', userId).eq('caption_id', modalMeme.id);
-      if (modalPile === 'liked') setLiked(prev => prev.filter(m => m.id !== modalMeme.id));
-      else setDisliked(prev => prev.filter(m => m.id !== modalMeme.id));
-      setModalMeme(null);
-    } catch (err: any) { alert(`Failed: ${err.message}`); }
-    finally { setModalActionLoading(false); }
-  }
-
-  async function handleSwitchToDownvote() {
-    if (!modalMeme || !userId) return;
-    setModalActionLoading(true);
-    const newValue = modalPile === 'liked' ? -1 : 1;
-    try {
-      await supabase.from('caption_votes')
-        .update({ vote_value: newValue, modified_by_user_id: userId })
-        .eq('profile_id', userId).eq('caption_id', modalMeme.id);
-      if (modalPile === 'liked') {
-        setLiked(prev => prev.filter(m => m.id !== modalMeme.id));
-        setDisliked(prev => [modalMeme, ...prev]);
-      } else {
-        setDisliked(prev => prev.filter(m => m.id !== modalMeme.id));
-        setLiked(prev => [modalMeme, ...prev]);
-      }
-      setModalMeme(null);
-    } catch (err: any) { alert(`Failed: ${err.message}`); }
-    finally { setModalActionLoading(false); }
   }
 
   async function handleDeleteMeme(item: MemeItem) {
@@ -325,8 +252,8 @@ export default function MainPage() {
         {/* Pile row */}
         <section className="mb-1">
           <h2 className="mb-3 text-xs font-black text-zinc-400 uppercase tracking-widest">Your Collection</h2>
-          <div className={`grid gap-3 ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            {(['liked', 'disliked', 'myMemes', ...(isSuperAdmin ? ['myFlavors'] : [])] as PileKey[]).map(key => (
+          <div className={`grid gap-3 ${isSuperAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {(['myMemes', ...(isSuperAdmin ? ['myFlavors'] : [])] as PileKey[]).map(key => (
               <PileCard
                 key={key}
                 pileKey={key}
@@ -354,7 +281,7 @@ export default function MainPage() {
                 <MemeCard
                   key={m.id}
                   item={m}
-                  onClick={() => openModal(m, openPile!)}
+                  onClick={() => openModal(m)}
                   onDelete={openPile === 'myMemes' ? () => handleDeleteMeme(m) : undefined}
                 />
               ))}
@@ -424,11 +351,7 @@ export default function MainPage() {
       {modalMeme && (
         <MemeModal
           item={modalMeme}
-          pile={modalPile}
           onClose={() => setModalMeme(null)}
-          onUnlike={handleUnlike}
-          onSwitchToDownvote={handleSwitchToDownvote}
-          actionLoading={modalActionLoading}
         />
       )}
     </div>

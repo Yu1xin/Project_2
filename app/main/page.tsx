@@ -817,7 +817,7 @@ export default function ListPage() {
         </div>
       )}
 
-      </div>{/* end main content */}
+      </div>
 
       {/* Meme modal */}
       {modalMeme && (
@@ -832,6 +832,6 @@ export default function ListPage() {
       )}
 
       <DuplicatePanel activeMeme={activeMeme} router={router} />
-    </div>{/* end flex wrapper */}
+    </div>
   );
 }

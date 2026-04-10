@@ -345,6 +345,134 @@ function VotingGroup({
   );
 }
 
+// ── GridCard (collapsed + expanded with voting) ───────────────
+function GridCard({
+  item, idx, isSelected, onSelect, onVoteCast, onLikeCountChange, userId, router,
+}: {
+  item: CaptionItem;
+  idx: number;
+  isSelected: boolean;
+  onSelect: (idx: number | null) => void;
+  onVoteCast: (type: 'up' | 'down', idx: number) => void;
+  onLikeCountChange: (id: string, n: number) => void;
+  userId: string | undefined;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [votedType, setVotedType] = useState<'up' | 'down' | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingVote, setLoadingVote] = useState(false);
+
+  useEffect(() => {
+    if (!isSelected || !userId) return;
+    let cancelled = false;
+    setLoadingVote(true);
+    supabase.from('caption_votes').select('vote_value')
+      .eq('profile_id', userId).eq('caption_id', item.id).maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setVotedType(data ? (data.vote_value === 1 ? 'up' : data.vote_value === -1 ? 'down' : null) : null);
+        setLoadingVote(false);
+      });
+    return () => { cancelled = true; };
+  }, [isSelected, item.id, userId]);
+
+  const handleVote = async (type: 'up' | 'down') => {
+    if (!userId || votedType || isSubmitting || loadingVote) return;
+    setIsSubmitting(true);
+    try {
+      await supabase.from('caption_votes').upsert(
+        { vote_value: type === 'up' ? 1 : -1, profile_id: userId, caption_id: item.id, created_by_user_id: userId, modified_by_user_id: userId },
+        { onConflict: 'profile_id,caption_id' }
+      );
+      setVotedType(type);
+      const newCount = await refreshCaptionLikeCount(item.id, userId);
+      onLikeCountChange(item.id, newCount);
+      onVoteCast(type, idx);
+    } catch (err: any) { alert(`Vote failed: ${err.message}`); }
+    finally { setIsSubmitting(false); }
+  };
+
+  const handleMakeSimilar = () => {
+    const params = new URLSearchParams();
+    if (item.image_id) {
+      params.set('imageId', item.image_id);
+      if (item.images?.url) params.set('imageUrl', item.images.url);
+    }
+    if (item.humor_flavor_id != null) params.set('flavorId', String(item.humor_flavor_id));
+    router.push(`/upload?${params.toString()}`);
+  };
+
+  if (!isSelected) {
+    return (
+      <div
+        onClick={() => onSelect(idx)}
+        className="cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
+      >
+        {item.images?.url ? (
+          <img src={item.images.url} alt="" className="w-full h-24 object-cover" />
+        ) : (
+          <div className="w-full h-24 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl">🖼️</div>
+        )}
+        <div className="p-2">
+          <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">"{item.content || '—'}"</p>
+          {item.like_count != null && (
+            <p className="mt-1 text-[10px] text-zinc-400 font-mono">{item.like_count > 0 ? '+' : ''}{item.like_count}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Expanded state
+  return (
+    <div className="col-span-2 rounded-2xl border-2 border-blue-400 dark:border-blue-500 bg-white dark:bg-zinc-900 overflow-hidden shadow-xl">
+      <div className="relative">
+        {item.images?.url ? (
+          <img src={item.images.url} alt="" className="w-full h-40 object-cover" />
+        ) : (
+          <div className="w-full h-40 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-4xl">🖼️</div>
+        )}
+        <button
+          onClick={() => onSelect(null)}
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/40 text-white text-xs flex items-center justify-center hover:bg-black/60 transition-colors"
+        >✕</button>
+      </div>
+      <div className="p-3">
+        <p className="text-xs text-zinc-700 dark:text-zinc-200 italic line-clamp-3 mb-3">"{item.content || '—'}"</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleVote('up')}
+            disabled={isSubmitting || loadingVote || votedType !== null}
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all disabled:opacity-50 ${
+              votedType === 'up' ? 'bg-blue-600 text-white' : 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/70'
+            }`}
+          >
+            <span>👍</span>
+            <span>{votedType === 'up' ? 'Liked!' : 'Like'}</span>
+          </button>
+          <button
+            onClick={() => handleVote('down')}
+            disabled={isSubmitting || loadingVote || votedType !== null}
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all disabled:opacity-50 ${
+              votedType === 'down' ? 'bg-red-600 text-white' : 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/70'
+            }`}
+          >
+            <span>👎</span>
+            <span>{votedType === 'down' ? 'Noped!' : 'Nope'}</span>
+          </button>
+          <button
+            onClick={handleMakeSimilar}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-950/70 transition-all"
+          >
+            <span>✨</span>
+            <span>Similar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── DuplicatePanel ────────────────────────────────────────────
 function DuplicatePanel({ activeMeme, router }: { activeMeme: CaptionItem | null; router: ReturnType<typeof useRouter> }) {
   const [copyCaption, setCopyCaption] = useState(false);
@@ -436,6 +564,7 @@ export default function ListPage() {
   const [pileLoading, setPileLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'pile' | 'grid'>('pile');
+  const [gridSelected, setGridSelected] = useState<number | null>(null);
   const [voteEffect, setVoteEffect] = useState<'idle' | 'liked' | 'disliked'>('idle');
   const [pile, setPile] = useState<Pile>('all');
 
@@ -537,6 +666,7 @@ export default function ListPage() {
   useEffect(() => {
     setCurrentIndex(0);
     setVoteEffect('idle');
+    setGridSelected(null);
   }, [displayList.length, searchQuery]);
 
   function navigateTo(newIndex: number, dir: 'next' | 'prev') {
@@ -587,6 +717,22 @@ export default function ListPage() {
       const next = currentIndexRef.current + 1;
       if (next < displayListLenRef.current) setCurrentIndex(next);
     }, 380);
+  }
+
+  function handleGridVoteCast(voteType: 'up' | 'down', itemIdx: number) {
+    const caption = displayList[itemIdx];
+    if (!caption) return;
+    const meme: MemeItem = {
+      id: caption.id,
+      content: caption.content,
+      like_count: caption.like_count,
+      image_url: caption.images?.url ?? null,
+    };
+    if (voteType === 'up') {
+      setLikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [...prev, meme]);
+    } else {
+      setDislikedMemes(prev => prev.some(m => m.id === meme.id) ? prev : [...prev, meme]);
+    }
   }
 
   async function handleUnlike() {
@@ -732,25 +878,17 @@ export default function ListPage() {
         /* ── Grid mode ── */
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {displayList.map((item, idx) => (
-            <div
+            <GridCard
               key={item.id}
-              onClick={() => { setCurrentIndex(idx); setViewMode('pile'); }}
-              className="cursor-pointer rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
-            >
-              {item.images?.url ? (
-                <img src={item.images.url} alt="" className="w-full h-24 object-cover" />
-              ) : (
-                <div className="w-full h-24 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl">🖼️</div>
-              )}
-              <div className="p-2">
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 italic">
-                  "{item.content || '—'}"
-                </p>
-                {item.like_count != null && (
-                  <p className="mt-1 text-[10px] text-zinc-400 font-mono">{item.like_count > 0 ? '+' : ''}{item.like_count}</p>
-                )}
-              </div>
-            </div>
+              item={item}
+              idx={idx}
+              isSelected={gridSelected === idx}
+              onSelect={setGridSelected}
+              onVoteCast={handleGridVoteCast}
+              onLikeCountChange={handleLikeCountChange}
+              userId={userId}
+              router={router}
+            />
           ))}
         </div>
 
@@ -865,7 +1003,7 @@ export default function ListPage() {
         />
       )}
 
-      <DuplicatePanel activeMeme={activeMeme} router={router} />
+      {viewMode === 'pile' && <DuplicatePanel activeMeme={activeMeme} router={router} />}
     </div>
   );
 }

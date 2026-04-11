@@ -267,7 +267,8 @@ function UploadPageInner() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [imageId, setImageId] = useState<string | null>(null);
-  const [generatedCaption, setGeneratedCaption] = useState('');
+  const [generatedCaptions, setGeneratedCaptions] = useState<string[]>([]);
+  const [selectedCaptionIdx, setSelectedCaptionIdx] = useState(0);
   const [editedCaption, setEditedCaption] = useState('');
 
   const [humorFlavors, setHumorFlavors] = useState<HumorFlavorRow[]>([]);
@@ -361,31 +362,29 @@ function UploadPageInner() {
     const paramImageId  = searchParams.get('imageId');
     const paramImageUrl = searchParams.get('imageUrl');
     const parts: string[] = [];
-    if (paramCaption)  { setGeneratedCaption(paramCaption); setEditedCaption(paramCaption); parts.push('caption'); }
+    if (paramCaption)  { setGeneratedCaptions([paramCaption]); setSelectedCaptionIdx(0); setEditedCaption(paramCaption); parts.push('caption'); }
     if (paramImageId)  { setImageId(paramImageId); parts.push('image'); }
     if (paramImageUrl) { setPreviewUrl(paramImageUrl); }
     if (parts.length > 0) setPrefillBanner(`Duplicated from Meme Board: ${parts.join(' + ')} pre-filled ✨`);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function extractCaption(payload: CaptionApiResponse, fallbackImageId?: string) {
-    let finalCaption = '';
+  function extractAllCaptions(payload: CaptionApiResponse, fallbackImageId?: string): string[] {
+    let items: string[] = [];
     if (Array.isArray(payload)) {
-      const first = payload[0];
-      finalCaption = typeof first === 'string' ? first : first?.content || '';
+      items = payload.map(c => (typeof c === 'string' ? c : c?.content || '')).filter(Boolean);
     } else if (typeof payload === 'string') {
-      finalCaption = payload;
+      items = [payload];
     } else if (payload?.captions && Array.isArray(payload.captions)) {
-      const first = payload.captions[0];
-      finalCaption = typeof first === 'string' ? first : first?.content || '';
+      items = payload.captions.map(c => (typeof c === 'string' ? c : c?.content || '')).filter(Boolean);
     } else if (payload?.content) {
-      finalCaption = payload.content;
+      items = [payload.content];
     }
-    if (!finalCaption.trim()) {
-      finalCaption = fallbackImageId
+    if (items.length === 0) {
+      items = [fallbackImageId
         ? `Meme generated, but AI is speechless. (Image ID: ${fallbackImageId.slice(0, 8)})`
-        : 'Meme generated, but AI is speechless.';
+        : 'Meme generated, but AI is speechless.'];
     }
-    return finalCaption;
+    return items;
   }
 
   async function requireSession() {
@@ -395,7 +394,7 @@ function UploadPageInner() {
     return { token: session.access_token, userId: session.user.id };
   }
 
-  async function generateCaptionForImage(token: string, uploadedImageId: string, flavorId?: string) {
+  async function generateCaptionsForImage(token: string, uploadedImageId: string, flavorId?: string): Promise<string[]> {
     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
     const body: Record<string, unknown> = { imageId: uploadedImageId };
     if (flavorId) body.humorFlavorId = Number(flavorId);
@@ -403,7 +402,7 @@ function UploadPageInner() {
       method: 'POST', headers, body: JSON.stringify(body),
     });
     if (!res.ok) { const text = await res.text(); throw new Error(`Caption generation failed: ${text}`); }
-    return extractCaption((await res.json()) as CaptionApiResponse, uploadedImageId);
+    return extractAllCaptions((await res.json()) as CaptionApiResponse, uploadedImageId);
   }
 
   // After the API auto-saves caption(s), call the server route (uses service role to bypass RLS)
@@ -453,12 +452,13 @@ function UploadPageInner() {
       const uploadImageData = (await s3Res.json()) as UploadImageFromUrlResponse;
       if (!uploadImageData?.imageId) throw new Error('Image registration did not return an imageId.');
       setStatus('AI is thinking...');
-      const finalCaption = await generateCaptionForImage(token, uploadImageData.imageId, selectedFlavorId);
+      const captions = await generateCaptionsForImage(token, uploadImageData.imageId, selectedFlavorId);
       setImageId(uploadImageData.imageId);
-      setGeneratedCaption(finalCaption);
-      setEditedCaption(finalCaption);
+      setGeneratedCaptions(captions);
+      setSelectedCaptionIdx(0);
+      setEditedCaption(captions[0] ?? '');
       setPreviewUrl(presignData.cdnUrl);
-      setStatus('Success! Edit the caption, revise it, or save it.');
+      setStatus('');
       draftAutoSavedCaptions(uploadImageData.imageId, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Something went wrong.'}`);
@@ -471,12 +471,13 @@ function UploadPageInner() {
     setLoading(true); setStatus('AI is thinking...');
     try {
       const { token, userId: uid } = await requireSession();
-      const caption = await generateCaptionForImage(token, selectedGalleryImage.id, selectedFlavorId);
+      const captions = await generateCaptionsForImage(token, selectedGalleryImage.id, selectedFlavorId);
       setImageId(selectedGalleryImage.id);
       setPreviewUrl(selectedGalleryImage.url);
-      setGeneratedCaption(caption);
-      setEditedCaption(caption);
-      setStatus('Success! Edit the caption, revise it, or save it.');
+      setGeneratedCaptions(captions);
+      setSelectedCaptionIdx(0);
+      setEditedCaption(captions[0] ?? '');
+      setStatus('');
       draftAutoSavedCaptions(selectedGalleryImage.id, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Something went wrong.'}`);
@@ -488,10 +489,11 @@ function UploadPageInner() {
     try {
       setIsRevising(true); setStatus('Revising caption with selected flavor...');
       const { token, userId: uid } = await requireSession();
-      const revisedCaption = await generateCaptionForImage(token, imageId, selectedFlavorId);
-      setGeneratedCaption(revisedCaption);
-      setEditedCaption(revisedCaption);
-      setStatus('Revised! You can revise again or save it.');
+      const captions = await generateCaptionsForImage(token, imageId, selectedFlavorId);
+      setGeneratedCaptions(captions);
+      setSelectedCaptionIdx(0);
+      setEditedCaption(captions[0] ?? '');
+      setStatus('');
       draftAutoSavedCaptions(imageId, uid);
     } catch (err: any) {
       setStatus(`Error: ${err.message || 'Failed to revise caption.'}`);
@@ -503,21 +505,12 @@ function UploadPageInner() {
     try {
       setLoading(true); setStatus('Saving meme...');
       const { userId } = await requireSession();
-      if (autoSavedCaptionId) {
-        // The API already saved a draft — just publish it with the user's final caption
-        const { error } = await supabase.from('captions')
-          .update({ content: editedCaption.trim(), is_public: true, modified_by_user_id: userId })
-          .eq('id', autoSavedCaptionId);
-        if (error) throw error;
-      } else {
-        // No draft found — insert fresh
-        const { error } = await supabase.from('captions').insert({
-          image_id: imageId, content: editedCaption.trim(), profile_id: userId,
-          humor_flavor_id: Number(selectedFlavorId), is_public: true, like_count: 0,
-          created_by_user_id: userId, modified_by_user_id: userId,
-        });
-        if (error) throw error;
-      }
+      const { error } = await supabase.from('captions').insert({
+        image_id: imageId, content: editedCaption.trim(), profile_id: userId,
+        humor_flavor_id: Number(selectedFlavorId), is_public: true, like_count: 0,
+        created_by_user_id: userId, modified_by_user_id: userId,
+      });
+      if (error) throw error;
       setStatus('Saved! Redirecting...');
       setTimeout(() => router.push('/main'), 800);
     } catch (err: any) {
@@ -526,10 +519,9 @@ function UploadPageInner() {
   };
 
   const resetPage = () => {
-    // Proactively hide any auto-saved captions still pending
     if (imageId && userId) draftAutoSavedCaptions(imageId, userId);
     setFile(null); setPreviewUrl(null); setImageId(null);
-    setGeneratedCaption(''); setEditedCaption(''); setStatus('');
+    setGeneratedCaptions([]); setSelectedCaptionIdx(0); setEditedCaption(''); setStatus('');
     setSelectedGalleryImage(null); setAutoSavedCaptionId(null);
   };
 
@@ -678,75 +670,94 @@ function UploadPageInner() {
               />
             </aside>
             <div className="flex-1 text-zinc-900 dark:text-zinc-100">
-              <h2 className="mb-6 text-xl font-bold">Final Result ✨</h2>
 
-            <div className="mb-5">
-              <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-                Humor Flavor <span className="font-normal text-zinc-400">(AI personality)</span>
-              </label>
-              <FlavorPicker
-                flavors={humorFlavors}
-                value={selectedFlavorId}
-                onChange={setSelectedFlavorId}
-                disabled={loading || isRevising || loadingFlavors}
-                loading={loadingFlavors}
-              />
-            </div>
+              {/* Image preview */}
+              <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                <img src={previewUrl} alt="Meme Preview" className="h-auto w-full object-cover max-h-72 object-center" />
+              </div>
 
-            <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-              <img src={previewUrl} alt="Meme Preview" className="h-auto w-full object-cover" />
-              <div className="border-t border-zinc-200 dark:border-zinc-800 p-6">
+              {/* Caption picker */}
+              {generatedCaptions.length > 0 && (
+                <div className="mb-6">
+                  <p className="mb-3 text-xs font-black uppercase tracking-widest text-zinc-400">
+                    Pick a caption ✨ <span className="font-normal normal-case tracking-normal text-zinc-400">— click one to select</span>
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {generatedCaptions.map((c, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setSelectedCaptionIdx(i); setEditedCaption(c); }}
+                        className={`w-full text-left rounded-2xl border-2 px-4 py-3 text-sm transition-all ${
+                          selectedCaptionIdx === i
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                            : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-500'
+                        }`}
+                      >
+                        <span className={`mr-2 text-xs font-black ${selectedCaptionIdx === i ? 'text-blue-500' : 'text-zinc-400'}`}>{i + 1}.</span>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Edit selected caption */}
+              <div className="mb-5">
                 <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-100">
-                  Edit your meme caption
+                  Edit caption <span className="font-normal text-zinc-400">(optional)</span>
                 </label>
                 <textarea
                   value={editedCaption}
                   onChange={e => setEditedCaption(e.target.value)}
-                  rows={4}
+                  rows={3}
                   className="w-full resize-none rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4 text-base text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  placeholder="Rewrite the meme caption here..."
+                  placeholder="Edit the caption before saving..."
                 />
-                <p className="mt-2 break-words text-xs text-zinc-400">AI draft: {generatedCaption}</p>
-                {imageId && <p className="mt-1 break-words text-[11px] text-zinc-400">Image ID: {imageId}</p>}
               </div>
-            </div>
 
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={handleRevise}
-                disabled={loading || isRevising || !selectedFlavorId}
-                className="w-full rounded-2xl bg-violet-600 hover:bg-violet-700 py-4 font-bold text-white disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 transition-all active:scale-95"
-              >
-                {isRevising ? 'Revising...' : '🔁 Revise with Selected Flavor'}
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={loading || isRevising || !editedCaption.trim()}
-                className="w-full rounded-2xl bg-emerald-500 hover:bg-emerald-600 py-4 font-bold text-white shadow-lg shadow-emerald-100 dark:shadow-none disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 transition-all active:scale-95"
-              >
-                {loading ? 'Saving...' : '👍 Add to Meme Board'}
-              </button>
-              <button
-                onClick={() => setEditedCaption(generatedCaption)}
-                disabled={loading || isRevising}
-                className="w-full rounded-xl bg-blue-50 dark:bg-blue-950/30 py-3 font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-all disabled:opacity-50"
-              >
-                ↺ Reset to AI version
-              </button>
-              <button
-                onClick={resetPage}
-                disabled={loading || isRevising}
-                className="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 py-3 font-bold text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-zinc-700 hover:text-red-500 transition-all disabled:opacity-50"
-              >
-                🗑️ Start over
-              </button>
-            </div>
+              {/* Flavor picker + actions */}
+              <div className="mb-5">
+                <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                  Humor Flavor <span className="font-normal text-zinc-400">— change & regenerate 5 new ones</span>
+                </label>
+                <FlavorPicker
+                  flavors={humorFlavors}
+                  value={selectedFlavorId}
+                  onChange={setSelectedFlavorId}
+                  disabled={loading || isRevising || loadingFlavors}
+                  loading={loadingFlavors}
+                />
+              </div>
 
-            {status && (
-              <p className="mt-4 break-words text-center text-xs font-mono text-blue-500">{status}</p>
-            )}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleRevise}
+                  disabled={loading || isRevising || !selectedFlavorId}
+                  className="w-full rounded-2xl bg-violet-600 hover:bg-violet-700 py-4 font-bold text-white disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 transition-all active:scale-95"
+                >
+                  {isRevising ? 'Generating...' : '🔁 Generate 5 New Captions'}
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={loading || isRevising || !editedCaption.trim()}
+                  className="w-full rounded-2xl bg-emerald-500 hover:bg-emerald-600 py-4 font-bold text-white shadow-lg shadow-emerald-100 dark:shadow-none disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 transition-all active:scale-95"
+                >
+                  {loading ? 'Saving...' : '👍 Add to Meme Board'}
+                </button>
+                <button
+                  onClick={resetPage}
+                  disabled={loading || isRevising}
+                  className="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 py-3 font-bold text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-zinc-700 hover:text-red-500 transition-all disabled:opacity-50"
+                >
+                  🗑️ Start over
+                </button>
+              </div>
+
+              {status && (
+                <p className="mt-4 break-words text-center text-xs font-mono text-blue-500">{status}</p>
+              )}
+            </div>
           </div>
-        </div>
         )}
       </div>
 

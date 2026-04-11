@@ -406,24 +406,19 @@ function UploadPageInner() {
     return extractCaption((await res.json()) as CaptionApiResponse, uploadedImageId);
   }
 
-  // After the API auto-saves caption(s), find ALL of them and mark as drafts (is_public: false).
-  // The API may save multiple records per generation, so we hide every one.
-  // Retries up to 8 times to handle API write latency.
+  // After the API auto-saves caption(s), call the server route (uses service role to bypass RLS)
+  // to find and hide all auto-saved captions. Retries up to 10 times to handle API write latency.
   async function draftAutoSavedCaptions(imgId: string, uid: string) {
-    const since = new Date(Date.now() - 90_000).toISOString();
-    for (let i = 0; i < 8; i++) {
-      await new Promise(r => setTimeout(r, 600 + i * 500));
-      const { data } = await supabase
-        .from('captions')
-        .select('id')
-        .eq('image_id', imgId)
-        .eq('profile_id', uid)
-        .eq('is_public', true)
-        .gte('created_at', since)
-        .order('created_at', { ascending: false });
-      if (data && data.length > 0) {
-        const ids = data.map(r => r.id);
-        await supabase.from('captions').update({ is_public: false }).in('id', ids);
+    for (let i = 0; i < 10; i++) {
+      await new Promise(r => setTimeout(r, 500 + i * 400));
+      const res = await fetch('/api/hide-draft-captions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageId: imgId, userId: uid }),
+      });
+      if (!res.ok) continue;
+      const { ids } = await res.json();
+      if (ids && ids.length > 0) {
         setAutoSavedCaptionId(ids[0]); // most recent becomes the save target
         return;
       }

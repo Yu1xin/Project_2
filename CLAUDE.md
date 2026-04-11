@@ -38,7 +38,7 @@ This is a **Next.js 16 App Router** project — a meme voting/captioning app cal
 
 ### Key Database Tables
 
-- `captions` — meme captions with `like_count`, `image_id`, `profile_id`, `humor_flavor_id`, `is_public`
+- `captions` — meme captions with `like_count`, `image_id`, `profile_id`, `humor_flavor_id`, `is_public`; timestamp columns are `created_datetime_utc` / `modified_datetime_utc` (NOT `created_at`)
 - `caption_votes` — vote records with `vote_value` (+1/-1), unique on `(profile_id, caption_id)`
 - `images` — image records with `url`
 - `humor_flavors` — AI humor style options

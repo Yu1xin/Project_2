@@ -23,8 +23,8 @@ export async function POST(request: Request) {
     .eq('image_id', imageId)
     .eq('profile_id', userId)
     .eq('is_public', true)
-    .gte('created_at', since)
-    .order('created_at', { ascending: false });
+    .gte('created_datetime_utc', since)
+    .order('created_datetime_utc', { ascending: false });
 
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });

@@ -94,10 +94,12 @@ export default function MainPage() {
     []
   );
 
+  const isLoggedIn = userEmail !== null;
+
   useEffect(() => {
     async function loadSession() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.push('/login'); return; }
+      if (!session) { setPageLoading(false); return; }
       setUserEmail(session.user.email || 'User');
       setUserId(session.user.id);
       const { data: profile } = await supabase
@@ -110,6 +112,13 @@ export default function MainPage() {
     }
     loadSession();
   }, [supabase, router]);
+
+  function requireLogin(e: React.MouseEvent) {
+    if (!isLoggedIn) {
+      e.preventDefault();
+      alert('Log in before you can do this');
+    }
+  }
 
   useEffect(() => {
     fetch('/api/top-images')
@@ -145,7 +154,16 @@ export default function MainPage() {
         {/* Greeting */}
         <div className="mb-8">
           <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100">Welcome, Rate & Create Memes</h1>
-          <p className="mt-1 text-sm italic text-zinc-500 dark:text-zinc-400 break-words">{userEmail}</p>
+          {isLoggedIn ? (
+            <p className="mt-1 text-sm italic text-zinc-500 dark:text-zinc-400 break-words">{userEmail}</p>
+          ) : (
+            <div className="mt-3 flex items-center gap-3">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">You're browsing as a guest.</p>
+              <Link href="/login" className="rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-1.5 text-sm font-bold text-white transition-all active:scale-95">
+                Log in
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Pile row — superAdmins only (My Flavors) */}
@@ -183,7 +201,7 @@ export default function MainPage() {
       <div className="px-6 mx-auto max-w-3xl mt-8">
         <section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           {/* Meme Board — live top-meme photo background */}
-          <Link href="/main"
+          <Link href="/main" onClick={requireLogin}
             className="group relative overflow-hidden rounded-[2.5rem] bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-2xl">
             {topMemeUrl && (
               <img
@@ -201,7 +219,7 @@ export default function MainPage() {
           </Link>
 
           {/* Meme Lab — 3-step process as background decoration */}
-          <Link href="/upload"
+          <Link href="/upload" onClick={requireLogin}
             className="group relative overflow-hidden rounded-[2.5rem] bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-2xl">
             {/* Decorative 3-step watermark */}
             <div className="absolute inset-0 flex flex-col justify-center gap-5 px-8 py-6 pointer-events-none select-none">

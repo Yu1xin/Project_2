@@ -65,6 +65,7 @@ const ADMIN_SECTIONS: AdminSection[] = [
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [viewMode, setViewMode] = useState<'user' | 'admin'>('user');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     analytics: false,
@@ -81,11 +82,12 @@ export default function Sidebar() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   ), []);
 
-  // Load superadmin status once
+  // Load session + superadmin status once
   useEffect(() => {
     async function loadProfile() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
+      setIsLoggedIn(true);
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_superadmin, is_matrix_admin')
@@ -97,6 +99,13 @@ export default function Sidebar() {
     }
     loadProfile();
   }, [supabase]);
+
+  function requireLogin(e: React.MouseEvent) {
+    if (!isLoggedIn) {
+      e.preventDefault();
+      alert('Log in before you can do this');
+    }
+  }
 
   // Redirect to login on session expiry / sign-out
   useEffect(() => {
@@ -197,6 +206,7 @@ export default function Sidebar() {
                 label={link.label}
                 isOpen={isOpen}
                 active={pathname === link.href}
+                onClick={link.href === '/' ? undefined : requireLogin}
               />
             ))}
             {isSuperAdmin && (
@@ -280,14 +290,16 @@ export default function Sidebar() {
           </button>
         )}
 
-        {/* Logout */}
-        <button
-          onClick={() => { if (window.confirm('Are you sure you want to logout?')) handleLogout(); }}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-zinc-400 dark:text-zinc-500 transition-all hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 dark:hover:text-red-400 active:scale-95"
-        >
-          <span className="flex w-6 shrink-0 items-center justify-center text-sm">🚪</span>
-          {isOpen && <span className="whitespace-nowrap text-xs font-medium">Logout</span>}
-        </button>
+        {/* Logout — only shown when logged in */}
+        {isLoggedIn && (
+          <button
+            onClick={() => { if (window.confirm('Are you sure you want to logout?')) handleLogout(); }}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-zinc-400 dark:text-zinc-500 transition-all hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 dark:hover:text-red-400 active:scale-95"
+          >
+            <span className="flex w-6 shrink-0 items-center justify-center text-sm">🚪</span>
+            {isOpen && <span className="whitespace-nowrap text-xs font-medium">Logout</span>}
+          </button>
+        )}
       </div>
     </aside>
     </>
@@ -301,6 +313,7 @@ function SidebarLink({
   isOpen,
   active,
   small = false,
+  onClick,
 }: {
   href: string;
   icon: string;
@@ -308,11 +321,13 @@ function SidebarLink({
   isOpen: boolean;
   active: boolean;
   small?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
 }) {
   return (
     <Link
       href={href}
       title={!isOpen ? label : undefined}
+      onClick={onClick}
       className={`flex items-center gap-3 rounded-xl px-3 transition-all active:scale-95 ${
         small ? 'py-2 text-xs' : 'py-3 text-sm'
       } font-medium ${

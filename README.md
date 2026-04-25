@@ -26,33 +26,42 @@ These tools were used as development aids, while the final design, integration, 
 
 ### User-Facing
 
-#### 1. Meme Board (`/main`)
-- Scrollable meme voting feed with pile and grid view modes
-- Pile mode: swipe-style card-by-card browsing with slide animations
-- Grid mode: see all memes at once; click a card to vote inline (👍 / 👎 / ✨ make similar)
-- Vote up or down on captions; voted memes move to the end of the pile
-- "Make Similar" button pre-fills Meme Lab with the same image + caption for remixing
-- Search bar to filter by caption text
-- Pile selector (All / Liked / Disliked)
+#### 1. Home Page (`/`)
+- Publicly accessible — no login required to view
+- Clicking any feature button while logged out shows an "Log in before you can do this" prompt
+- Quick-launch cards for Meme Board and Meme Lab, with live top-meme background image on the Meme Board card
+- Logged-in users see their email; guests see a "Log in" button
+- Superadmin users see their Humor Flavor collection
 
-#### 2. Meme Lab (`/upload`)
+#### 2. Meme Board (`/main`)
+- Scrollable meme voting feed with **pile** and **grid** view modes (toggle in sidebar)
+- **Pile mode**: card-by-card browsing with slide-out animations; voted memes move to the end of the pile
+- **Grid mode**: all memes laid out at once; click a card to expand it inline and vote (👍 / 👎 / ✨ make similar)
+- Vote up or down; unvote by clicking again
+- "Make Similar" (✨) pre-fills Meme Lab with the same image + caption for remixing
+- Search bar to filter captions by text
+- Pile selector: All / Liked / Disliked
+
+#### 3. Meme Lab (`/upload`)
 - **Gallery mode**: pick from the top 50 highest-rated images
 - **Upload mode**: drag-and-drop or click to upload your own image
 - Choose a humor flavor (AI personality) from a searchable dropdown
-- Generate 5 AI captions at once — pick the one you like, edit it, then publish
-- Generated captions are hidden (draft) until you explicitly click "Add to Meme Board"
-- "Generate 5 New Captions" to get a fresh batch with a different flavor
-- **My Memes sidebar**: view and delete your own published memes
-
-#### 3. Home Page (`/`)
-- Quick-launch buttons to Meme Board and Meme Lab
-- Superadmin users see their Humor Flavor collection
+- Generates **5 AI captions at once** — displayed as a numbered list to pick from
+- Click any caption to select it; edit it freely before publishing
+- "Generate 5 New Captions" calls the AI again with the current flavor for a fresh batch
+- Generated captions are kept as hidden drafts until you explicitly click "Add to Meme Board"
+- **My Memes sidebar**: view all your published memes; click to preview, click × to delete
 
 #### 4. Least Favored (`/least-favored`)
 - Displays the bottom 25 memes by score
 
 #### 5. Who Is Online (`/list`) *(admin only)*
 - Recent voting activity feed
+
+#### 6. Authentication
+- Google OAuth login via Supabase (`/login`)
+- Sidebar hides logout button for unauthenticated guests
+- Session expiry automatically redirects to login
 
 ---
 
@@ -61,9 +70,9 @@ These tools were used as development aids, while the final design, integration, 
 Access via sidebar for superadmin / matrix admin users.
 
 #### Analytics (`/admin/analytics`)
-- **Overview**: regression analysis of caption length vs. likes; leaderboard of top profiles, images, and humor flavors ranked by average likes, total likes, or caption count; metric toggle between avgLikes / totalLikes
-- **Factors Impacting Scores** (`/admin/analytics/factors`): per-factor impact scores (image, humor flavor, user profile, time of day) calculated as `group average − overall average`
-- **Flavor Intelligence** (`/admin/analytics/flavor`): per-flavor performance breakdown
+- **Overview** (`/admin/analytics`): live platform stats displayed as proportionally-sized animated bubbles (total captions, images, users, flavors, votes); votes bubble contains an embedded upvote/downvote pie chart; 30-day activity line chart tracking daily captions, votes, new users, new images, and new flavors; stat bubbles update in real-time via Supabase Postgres subscriptions
+- **Factors Impacting Scores** (`/admin/analytics/factors`): simple linear regression of caption length (chars or word count) vs. likes with slope, intercept, and R²; time-of-day impact (Morning / Midday / Evening UTC); flavor usage table (top 20 by caption count with avg likes bar); leaderboards for top profiles, images, humor flavors, and captions — sortable by avg likes or total likes
+- **Flavor Intelligence** (`/admin/analytics/flavor`): step-count vs. performance analysis; word frequency comparison between top and bottom flavors; "Anticipated Best Mix" card with predicted optimal step count and expected likes; per-flavor outcome estimator with confidence rating (high / medium / low) based on sample size
 
 #### LLM Related
 - **Humor Flavors** (`/admin/humor-flavors`): manage AI personality options used during caption generation
@@ -155,15 +164,15 @@ app/
 
 ## Demo
 
-Home page:
+Home page (guest view with Log in prompt):
 ![img.png](img.png)
-Meme voting:
+Meme Board — pile mode voting:
 ![img_1.png](img_1.png)
-Create new meme:
+Meme Lab — 5-caption picker:
 ![img_2.png](img_2.png)
 25 memes with lowest score:
 ![img_3.png](img_3.png)
-Admin page:
+Admin panel:
 ![img_4.png](img_4.png)
-Data analysis panel:
+Analytics dashboard:
 ![img_5.png](img_5.png)

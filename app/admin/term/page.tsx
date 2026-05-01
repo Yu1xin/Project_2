@@ -232,14 +232,14 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen bg-background p-10">
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-100">
+        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-900 dark:text-zinc-100">
           <span className="rounded-lg bg-purple-600 p-2 text-xl text-white">📚</span>
           Terms Management
         </h1>
 
         {/* CREATE NEW TERM */}
         <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-zinc-100">
+          <h2 className="mb-4 text-xl font-bold text-zinc-900 dark:text-zinc-100">
             Add New Term
           </h2>
 
@@ -389,7 +389,7 @@ export default function TermsPage() {
                   ) : (
                     <>
                       <div className="mb-3 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-purple-400">
+                        <h2 className="text-xl font-bold text-purple-600 dark:text-purple-400">
                           {t.term || 'Untitled Term'}
                         </h2>
 

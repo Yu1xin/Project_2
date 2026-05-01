@@ -187,13 +187,13 @@ export default function WhitelistEmailAddressesPage() {
   return (
     <div className="min-h-screen bg-background p-10">
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-100">
+        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-900 dark:text-zinc-100">
           <span className="rounded-lg bg-amber-600 p-2 text-xl text-white">📧</span>
           Whitelist Email Addresses
         </h1>
 
         <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-zinc-100">
+          <h2 className="mb-4 text-xl font-bold text-zinc-900 dark:text-zinc-100">
             Add New Whitelist Email
           </h2>
 
@@ -270,7 +270,7 @@ export default function WhitelistEmailAddressesPage() {
                     <>
                       <div className="mb-3 flex justify-between items-start gap-4">
                         <div>
-                          <h2 className="text-xl font-bold text-amber-400 break-all">
+                          <h2 className="text-xl font-bold text-amber-600 dark:text-amber-400 break-all">
                             {email.email_address || 'No Email Address'}
                           </h2>
                         </div>
@@ -282,13 +282,13 @@ export default function WhitelistEmailAddressesPage() {
 
                       <div className="space-y-2 text-sm text-zinc-100">
                         <p>
-                          <span className="font-bold text-zinc-100">Created By:</span>{' '}
+                          <span className="font-bold text-zinc-900 dark:text-zinc-100">Created By:</span>{' '}
                           <span className="font-mono text-xs">
                             {email.created_by_user_id || 'N/A'}
                           </span>
                         </p>
                         <p>
-                          <span className="font-bold text-zinc-100">Modified By:</span>{' '}
+                          <span className="font-bold text-zinc-900 dark:text-zinc-100">Modified By:</span>{' '}
                           <span className="font-mono text-xs">
                             {email.modified_by_user_id || 'N/A'}
                           </span>

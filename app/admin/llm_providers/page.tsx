@@ -188,12 +188,12 @@ export default function LlmProvidersPage() {
   return (
     <div className="min-h-screen bg-background p-10">
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 text-3xl font-black text-zinc-100">
+        <h1 className="mb-8 text-3xl font-black text-zinc-900 dark:text-zinc-100">
           LLM Providers Management
         </h1>
 
         <div className="mb-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-zinc-100">
+          <h2 className="mb-4 text-xl font-bold text-zinc-900 dark:text-zinc-100">
             Add New LLM Provider
           </h2>
 
@@ -268,7 +268,7 @@ export default function LlmProvidersPage() {
                     <>
                       <div className="mb-3 flex items-start justify-between gap-4">
                         <div className="space-y-2">
-                          <h2 className="text-xl font-bold text-blue-400">
+                          <h2 className="text-xl font-bold text-blue-600 dark:text-blue-400">
                             {provider.name || 'Unnamed Provider'}
                           </h2>
                         </div>

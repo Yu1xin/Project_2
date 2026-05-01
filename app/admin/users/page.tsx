@@ -60,7 +60,7 @@ export default function ManageUsersPage() {
       <div className="max-w-5xl mx-auto">
 
         {/* HEADER */}
-        <h1 className="text-3xl font-black text-zinc-100 mb-6 flex items-center gap-3">
+        <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mb-6 flex items-center gap-3">
           <span className="bg-blue-600 text-white p-2 rounded-lg text-xl">👥</span>
           User Management
         </h1>

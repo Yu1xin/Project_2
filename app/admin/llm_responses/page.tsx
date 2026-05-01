@@ -75,7 +75,7 @@ export default function LlmLogsPage() {
   return (
     <div className="min-h-screen bg-background p-10">
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-100">
+        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-900 dark:text-zinc-100">
           <span className="rounded-lg bg-blue-600 p-2 text-xl text-white">🤖</span>
           LLM Prompt / Response Logs
         </h1>
@@ -93,7 +93,7 @@ export default function LlmLogsPage() {
               >
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div className="space-y-2">
-                    <h2 className="text-lg font-bold text-blue-400">
+                    <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {getModelName(log.llm_model_id)}
                     </h2>
 

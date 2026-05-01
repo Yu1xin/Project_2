@@ -58,7 +58,7 @@ export default function AdminCaptionsInfoPage() {
   return (
     <div className="min-h-screen bg-background p-10 ml-64 text-zinc-900 dark:text-zinc-100">
       <div className="mx-auto max-w-7xl">
-        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-100">
+        <h1 className="mb-8 flex items-center gap-3 text-3xl font-black text-zinc-900 dark:text-zinc-100">
           <span className="rounded-lg bg-blue-600 p-2 text-xl text-white">📋</span>
           Captions Info
         </h1>

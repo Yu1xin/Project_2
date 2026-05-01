@@ -235,13 +235,13 @@ export default function AdminCaptionExamplesPage() {
   return (
     <div className="p-10 ml-64 bg-background min-h-screen">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-black text-zinc-100 mb-8 flex items-center gap-3">
+        <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mb-8 flex items-center gap-3">
           <span className="bg-orange-500 text-white p-2 rounded-lg text-xl">📝</span>
           Caption Examples Management
         </h1>
 
         <div className="text-zinc-900 p-6 rounded-3xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 shadow-sm mb-8">
-          <h2 className="text-xl font-bold text-zinc-100 mb-4">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
             Create New Caption Example
           </h2>
 

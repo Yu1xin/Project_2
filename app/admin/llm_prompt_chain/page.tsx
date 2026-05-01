@@ -52,7 +52,7 @@ export default function LlmPromptChainsPage() {
   return (
     <div className="p-10 bg-background min-h-screen">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-black text-zinc-100 mb-8 flex items-center gap-3">
+        <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 mb-8 flex items-center gap-3">
           <span className="bg-cyan-600 text-white p-2 rounded-lg text-xl">⛓️</span>
           LLM Prompt Chains
         </h1>
@@ -80,14 +80,14 @@ export default function LlmPromptChainsPage() {
 
                 <div className="space-y-2 text-sm text-zinc-100">
                   <p>
-                    <span className="font-bold text-zinc-100">Created By:</span>{' '}
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">Created By:</span>{' '}
                     <span className="font-mono text-xs">
                       {chain.created_by_user_id || 'N/A'}
                     </span>
                   </p>
 
                   <p>
-                    <span className="font-bold text-zinc-100">Modified By:</span>{' '}
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">Modified By:</span>{' '}
                     <span className="font-mono text-xs">
                       {chain.modified_by_user_id || 'N/A'}
                     </span>

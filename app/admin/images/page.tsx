@@ -238,8 +238,8 @@ export default function AdminImagesPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-zinc-100">Manage Images 🖼️</h2>
-            <p className="text-sm text-zinc-100 mt-1">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Manage Images 🖼️</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
               Upload new images, replace old ones, or delete image records.
             </p>
           </div>

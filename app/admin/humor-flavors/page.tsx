@@ -105,6 +105,7 @@ export default function HumorFlavorsPage() {
   const [showMixPanel, setShowMixPanel] = useState(false);
   const [newStep, setNewStep] = useState(EMPTY_STEP);
   const [search, setSearch] = useState('');
+  const [mixSearch, setMixSearch] = useState('');
 
   async function loadFlavors() {
     try {
@@ -176,6 +177,29 @@ export default function HumorFlavorsPage() {
         humor_flavor_step_type_id: step.humor_flavor_step_type_id ?? 3,
       },
     ]);
+  }
+
+  function copyEntireFlavor(flavor: HumorFlavor) {
+    const steps = allSteps
+      .filter((s) => s.humor_flavor_id === flavor.id)
+      .sort((a, b) => a.order_by - b.order_by);
+    if (steps.length === 0) { alert('This flavor has no steps to copy.'); return; }
+    if (pendingSteps.length > 0 && !confirm(`Replace your ${pendingSteps.length} current step(s) with all ${steps.length} steps from "${flavor.slug}"?`)) return;
+    setPendingSteps(steps.map((s) => ({
+      key: crypto.randomUUID(),
+      description: s.description ?? '',
+      llm_system_prompt: s.llm_system_prompt ?? '',
+      llm_user_prompt: s.llm_user_prompt ?? '',
+      llm_temperature: s.llm_temperature ?? 0.7,
+      llm_input_type_id: s.llm_input_type_id ?? 1,
+      llm_output_type_id: s.llm_output_type_id ?? 1,
+      llm_model_id: s.llm_model_id ?? 5,
+      humor_flavor_step_type_id: s.humor_flavor_step_type_id ?? 3,
+    })));
+    setSlug(`${flavor.slug}-copy`);
+    setDescription(flavor.description ?? '');
+    setShowMixPanel(false);
+    setMixSearch('');
   }
 
   function removeStep(key: string) {
@@ -477,52 +501,122 @@ export default function HumorFlavorsPage() {
             </div>
           )}
 
-          {/* Mix panel — copy from existing steps */}
-          {showMixPanel && (
-            <div className="border border-violet-200 dark:border-violet-800 rounded-xl p-4 bg-violet-50 dark:bg-violet-950/30 space-y-3">
-              <h4 className="font-semibold text-violet-800 dark:text-violet-300">Copy from existing steps</h4>
-              {allSteps.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-zinc-400">No existing steps found.</p>
-              ) : (
-                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                  {allSteps.map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-start justify-between gap-3 border border-violet-100 dark:border-violet-800 bg-white dark:bg-zinc-900 rounded-lg p-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-violet-700 dark:text-violet-400">
-                          {s.flavor_slug} · Step {s.order_by}
-                        </p>
-                        {s.description && (
-                          <p className="text-xs text-gray-600 dark:text-zinc-400">{s.description}</p>
-                        )}
-                        {s.llm_system_prompt && (
-                          <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">System: {s.llm_system_prompt}</p>
-                        )}
-                        {s.llm_user_prompt && (
-                          <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">User: {s.llm_user_prompt}</p>
-                        )}
-                        <p className="text-xs text-gray-400 dark:text-zinc-500">Temp: {s.llm_temperature ?? 'N/A'}</p>
-                      </div>
-                      <button
-                        onClick={() => copyExistingStep(s)}
-                        className="shrink-0 px-3 py-1 text-xs bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-medium"
-                      >
-                        Copy
-                      </button>
-                    </div>
-                  ))}
+          {/* Mix panel — copy entire flavor or individual steps */}
+          {showMixPanel && (() => {
+            const q = mixSearch.toLowerCase();
+            const filteredFlavors = flavors.filter((f) =>
+              !q || f.slug.toLowerCase().includes(q) || (f.description ?? '').toLowerCase().includes(q)
+            );
+            const filteredSteps = allSteps.filter((s) =>
+              !q ||
+              (s.flavor_slug ?? '').toLowerCase().includes(q) ||
+              (s.description ?? '').toLowerCase().includes(q)
+            );
+            return (
+              <div className="border border-violet-200 dark:border-violet-800 rounded-xl p-4 bg-violet-50 dark:bg-violet-950/30 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-violet-800 dark:text-violet-300">Copy from existing</h4>
+                  <button
+                    onClick={() => { setShowMixPanel(false); setMixSearch(''); }}
+                    className="text-sm text-violet-500 dark:text-violet-400 hover:underline"
+                  >
+                    Close
+                  </button>
                 </div>
-              )}
-              <button
-                onClick={() => setShowMixPanel(false)}
-                className="text-sm text-violet-600 dark:text-violet-400 hover:underline"
-              >
-                Close
-              </button>
-            </div>
-          )}
+
+                {/* Search */}
+                <input
+                  autoFocus
+                  className="border border-violet-300 dark:border-violet-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 px-3 py-2 w-full rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                  placeholder="Search by slug or description..."
+                  value={mixSearch}
+                  onChange={(e) => setMixSearch(e.target.value)}
+                />
+
+                {/* ── Section 1: Entire flavors ── */}
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-2">
+                    Copy entire flavor
+                    <span className="font-normal normal-case tracking-normal ml-1 text-violet-400 dark:text-violet-500">— loads all steps at once</span>
+                  </p>
+                  {filteredFlavors.length === 0 ? (
+                    <p className="text-xs text-zinc-400 italic">No flavors match.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {filteredFlavors.map((f) => {
+                        const stepCount = allSteps.filter((s) => s.humor_flavor_id === f.id).length;
+                        return (
+                          <div
+                            key={f.id}
+                            className="flex items-center justify-between gap-3 border border-violet-200 dark:border-violet-800 bg-white dark:bg-zinc-900 rounded-lg px-3 py-2.5"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-violet-700 dark:text-violet-300 truncate">{f.slug}</p>
+                              {f.description && (
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{f.description}</p>
+                              )}
+                              <p className="text-xs text-zinc-400 dark:text-zinc-500">{stepCount} step{stepCount !== 1 ? 's' : ''}</p>
+                            </div>
+                            <button
+                              onClick={() => copyEntireFlavor(f)}
+                              className="shrink-0 px-3 py-1.5 text-xs bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-bold"
+                            >
+                              Copy All
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-violet-200 dark:border-violet-800" />
+
+                {/* ── Section 2: Individual steps ── */}
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-2">
+                    Copy individual step
+                    <span className="font-normal normal-case tracking-normal ml-1 text-violet-400 dark:text-violet-500">— appends one step</span>
+                  </p>
+                  {filteredSteps.length === 0 ? (
+                    <p className="text-xs text-zinc-400 italic">No steps match.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {filteredSteps.map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-start justify-between gap-3 border border-violet-100 dark:border-violet-800 bg-white dark:bg-zinc-900 rounded-lg p-3"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-violet-700 dark:text-violet-400">
+                              {s.flavor_slug} · Step {s.order_by}
+                            </p>
+                            {s.description && (
+                              <p className="text-xs text-gray-600 dark:text-zinc-400">{s.description}</p>
+                            )}
+                            {s.llm_system_prompt && (
+                              <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">System: {s.llm_system_prompt}</p>
+                            )}
+                            {s.llm_user_prompt && (
+                              <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">User: {s.llm_user_prompt}</p>
+                            )}
+                            <p className="text-xs text-gray-400 dark:text-zinc-500">Temp: {s.llm_temperature ?? 'N/A'}</p>
+                          </div>
+                          <button
+                            onClick={() => copyExistingStep(s)}
+                            className="shrink-0 px-3 py-1 text-xs bg-violet-500 hover:bg-violet-600 text-white rounded-lg transition font-medium"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         <button

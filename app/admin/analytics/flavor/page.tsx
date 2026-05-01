@@ -30,7 +30,7 @@ export default function FlavorIntelligencePage() {
   const reliabilityBg    = (r: string) => r === 'high' ? 'bg-emerald-900/30 border-emerald-700/40' : r === 'medium' ? 'bg-amber-900/30 border-amber-700/40' : 'bg-red-900/30 border-red-700/40';
 
   return (
-    <div className="p-8 bg-slate-900 text-white rounded-[3rem] shadow-2xl mt-10 max-w-7xl mx-auto">
+    <div className="p-8 bg-white dark:bg-slate-900 text-zinc-900 dark:text-white rounded-[3rem] shadow-2xl mt-10 max-w-7xl mx-auto border border-zinc-200 dark:border-transparent">
       <div className="flex items-center gap-4 mb-8">
         <div className="p-3 bg-violet-500 rounded-2xl text-3xl">🧠</div>
         <div>

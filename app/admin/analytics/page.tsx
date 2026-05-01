@@ -119,7 +119,7 @@ export default function AdminAnalyticsOverview() {
   }, []);
 
   return (
-    <div className="p-8 bg-slate-900 text-white rounded-[3rem] shadow-2xl mt-10 max-w-7xl mx-auto">
+    <div className="p-8 bg-white dark:bg-slate-900 text-zinc-900 dark:text-white rounded-[3rem] shadow-2xl mt-10 max-w-7xl mx-auto border border-zinc-200 dark:border-transparent">
       <div className="flex items-center gap-4 mb-8">
         <div className="p-3 bg-blue-500 rounded-2xl text-3xl">📈</div>
         <div>

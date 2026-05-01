@@ -41,8 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (loading) return <div className="p-10 font-bold text-blue-600">confirming identity...</div>;
 
   return isAdmin ? (
-    <div className="min-h-screen bg-zinc-950">
-      {/* 这里的 ml-64 解决了你说的内容被侧边栏挡住的问题 */}
+    <div className="min-h-screen bg-background">
       <main className="ml-64 p-8">
         <div className="max-w-6xl mx-auto">
           {children}

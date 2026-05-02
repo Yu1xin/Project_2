@@ -41,12 +41,15 @@ export default function ManageUsersPage() {
     const keyword = search.toLowerCase();
 
     const filtered = profiles.filter((user) => {
-      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
+      const first = (user.first_name || '').trim().toLowerCase();
+      const last = (user.last_name || '').trim().toLowerCase();
+      const fullName = `${first} ${last}`.trim();
       return (
         user.id?.toLowerCase().includes(keyword) ||
-        user.first_name?.toLowerCase().includes(keyword) ||
-        user.last_name?.toLowerCase().includes(keyword) ||
-        fullName.includes(keyword)
+        first.includes(keyword) ||
+        last.includes(keyword) ||
+        fullName.includes(keyword) ||
+        user.email?.toLowerCase().includes(keyword)
       );
     });
 
@@ -69,7 +72,7 @@ export default function ManageUsersPage() {
         <div className="mb-6">
           <input
             type="text"
-            placeholder="Search by first name, last name, or profile ID..."
+            placeholder="Search by name, email, or profile ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-5 py-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"

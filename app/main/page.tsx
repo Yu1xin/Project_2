@@ -698,7 +698,8 @@ export default function ListPage() {
   }
 
   function handleVoteCast(voteType: 'up' | 'down') {
-    const caption = displayList[currentIndexRef.current];
+    const idx = currentIndexRef.current;
+    const caption = displayList[idx];
     if (!caption) return;
     const meme: MemeItem = {
       id: caption.id,
@@ -714,8 +715,18 @@ export default function ListPage() {
     setVoteEffect(voteType === 'up' ? 'liked' : 'disliked');
     setTimeout(() => {
       setVoteEffect('idle');
-      const next = currentIndexRef.current + 1;
-      if (next < displayListLenRef.current) setCurrentIndex(next);
+      if (!searchResults && idx < displayListLenRef.current - 1) {
+        // Move voted card to end of pile; currentIndex stays put so the next card slides in
+        setCaptionsList(prev => {
+          const item = prev[idx];
+          if (!item) return prev;
+          return [...prev.slice(0, idx), ...prev.slice(idx + 1), item];
+        });
+      } else {
+        // Last card in pile, or in search mode — just advance as before
+        const next = idx + 1;
+        if (next < displayListLenRef.current) setCurrentIndex(next);
+      }
     }, 380);
   }
 

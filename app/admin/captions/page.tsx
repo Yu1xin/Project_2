@@ -9,7 +9,7 @@ type CaptionRow = {
   image_id: string | null;
   humor_flavor_id: number | null;
   created_by_user_id: string | null;
-  images?: { url: string | null } | null;
+  images?: { url: string | null; image_description: string | null } | null;
 };
 
 export default function AdminCaptionsInfoPage() {
@@ -69,6 +69,7 @@ export default function AdminCaptionsInfoPage() {
               <tr>
                 <th className="px-4 py-3 text-left font-bold">Content</th>
                 <th className="px-4 py-3 text-left font-bold">Image</th>
+                <th className="px-4 py-3 text-left font-bold">Image Description</th>
                 <th className="px-4 py-3 text-left font-bold">Humor Flavor ID</th>
                 <th className="px-4 py-3 text-left font-bold">Created By User ID</th>
               </tr>
@@ -78,7 +79,7 @@ export default function AdminCaptionsInfoPage() {
               {captions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-4 py-8 text-center text-zinc-400"
                   >
                     No caption data found.
@@ -103,6 +104,11 @@ export default function AdminCaptionsInfoPage() {
                       ) : (
                         <span className="font-mono text-zinc-500 text-xs">{caption.image_id?.substring(0, 8) ?? '-'}</span>
                       )}
+                    </td>
+                    <td className="max-w-xs px-4 py-3 text-zinc-300 text-xs">
+                      {caption.images?.image_description
+                        ? <span title={caption.images.image_description} className="line-clamp-3">{caption.images.image_description}</span>
+                        : <span className="text-zinc-500">-</span>}
                     </td>
                     <td className="px-4 py-3 font-mono text-zinc-300">
                       {caption.humor_flavor_id ?? '-'}

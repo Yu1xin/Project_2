@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('captions')
-    .select('id, content, image_id, humor_flavor_id, created_by_user_id, images(url)')
+    .select('id, content, image_id, humor_flavor_id, created_by_user_id, images(url, image_description)')
     .order('created_datetime_utc', { ascending: false });
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
